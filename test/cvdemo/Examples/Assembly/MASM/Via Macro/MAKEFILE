@@ -1,0 +1,7 @@
+NAME=Example
+
+$(NAME).exe: $(NAME).obj
+        link /SUBSYSTEM:WINDOWS $(NAME).obj
+        
+$(NAME).obj: $(NAME).asm
+        ml /c /coff /Cp $(NAME).asm

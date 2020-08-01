@@ -1,0 +1,2 @@
+#!/bin/bash
+exec docker-compose -f $S2EDIR/docker/docker-compose.yml exec --user $(id -u) binrec bash -ilc "cd $(pwd); $*"

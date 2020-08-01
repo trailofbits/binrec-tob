@@ -1,0 +1,94 @@
+#!/bin/sh
+
+#********************************************************************
+# AUTHORS: Vijay Ganesh, David L. Dill
+#
+# BEGIN DATE: November, 2005
+#
+# LICENSE: Please view LICENSE file in the home dir of this Program
+#********************************************************************
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+	--with-prefix=*)
+	    PREFIX=${1#*=};;
+	--with-gcc=*)
+	    CC=${1#*=};;
+	--with-g++=*)
+	    arg=`expr "x$1" : 'x[^=]*=\(.*\)'`
+	    CXX=$arg
+	    echo "Using g++ instead of gcc";;
+	--with-gcc=*)
+	    arg=`expr "x$1" : 'x[^=]*=\(.*\)'`
+	    CC=$arg
+	    ;;
+	--with-minisat-core)
+	    SAT=minisat;;
+	--with-cryptominisat2)
+	    SAT=cryptominisat2;;
+        --with-address-sanitizer)
+	    ASAN=yes;;
+	--with-fpic)
+	    CFLAGS_FPIC=-fpic;;
+	*)
+	    echo "Usage: $0 [options]"
+	    echo "   --with-prefix=/prefix/path   Install STP at the specified path"
+	    echo "   --with-gcc=/path/to/gcc      Use gcc at the specified path"
+	    echo "   --with-g++=/path/to/g++      Use g++ at the specified path"
+            echo "   --with-gcc=/path/to/gcc      Use gcc at the specified path"
+	    echo "   --with-minisat-core          Use core MiniSAT solver (default), runtime option to use simplifying"
+	    echo "   --with-cryptominisat2        Use CRYPTOMiniSAT 2.x solver"
+            echo "   --with-address-sanitizer     Use AddressSanitizer for memory debugging"
+	    echo "   --with-fpic                  Required to build 64-bit shared libraries."
+	    echo "$0 failed"
+	    exit 1;;
+    esac
+
+    shift
+done
+
+# check for an option --with-prefix=/path/to/prefix and use that as the
+# prefix, otherwise use /usr/local
+PREFIX=${PREFIX:-/usr/local}
+
+echo "export PREFIX=$PREFIX" > scripts/config.info
+echo "Setting prefix to... $PREFIX"
+if [ $CXX ]
+then echo "CXX=$CXX" >> scripts/config.info
+export CXX="$CXX"
+echo "Setting CXX to... $CXX"
+fi
+
+if [ $CC ]
+then echo "CC=$CC" >> scripts/config.info
+export CC="$CC"
+echo "Setting CC to... $CC"
+fi
+
+
+if [ "x$ASAN" = "xyes" ]; then
+  echo "ASAN_FLAGS=-faddress-sanitizer" >> scripts/config.info
+  echo "Using Address sanitizer"
+fi
+
+echo "SAT=$SAT" >> scripts/config.info
+echo "Using SAT solver: $SAT"
+
+if [ ! -d $PREFIX/include ]
+then mkdir -p $PREFIX/include
+fi
+if [ -n "$CXX" ]; then
+    echo "export CXX=$CXX" >> scripts/config.info
+    echo "Setting CXX to... $CXX"
+fi
+if [ -n "$CFLAGS_FPIC" ]; then
+    echo "export CFLAGS_FPIC=$CFLAGS_FPIC" >> scripts/config.info
+    echo "Setting CFLAGS_FPIC to... $CFLAGS_FPIC"
+fi
+
+echo "STP is configured successfully."
+cp scripts/Makefile.in Makefile
+
+echo
+echo "Type 'make' to compile STP."
+echo "Type 'make install' to compile & install STP."

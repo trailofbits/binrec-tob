@@ -1,0 +1,527 @@
+
+inheritance:     file format elf32-i386
+
+
+Disassembly of section .init:
+
+080485c8 <_init>:
+ 80485c8:	53                   	push   %ebx
+ 80485c9:	83 ec 08             	sub    $0x8,%esp
+ 80485cc:	e8 0f 01 00 00       	call   80486e0 <__x86.get_pc_thunk.bx>
+ 80485d1:	81 c3 2f 1a 00 00    	add    $0x1a2f,%ebx
+ 80485d7:	8b 83 fc ff ff ff    	mov    -0x4(%ebx),%eax
+ 80485dd:	85 c0                	test   %eax,%eax
+ 80485df:	74 05                	je     80485e6 <_init+0x1e>
+ 80485e1:	e8 2a 00 00 00       	call   8048610 <__gmon_start__@plt>
+ 80485e6:	83 c4 08             	add    $0x8,%esp
+ 80485e9:	5b                   	pop    %ebx
+ 80485ea:	c3                   	ret    
+
+Disassembly of section .plt:
+
+080485f0 <__cxa_atexit@plt-0x10>:
+ 80485f0:	ff 35 04 a0 04 08    	pushl  0x804a004
+ 80485f6:	ff 25 08 a0 04 08    	jmp    *0x804a008
+ 80485fc:	00 00                	add    %al,(%eax)
+	...
+
+08048600 <__cxa_atexit@plt>:
+ 8048600:	ff 25 0c a0 04 08    	jmp    *0x804a00c
+ 8048606:	68 00 00 00 00       	push   $0x0
+ 804860b:	e9 e0 ff ff ff       	jmp    80485f0 <_init+0x28>
+
+08048610 <__gmon_start__@plt>:
+ 8048610:	ff 25 10 a0 04 08    	jmp    *0x804a010
+ 8048616:	68 08 00 00 00       	push   $0x8
+ 804861b:	e9 d0 ff ff ff       	jmp    80485f0 <_init+0x28>
+
+08048620 <_ZdlPv@plt>:
+ 8048620:	ff 25 14 a0 04 08    	jmp    *0x804a014
+ 8048626:	68 10 00 00 00       	push   $0x10
+ 804862b:	e9 c0 ff ff ff       	jmp    80485f0 <_init+0x28>
+
+08048630 <_ZNSt8ios_base4InitC1Ev@plt>:
+ 8048630:	ff 25 18 a0 04 08    	jmp    *0x804a018
+ 8048636:	68 18 00 00 00       	push   $0x18
+ 804863b:	e9 b0 ff ff ff       	jmp    80485f0 <_init+0x28>
+
+08048640 <__libc_start_main@plt>:
+ 8048640:	ff 25 1c a0 04 08    	jmp    *0x804a01c
+ 8048646:	68 20 00 00 00       	push   $0x20
+ 804864b:	e9 a0 ff ff ff       	jmp    80485f0 <_init+0x28>
+
+08048650 <_ZNSt8ios_base4InitD1Ev@plt>:
+ 8048650:	ff 25 20 a0 04 08    	jmp    *0x804a020
+ 8048656:	68 28 00 00 00       	push   $0x28
+ 804865b:	e9 90 ff ff ff       	jmp    80485f0 <_init+0x28>
+
+08048660 <__cxa_pure_virtual@plt>:
+ 8048660:	ff 25 24 a0 04 08    	jmp    *0x804a024
+ 8048666:	68 30 00 00 00       	push   $0x30
+ 804866b:	e9 80 ff ff ff       	jmp    80485f0 <_init+0x28>
+
+08048670 <_Znwj@plt>:
+ 8048670:	ff 25 28 a0 04 08    	jmp    *0x804a028
+ 8048676:	68 38 00 00 00       	push   $0x38
+ 804867b:	e9 70 ff ff ff       	jmp    80485f0 <_init+0x28>
+
+08048680 <puts@plt>:
+ 8048680:	ff 25 2c a0 04 08    	jmp    *0x804a02c
+ 8048686:	68 40 00 00 00       	push   $0x40
+ 804868b:	e9 60 ff ff ff       	jmp    80485f0 <_init+0x28>
+
+08048690 <__gxx_personality_v0@plt>:
+ 8048690:	ff 25 30 a0 04 08    	jmp    *0x804a030
+ 8048696:	68 48 00 00 00       	push   $0x48
+ 804869b:	e9 50 ff ff ff       	jmp    80485f0 <_init+0x28>
+
+080486a0 <_Unwind_Resume@plt>:
+ 80486a0:	ff 25 34 a0 04 08    	jmp    *0x804a034
+ 80486a6:	68 50 00 00 00       	push   $0x50
+ 80486ab:	e9 40 ff ff ff       	jmp    80485f0 <_init+0x28>
+
+Disassembly of section .text:
+
+080486b0 <_start>:
+ 80486b0:	31 ed                	xor    %ebp,%ebp
+ 80486b2:	5e                   	pop    %esi
+ 80486b3:	89 e1                	mov    %esp,%ecx
+ 80486b5:	83 e4 f0             	and    $0xfffffff0,%esp
+ 80486b8:	50                   	push   %eax
+ 80486b9:	54                   	push   %esp
+ 80486ba:	52                   	push   %edx
+ 80486bb:	68 30 8a 04 08       	push   $0x8048a30
+ 80486c0:	68 c0 89 04 08       	push   $0x80489c0
+ 80486c5:	51                   	push   %ecx
+ 80486c6:	56                   	push   %esi
+ 80486c7:	68 ad 87 04 08       	push   $0x80487ad
+ 80486cc:	e8 6f ff ff ff       	call   8048640 <__libc_start_main@plt>
+ 80486d1:	f4                   	hlt    
+ 80486d2:	66 90                	xchg   %ax,%ax
+ 80486d4:	66 90                	xchg   %ax,%ax
+ 80486d6:	66 90                	xchg   %ax,%ax
+ 80486d8:	66 90                	xchg   %ax,%ax
+ 80486da:	66 90                	xchg   %ax,%ax
+ 80486dc:	66 90                	xchg   %ax,%ax
+ 80486de:	66 90                	xchg   %ax,%ax
+
+080486e0 <__x86.get_pc_thunk.bx>:
+ 80486e0:	8b 1c 24             	mov    (%esp),%ebx
+ 80486e3:	c3                   	ret    
+ 80486e4:	66 90                	xchg   %ax,%ax
+ 80486e6:	66 90                	xchg   %ax,%ax
+ 80486e8:	66 90                	xchg   %ax,%ax
+ 80486ea:	66 90                	xchg   %ax,%ax
+ 80486ec:	66 90                	xchg   %ax,%ax
+ 80486ee:	66 90                	xchg   %ax,%ax
+
+080486f0 <deregister_tm_clones>:
+ 80486f0:	b8 43 a0 04 08       	mov    $0x804a043,%eax
+ 80486f5:	2d 40 a0 04 08       	sub    $0x804a040,%eax
+ 80486fa:	83 f8 06             	cmp    $0x6,%eax
+ 80486fd:	77 01                	ja     8048700 <deregister_tm_clones+0x10>
+ 80486ff:	c3                   	ret    
+ 8048700:	b8 00 00 00 00       	mov    $0x0,%eax
+ 8048705:	85 c0                	test   %eax,%eax
+ 8048707:	74 f6                	je     80486ff <deregister_tm_clones+0xf>
+ 8048709:	55                   	push   %ebp
+ 804870a:	89 e5                	mov    %esp,%ebp
+ 804870c:	83 ec 18             	sub    $0x18,%esp
+ 804870f:	c7 04 24 40 a0 04 08 	movl   $0x804a040,(%esp)
+ 8048716:	ff d0                	call   *%eax
+ 8048718:	c9                   	leave  
+ 8048719:	c3                   	ret    
+ 804871a:	8d b6 00 00 00 00    	lea    0x0(%esi),%esi
+
+08048720 <register_tm_clones>:
+ 8048720:	b8 40 a0 04 08       	mov    $0x804a040,%eax
+ 8048725:	2d 40 a0 04 08       	sub    $0x804a040,%eax
+ 804872a:	c1 f8 02             	sar    $0x2,%eax
+ 804872d:	89 c2                	mov    %eax,%edx
+ 804872f:	c1 ea 1f             	shr    $0x1f,%edx
+ 8048732:	01 d0                	add    %edx,%eax
+ 8048734:	d1 f8                	sar    %eax
+ 8048736:	75 01                	jne    8048739 <register_tm_clones+0x19>
+ 8048738:	c3                   	ret    
+ 8048739:	ba 00 00 00 00       	mov    $0x0,%edx
+ 804873e:	85 d2                	test   %edx,%edx
+ 8048740:	74 f6                	je     8048738 <register_tm_clones+0x18>
+ 8048742:	55                   	push   %ebp
+ 8048743:	89 e5                	mov    %esp,%ebp
+ 8048745:	83 ec 18             	sub    $0x18,%esp
+ 8048748:	89 44 24 04          	mov    %eax,0x4(%esp)
+ 804874c:	c7 04 24 40 a0 04 08 	movl   $0x804a040,(%esp)
+ 8048753:	ff d2                	call   *%edx
+ 8048755:	c9                   	leave  
+ 8048756:	c3                   	ret    
+ 8048757:	89 f6                	mov    %esi,%esi
+ 8048759:	8d bc 27 00 00 00 00 	lea    0x0(%edi,%eiz,1),%edi
+
+08048760 <__do_global_dtors_aux>:
+ 8048760:	80 3d ac a0 04 08 00 	cmpb   $0x0,0x804a0ac
+ 8048767:	75 13                	jne    804877c <__do_global_dtors_aux+0x1c>
+ 8048769:	55                   	push   %ebp
+ 804876a:	89 e5                	mov    %esp,%ebp
+ 804876c:	83 ec 08             	sub    $0x8,%esp
+ 804876f:	e8 7c ff ff ff       	call   80486f0 <deregister_tm_clones>
+ 8048774:	c6 05 ac a0 04 08 01 	movb   $0x1,0x804a0ac
+ 804877b:	c9                   	leave  
+ 804877c:	f3 c3                	repz ret 
+ 804877e:	66 90                	xchg   %ax,%ax
+
+08048780 <frame_dummy>:
+ 8048780:	a1 00 9f 04 08       	mov    0x8049f00,%eax
+ 8048785:	85 c0                	test   %eax,%eax
+ 8048787:	74 1f                	je     80487a8 <frame_dummy+0x28>
+ 8048789:	b8 00 00 00 00       	mov    $0x0,%eax
+ 804878e:	85 c0                	test   %eax,%eax
+ 8048790:	74 16                	je     80487a8 <frame_dummy+0x28>
+ 8048792:	55                   	push   %ebp
+ 8048793:	89 e5                	mov    %esp,%ebp
+ 8048795:	83 ec 18             	sub    $0x18,%esp
+ 8048798:	c7 04 24 00 9f 04 08 	movl   $0x8049f00,(%esp)
+ 804879f:	ff d0                	call   *%eax
+ 80487a1:	c9                   	leave  
+ 80487a2:	e9 79 ff ff ff       	jmp    8048720 <register_tm_clones>
+ 80487a7:	90                   	nop
+ 80487a8:	e9 73 ff ff ff       	jmp    8048720 <register_tm_clones>
+
+080487ad <main>:
+        puts("I am calm, can't shout");
+    }
+    
+};
+
+int main() {
+ 80487ad:	55                   	push   %ebp
+ 80487ae:	89 e5                	mov    %esp,%ebp
+ 80487b0:	56                   	push   %esi
+ 80487b1:	53                   	push   %ebx
+ 80487b2:	83 e4 f0             	and    $0xfffffff0,%esp
+ 80487b5:	83 ec 20             	sub    $0x20,%esp
+    Person *p = new Calm(27);
+ 80487b8:	c7 04 24 08 00 00 00 	movl   $0x8,(%esp)
+ 80487bf:	e8 ac fe ff ff       	call   8048670 <_Znwj@plt>
+ 80487c4:	89 c3                	mov    %eax,%ebx
+ 80487c6:	c7 44 24 04 1b 00 00 	movl   $0x1b,0x4(%esp)
+ 80487cd:	00 
+ 80487ce:	89 1c 24             	mov    %ebx,(%esp)
+ 80487d1:	e8 26 01 00 00       	call   80488fc <_ZN4CalmC1Ej>
+ 80487d6:	89 5c 24 1c          	mov    %ebx,0x1c(%esp)
+    p->shout();
+ 80487da:	8b 44 24 1c          	mov    0x1c(%esp),%eax
+ 80487de:	8b 00                	mov    (%eax),%eax
+ 80487e0:	83 c0 08             	add    $0x8,%eax
+ 80487e3:	8b 00                	mov    (%eax),%eax
+ 80487e5:	8b 54 24 1c          	mov    0x1c(%esp),%edx
+ 80487e9:	89 14 24             	mov    %edx,(%esp)
+ 80487ec:	ff d0                	call   *%eax
+    delete p;
+ 80487ee:	83 7c 24 1c 00       	cmpl   $0x0,0x1c(%esp)
+ 80487f3:	74 14                	je     8048809 <main+0x5c>
+ 80487f5:	8b 44 24 1c          	mov    0x1c(%esp),%eax
+ 80487f9:	8b 00                	mov    (%eax),%eax
+ 80487fb:	83 c0 04             	add    $0x4,%eax
+ 80487fe:	8b 00                	mov    (%eax),%eax
+ 8048800:	8b 54 24 1c          	mov    0x1c(%esp),%edx
+ 8048804:	89 14 24             	mov    %edx,(%esp)
+ 8048807:	ff d0                	call   *%eax
+    return 0;
+ 8048809:	b8 00 00 00 00       	mov    $0x0,%eax
+ 804880e:	eb 14                	jmp    8048824 <main+0x77>
+ 8048810:	89 c6                	mov    %eax,%esi
+    }
+    
+};
+
+int main() {
+    Person *p = new Calm(27);
+ 8048812:	89 1c 24             	mov    %ebx,(%esp)
+ 8048815:	e8 06 fe ff ff       	call   8048620 <_ZdlPv@plt>
+ 804881a:	89 f0                	mov    %esi,%eax
+ 804881c:	89 04 24             	mov    %eax,(%esp)
+ 804881f:	e8 7c fe ff ff       	call   80486a0 <_Unwind_Resume@plt>
+    p->shout();
+    delete p;
+    return 0;
+}
+ 8048824:	8d 65 f8             	lea    -0x8(%ebp),%esp
+ 8048827:	5b                   	pop    %ebx
+ 8048828:	5e                   	pop    %esi
+ 8048829:	5d                   	pop    %ebp
+ 804882a:	c3                   	ret    
+
+0804882b <_Z41__static_initialization_and_destruction_0ii>:
+ 804882b:	55                   	push   %ebp
+ 804882c:	89 e5                	mov    %esp,%ebp
+ 804882e:	83 ec 18             	sub    $0x18,%esp
+ 8048831:	83 7d 08 01          	cmpl   $0x1,0x8(%ebp)
+ 8048835:	75 31                	jne    8048868 <_Z41__static_initialization_and_destruction_0ii+0x3d>
+ 8048837:	81 7d 0c ff ff 00 00 	cmpl   $0xffff,0xc(%ebp)
+ 804883e:	75 28                	jne    8048868 <_Z41__static_initialization_and_destruction_0ii+0x3d>
+  extern wostream wclog;	/// Linked to standard error (buffered)
+#endif
+  //@}
+
+  // For construction of filebuffers for cout, cin, cerr, clog et. al.
+  static ios_base::Init __ioinit;
+ 8048840:	c7 04 24 ad a0 04 08 	movl   $0x804a0ad,(%esp)
+ 8048847:	e8 e4 fd ff ff       	call   8048630 <_ZNSt8ios_base4InitC1Ev@plt>
+ 804884c:	c7 44 24 08 3c a0 04 	movl   $0x804a03c,0x8(%esp)
+ 8048853:	08 
+ 8048854:	c7 44 24 04 ad a0 04 	movl   $0x804a0ad,0x4(%esp)
+ 804885b:	08 
+ 804885c:	c7 04 24 50 86 04 08 	movl   $0x8048650,(%esp)
+ 8048863:	e8 98 fd ff ff       	call   8048600 <__cxa_atexit@plt>
+ 8048868:	c9                   	leave  
+ 8048869:	c3                   	ret    
+
+0804886a <_GLOBAL__sub_I_main>:
+ 804886a:	55                   	push   %ebp
+ 804886b:	89 e5                	mov    %esp,%ebp
+ 804886d:	83 ec 18             	sub    $0x18,%esp
+ 8048870:	c7 44 24 04 ff ff 00 	movl   $0xffff,0x4(%esp)
+ 8048877:	00 
+ 8048878:	c7 04 24 01 00 00 00 	movl   $0x1,(%esp)
+ 804887f:	e8 a7 ff ff ff       	call   804882b <_Z41__static_initialization_and_destruction_0ii>
+ 8048884:	c9                   	leave  
+ 8048885:	c3                   	ret    
+
+08048886 <_ZN6PersonC1Ej>:
+
+struct Person {
+protected:
+    unsigned age;
+public:
+    Person( unsigned old ) : age( old ) {
+ 8048886:	55                   	push   %ebp
+ 8048887:	89 e5                	mov    %esp,%ebp
+ 8048889:	83 ec 18             	sub    $0x18,%esp
+ 804888c:	8b 45 08             	mov    0x8(%ebp),%eax
+ 804888f:	c7 00 d8 8a 04 08    	movl   $0x8048ad8,(%eax)
+ 8048895:	8b 45 08             	mov    0x8(%ebp),%eax
+ 8048898:	8b 55 0c             	mov    0xc(%ebp),%edx
+ 804889b:	89 50 04             	mov    %edx,0x4(%eax)
+        puts("Person created");
+ 804889e:	c7 04 24 51 8a 04 08 	movl   $0x8048a51,(%esp)
+ 80488a5:	e8 d6 fd ff ff       	call   8048680 <puts@plt>
+    }
+ 80488aa:	c9                   	leave  
+ 80488ab:	c3                   	ret    
+
+080488ac <_ZN6PersonD1Ev>:
+
+    virtual ~Person() {
+ 80488ac:	55                   	push   %ebp
+ 80488ad:	89 e5                	mov    %esp,%ebp
+ 80488af:	83 ec 18             	sub    $0x18,%esp
+ 80488b2:	8b 45 08             	mov    0x8(%ebp),%eax
+ 80488b5:	c7 00 d8 8a 04 08    	movl   $0x8048ad8,(%eax)
+        puts("Person destroyed");
+ 80488bb:	c7 04 24 60 8a 04 08 	movl   $0x8048a60,(%esp)
+ 80488c2:	e8 b9 fd ff ff       	call   8048680 <puts@plt>
+    }
+ 80488c7:	b8 00 00 00 00       	mov    $0x0,%eax
+ 80488cc:	85 c0                	test   %eax,%eax
+ 80488ce:	74 0b                	je     80488db <_ZN6PersonD1Ev+0x2f>
+ 80488d0:	8b 45 08             	mov    0x8(%ebp),%eax
+ 80488d3:	89 04 24             	mov    %eax,(%esp)
+ 80488d6:	e8 45 fd ff ff       	call   8048620 <_ZdlPv@plt>
+ 80488db:	c9                   	leave  
+ 80488dc:	c3                   	ret    
+ 80488dd:	90                   	nop
+
+080488de <_ZN6PersonD0Ev>:
+public:
+    Person( unsigned old ) : age( old ) {
+        puts("Person created");
+    }
+
+    virtual ~Person() {
+ 80488de:	55                   	push   %ebp
+ 80488df:	89 e5                	mov    %esp,%ebp
+ 80488e1:	83 ec 18             	sub    $0x18,%esp
+        puts("Person destroyed");
+    }
+ 80488e4:	8b 45 08             	mov    0x8(%ebp),%eax
+ 80488e7:	89 04 24             	mov    %eax,(%esp)
+ 80488ea:	e8 bd ff ff ff       	call   80488ac <_ZN6PersonD1Ev>
+ 80488ef:	8b 45 08             	mov    0x8(%ebp),%eax
+ 80488f2:	89 04 24             	mov    %eax,(%esp)
+ 80488f5:	e8 26 fd ff ff       	call   8048620 <_ZdlPv@plt>
+ 80488fa:	c9                   	leave  
+ 80488fb:	c3                   	ret    
+
+080488fc <_ZN4CalmC1Ej>:
+
+    virtual void shout() = 0;
+};
+
+struct Calm : Person {
+    Calm( unsigned age ) : Person( age + 10 ) {
+ 80488fc:	55                   	push   %ebp
+ 80488fd:	89 e5                	mov    %esp,%ebp
+ 80488ff:	53                   	push   %ebx
+ 8048900:	83 ec 14             	sub    $0x14,%esp
+ 8048903:	8b 45 0c             	mov    0xc(%ebp),%eax
+ 8048906:	8d 50 0a             	lea    0xa(%eax),%edx
+ 8048909:	8b 45 08             	mov    0x8(%ebp),%eax
+ 804890c:	89 54 24 04          	mov    %edx,0x4(%esp)
+ 8048910:	89 04 24             	mov    %eax,(%esp)
+ 8048913:	e8 6e ff ff ff       	call   8048886 <_ZN6PersonC1Ej>
+ 8048918:	8b 45 08             	mov    0x8(%ebp),%eax
+ 804891b:	c7 00 c0 8a 04 08    	movl   $0x8048ac0,(%eax)
+        puts("Calm person created");
+ 8048921:	c7 04 24 71 8a 04 08 	movl   $0x8048a71,(%esp)
+ 8048928:	e8 53 fd ff ff       	call   8048680 <puts@plt>
+    }
+ 804892d:	eb 17                	jmp    8048946 <_ZN4CalmC1Ej+0x4a>
+ 804892f:	89 c3                	mov    %eax,%ebx
+
+    virtual void shout() = 0;
+};
+
+struct Calm : Person {
+    Calm( unsigned age ) : Person( age + 10 ) {
+ 8048931:	8b 45 08             	mov    0x8(%ebp),%eax
+ 8048934:	89 04 24             	mov    %eax,(%esp)
+ 8048937:	e8 70 ff ff ff       	call   80488ac <_ZN6PersonD1Ev>
+ 804893c:	89 d8                	mov    %ebx,%eax
+ 804893e:	89 04 24             	mov    %eax,(%esp)
+ 8048941:	e8 5a fd ff ff       	call   80486a0 <_Unwind_Resume@plt>
+        puts("Calm person created");
+    }
+ 8048946:	83 c4 14             	add    $0x14,%esp
+ 8048949:	5b                   	pop    %ebx
+ 804894a:	5d                   	pop    %ebp
+ 804894b:	c3                   	ret    
+
+0804894c <_ZN4CalmD1Ev>:
+
+    virtual ~Calm() {
+ 804894c:	55                   	push   %ebp
+ 804894d:	89 e5                	mov    %esp,%ebp
+ 804894f:	83 ec 18             	sub    $0x18,%esp
+ 8048952:	8b 45 08             	mov    0x8(%ebp),%eax
+ 8048955:	c7 00 c0 8a 04 08    	movl   $0x8048ac0,(%eax)
+        puts("Calm person destroyed");
+ 804895b:	c7 04 24 85 8a 04 08 	movl   $0x8048a85,(%esp)
+ 8048962:	e8 19 fd ff ff       	call   8048680 <puts@plt>
+struct Calm : Person {
+    Calm( unsigned age ) : Person( age + 10 ) {
+        puts("Calm person created");
+    }
+
+    virtual ~Calm() {
+ 8048967:	8b 45 08             	mov    0x8(%ebp),%eax
+ 804896a:	89 04 24             	mov    %eax,(%esp)
+ 804896d:	e8 3a ff ff ff       	call   80488ac <_ZN6PersonD1Ev>
+        puts("Calm person destroyed");
+    }
+ 8048972:	b8 00 00 00 00       	mov    $0x0,%eax
+ 8048977:	85 c0                	test   %eax,%eax
+ 8048979:	74 0b                	je     8048986 <_ZN4CalmD1Ev+0x3a>
+ 804897b:	8b 45 08             	mov    0x8(%ebp),%eax
+ 804897e:	89 04 24             	mov    %eax,(%esp)
+ 8048981:	e8 9a fc ff ff       	call   8048620 <_ZdlPv@plt>
+ 8048986:	c9                   	leave  
+ 8048987:	c3                   	ret    
+
+08048988 <_ZN4CalmD0Ev>:
+struct Calm : Person {
+    Calm( unsigned age ) : Person( age + 10 ) {
+        puts("Calm person created");
+    }
+
+    virtual ~Calm() {
+ 8048988:	55                   	push   %ebp
+ 8048989:	89 e5                	mov    %esp,%ebp
+ 804898b:	83 ec 18             	sub    $0x18,%esp
+        puts("Calm person destroyed");
+    }
+ 804898e:	8b 45 08             	mov    0x8(%ebp),%eax
+ 8048991:	89 04 24             	mov    %eax,(%esp)
+ 8048994:	e8 b3 ff ff ff       	call   804894c <_ZN4CalmD1Ev>
+ 8048999:	8b 45 08             	mov    0x8(%ebp),%eax
+ 804899c:	89 04 24             	mov    %eax,(%esp)
+ 804899f:	e8 7c fc ff ff       	call   8048620 <_ZdlPv@plt>
+ 80489a4:	c9                   	leave  
+ 80489a5:	c3                   	ret    
+
+080489a6 <_ZN4Calm5shoutEv>:
+
+    void shout() override {
+ 80489a6:	55                   	push   %ebp
+ 80489a7:	89 e5                	mov    %esp,%ebp
+ 80489a9:	83 ec 18             	sub    $0x18,%esp
+        puts("I am calm, can't shout");
+ 80489ac:	c7 04 24 9b 8a 04 08 	movl   $0x8048a9b,(%esp)
+ 80489b3:	e8 c8 fc ff ff       	call   8048680 <puts@plt>
+    }
+ 80489b8:	c9                   	leave  
+ 80489b9:	c3                   	ret    
+ 80489ba:	66 90                	xchg   %ax,%ax
+ 80489bc:	66 90                	xchg   %ax,%ax
+ 80489be:	66 90                	xchg   %ax,%ax
+
+080489c0 <__libc_csu_init>:
+ 80489c0:	55                   	push   %ebp
+ 80489c1:	57                   	push   %edi
+ 80489c2:	31 ff                	xor    %edi,%edi
+ 80489c4:	56                   	push   %esi
+ 80489c5:	53                   	push   %ebx
+ 80489c6:	e8 15 fd ff ff       	call   80486e0 <__x86.get_pc_thunk.bx>
+ 80489cb:	81 c3 35 16 00 00    	add    $0x1635,%ebx
+ 80489d1:	83 ec 1c             	sub    $0x1c,%esp
+ 80489d4:	8b 6c 24 30          	mov    0x30(%esp),%ebp
+ 80489d8:	8d b3 fc fe ff ff    	lea    -0x104(%ebx),%esi
+ 80489de:	e8 e5 fb ff ff       	call   80485c8 <_init>
+ 80489e3:	8d 83 f4 fe ff ff    	lea    -0x10c(%ebx),%eax
+ 80489e9:	29 c6                	sub    %eax,%esi
+ 80489eb:	c1 fe 02             	sar    $0x2,%esi
+ 80489ee:	85 f6                	test   %esi,%esi
+ 80489f0:	74 27                	je     8048a19 <__libc_csu_init+0x59>
+ 80489f2:	8d b6 00 00 00 00    	lea    0x0(%esi),%esi
+ 80489f8:	8b 44 24 38          	mov    0x38(%esp),%eax
+ 80489fc:	89 2c 24             	mov    %ebp,(%esp)
+ 80489ff:	89 44 24 08          	mov    %eax,0x8(%esp)
+ 8048a03:	8b 44 24 34          	mov    0x34(%esp),%eax
+ 8048a07:	89 44 24 04          	mov    %eax,0x4(%esp)
+ 8048a0b:	ff 94 bb f4 fe ff ff 	call   *-0x10c(%ebx,%edi,4)
+ 8048a12:	83 c7 01             	add    $0x1,%edi
+ 8048a15:	39 f7                	cmp    %esi,%edi
+ 8048a17:	75 df                	jne    80489f8 <__libc_csu_init+0x38>
+ 8048a19:	83 c4 1c             	add    $0x1c,%esp
+ 8048a1c:	5b                   	pop    %ebx
+ 8048a1d:	5e                   	pop    %esi
+ 8048a1e:	5f                   	pop    %edi
+ 8048a1f:	5d                   	pop    %ebp
+ 8048a20:	c3                   	ret    
+ 8048a21:	eb 0d                	jmp    8048a30 <__libc_csu_fini>
+ 8048a23:	90                   	nop
+ 8048a24:	90                   	nop
+ 8048a25:	90                   	nop
+ 8048a26:	90                   	nop
+ 8048a27:	90                   	nop
+ 8048a28:	90                   	nop
+ 8048a29:	90                   	nop
+ 8048a2a:	90                   	nop
+ 8048a2b:	90                   	nop
+ 8048a2c:	90                   	nop
+ 8048a2d:	90                   	nop
+ 8048a2e:	90                   	nop
+ 8048a2f:	90                   	nop
+
+08048a30 <__libc_csu_fini>:
+ 8048a30:	f3 c3                	repz ret 
+
+Disassembly of section .fini:
+
+08048a34 <_fini>:
+ 8048a34:	53                   	push   %ebx
+ 8048a35:	83 ec 08             	sub    $0x8,%esp
+ 8048a38:	e8 a3 fc ff ff       	call   80486e0 <__x86.get_pc_thunk.bx>
+ 8048a3d:	81 c3 c3 15 00 00    	add    $0x15c3,%ebx
+ 8048a43:	83 c4 08             	add    $0x8,%esp
+ 8048a46:	5b                   	pop    %ebx
+ 8048a47:	c3                   	ret    

@@ -1,0 +1,8 @@
+TARGETNAME=sample
+#TARGETPATH=$(BASEDIR)\lib
+TARGETPATH=obj
+TARGETTYPE=DRIVER
+TARGETLIBS=VirtualizerDDK.lib
+
+SOURCES=sample.c \
+        sample.rc

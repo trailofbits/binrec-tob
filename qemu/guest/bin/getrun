@@ -1,0 +1,45 @@
+#!/bin/bash
+usage() {
+    echo "usage: $0 [ OPTIONS ] EXECUTABLE_NAME [ ARGS... ]"
+    echo "OPTIONS:"
+    echo "  -h,--help           Show this help message"
+    echo "  --stdin DATA        Pass DATA on stdin"
+    echo "  --sym-stdin NBYTES  Pass NBYTES symbolic bytes on stdin"
+}
+
+if [ $# -lt 1 ]; then usage; exit 1; fi
+
+stdin=
+
+while :
+do
+    case "$1" in
+    -h|--help)
+        usage
+        exit 0
+        ;;
+    --stdin)
+        stdin="echo '$2'"
+        ;;
+    --sym-stdin)
+        stdin="s2ecmd symbwrite $2"
+        ;;
+    *)
+        break
+        ;;
+    esac
+    shift
+done
+
+bin=$1
+args="${@:2}"
+cmd="LD_PRELOAD=$HOME/guest/build/init_env.so ./$bin $args"
+
+s2eget $bin && \
+chmod +x ./$bin && \
+if [ "$stdin" = "" ]; then
+    eval $cmd
+else
+    $stdin | (eval $cmd)
+fi
+s2ecmd kill 0 "$bin finished"

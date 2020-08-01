@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.11: http://docutils.sourceforge.net/" />
+<title>Using SystemTap with S2E</title>
+<link rel="stylesheet" href="./s2e.css" type="text/css" />
+</head>
+<body>
+<div class="document" id="using-systemtap-with-s2e">
+<h1 class="title">Using SystemTap with S2E</h1>
+
+<p>SystemTap is a powerful tracing framework on Linux. It can intercept any function calls or instructions
+in the kernel and invoke custom scripts. Such scripts have full access to the system state, can leverage
+debugging information, etc.</p>
+<p>SystemTap provides S2E users a flexible way of controlling symbolic execution.
+The user writes a SystemTap script with embedded calls to S2E custom instructions.
+This allows to inject symbolic values in any place, kill states based on complex
+conditions, etc.</p>
+<p>In this tutorial, we describe how to build and run SystemTap. We also give several
+examples of useful in-vivo analysis that can be achieved.</p>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#building-the-linux-kernel" id="id1">Building the Linux kernel</a></li>
+<li><a class="reference internal" href="#building-systemtap-in-the-chroot-environment-of-the-host" id="id2">Building SystemTap in the <tt class="docutils literal">chroot</tt> environment of the host</a></li>
+<li><a class="reference internal" href="#building-systemtap-on-the-guest" id="id3">Building SystemTap on the guest</a></li>
+<li><a class="reference internal" href="#creating-a-simple-s2e-enabled-systemtap-script" id="id4">Creating a simple S2E-enabled SystemTap script</a></li>
+<li><a class="reference internal" href="#running-the-script-in-s2e" id="id5">Running the script in S2E</a></li>
+</ul>
+</div>
+<div class="section" id="building-the-linux-kernel">
+<h1>Building the Linux kernel</h1>
+<p>SystemTap requires a kernel built with the following settings:</p>
+<ul class="simple">
+<li>CONFIG_DEBUG_INFO=y</li>
+<li>CONFIG_RELAY=y</li>
+<li>CONFIG_KPROBES=y</li>
+<li>CONFIG_DEBUG_FS=y</li>
+</ul>
+<p>For the purpose of this tutorial, also enable the following options:</p>
+<ul class="simple">
+<li>CONFIG_PCNET32=m (To enable this option, issue &quot;make menuconfig&quot;, then select Device Drivers ---&gt; Network device support ---&gt; Ethernet (10 or 100Mbit) ---&gt; AMD PCnet32 PCI support)</li>
+<li>For other additional options, please refer to the <a class="reference external" href="config.s2e.i686">config.s2e.i686</a> file.</li>
+</ul>
+<p>Refer to the <a class="reference external" href="BuildingLinux.html">Building Linux</a> tutorial
+for a list of detailed steps.</p>
+<p>Install the resulting kernel in the guest OS.</p>
+</div>
+<div class="section" id="building-systemtap-in-the-chroot-environment-of-the-host">
+<h1>Building SystemTap in the <tt class="docutils literal">chroot</tt> environment of the host</h1>
+<p>We will compile SystemTap and the scripts in the <em>chrooted</em> environment, upload
+the scripts to the VM, and run them there. The <tt class="docutils literal">chroot</tt> environment isolates
+your production environment from mistakes.</p>
+<p>We could also compile the scripts directly inside
+the VM, but it is much slower.</p>
+<p>In the <tt class="docutils literal">chroot</tt> environment you use to compile your kernel, do the following:</p>
+<pre class="literal-block">
+# Install the compiled kernel, headers, and debug information.
+# You must ensure that kernel-package = 11.015 is installed, later versions (&gt;=12)
+# strip the debug information from the kernel image/modules.
+
+# Install initramfs-tools and its dependencies
+$ apt-get install initramfs-tools klibc-utils libklibc udev libvolume-id0
+
+# Set up the Linux image (an initrd image will be created in /boot/ as well).
+# Adapt all the filenames accordingly.
+$ dpkg -i linux-image-2.6.26.8-s2e.deb linux-headers-2.6.26.8-s2e.deb
+
+# Install packages on which SystemTap depends:
+$ apt-get install libdw-dev libebl-dev
+
+# Get SystemTap, configure, compile, and install:
+$ wget http://sourceware.org/systemtap/ftp/releases/systemtap-1.3.tar.gz
+$ tar xzvf systemtap-1.3.tar.gz
+$ cd systemtap-1.3
+$ ./configure
+$ make --jobs=8 # Replace 8 with your number of cores
+$ make install
+</pre>
+</div>
+<div class="section" id="building-systemtap-on-the-guest">
+<h1>Building SystemTap on the guest</h1>
+<p>Build SystemTap dependencies and fetch SystemTap source:</p>
+<pre class="literal-block">
+# Boot the OS image in the vanilla QEMU and login as root.
+$ $S2EBUILD/qemu-release/i386-softmmu/qemu-system-i386 s2e_disk.raw
+
+# Get packages on which SystemTap depends and install them:
+$ wget http://ftp.au.debian.org/debian/pool/main/e/elfutils/libelf1_0.131-4_i386.deb
+$ wget http://ftp.au.debian.org/debian/pool/main/e/elfutils/libelf-dev_0.131-4_i386.deb
+$ wget http://ftp.au.debian.org/debian/pool/main/e/elfutils/libdw-dev_0.131-4_i386.deb
+$ wget http://ftp.au.debian.org/debian/pool/main/e/elfutils/libebl-dev_0.131-4_i386.deb
+$ dpkg -i *.deb
+
+# Get SystemTap:
+$ wget http://sourceware.org/systemtap/ftp/releases/systemtap-1.3.tar.gz
+$ tar xzf systemtap-1.3.tar.gz
+</pre>
+<p>Install and boot your new kernel on the guest:</p>
+<pre class="literal-block">
+# Upload the kernel packages to the guest OS, install them (adapt all
+# the filenames accordingly)
+$ dpkg -i linux-image-2.6.26.8-s2e.deb linux-headers-2.6.26.8-s2e.deb
+# Reboot your QEMU machine, choose your 2.6.26.8-s2e kernel from the
+# grub menu and login as root.
+$ reboot
+
+# Verify that the new version of your kernel rebooted.
+$ uname -a
+
+# Note: If this is a re-install of a kernel package that you have already
+# installed (i.e. the same 2.6.26.8-s2e flag as an installed kernel
+# package), you need to first remove the old package(s), before you do
+# the dpkg -i of the new ones:
+$ dpkg -r linux-image-2.6.26.8-s2e.deb
+
+# You can use the -I option of dpkg to list info about the package file,
+# including its name (used in the -r option).
+</pre>
+<p>Install SystemTap with the following steps:</p>
+<pre class="literal-block">
+$ cd systemtap-1.3
+$ ./configure
+$ make
+$ make install
+</pre>
+<p>Shut down the QEMU machine:</p>
+<pre class="literal-block">
+$ halt
+</pre>
+</div>
+<div class="section" id="creating-a-simple-s2e-enabled-systemtap-script">
+<h1>Creating a simple S2E-enabled SystemTap script</h1>
+<p>In this section, we show how to intercept the network packets received by the <tt class="docutils literal">pcnet32</tt> driver
+and replace the content of the IP header field with symbolic values.</p>
+<p>Create (on the host machine) a <tt class="docutils literal">pcnet32.stp</tt> file with the following content:</p>
+<div class="highlight"><pre><span class="cp"># We use the embedded C support of SystemTap to access the S2E</span>
+<span class="cp"># custom instructions. A comprehensive set of such instructions can</span>
+<span class="cp"># be found in s2e.h. You can adapt them to SystemTap, in case</span>
+<span class="cp"># you need them.</span>
+
+<span class="cp"># Terminate current state.</span>
+<span class="cp"># This is a SystemTap function that can be called from SystemTap code.</span>
+<span class="n">function</span> <span class="nf">s2e_kill_state</span><span class="p">(</span><span class="n">status</span><span class="o">:</span><span class="kt">long</span><span class="p">,</span> <span class="n">message</span><span class="o">:</span> <span class="n">string</span><span class="p">)</span> <span class="o">%</span><span class="p">{</span>
+  <span class="n">__asm__</span> <span class="n">__volatile__</span><span class="p">(</span>
+    <span class="s">&quot;.byte 0x0f, 0x3f</span><span class="se">\n</span><span class="s">&quot;</span>
+    <span class="s">&quot;.byte 0x00, 0x06, 0x00, 0x00</span><span class="se">\n</span><span class="s">&quot;</span>
+    <span class="s">&quot;.byte 0x00, 0x00, 0x00, 0x00</span><span class="se">\n</span><span class="s">&quot;</span>
+    <span class="o">:</span> <span class="o">:</span> <span class="s">&quot;a&quot;</span> <span class="p">((</span><span class="kt">uint32_t</span><span class="p">)</span><span class="n">THIS</span><span class="o">-&gt;</span><span class="n">status</span><span class="p">),</span> <span class="s">&quot;b&quot;</span> <span class="p">(</span><span class="n">THIS</span><span class="o">-&gt;</span><span class="n">message</span><span class="p">)</span>
+  <span class="p">);</span>
+<span class="o">%</span><span class="p">}</span>
+
+<span class="cp"># Print message to the S2E log.</span>
+<span class="cp"># This is a SystemTap function that can be called from SystemTap code.</span>
+<span class="n">function</span> <span class="n">s2e_message</span><span class="p">(</span><span class="n">message</span><span class="o">:</span><span class="n">string</span><span class="p">)</span> <span class="o">%</span><span class="p">{</span>
+  <span class="n">__asm__</span> <span class="n">__volatile__</span><span class="p">(</span>
+    <span class="s">&quot;.byte 0x0f, 0x3f</span><span class="se">\n</span><span class="s">&quot;</span>
+    <span class="s">&quot;.byte 0x00, 0x10, 0x00, 0x00</span><span class="se">\n</span><span class="s">&quot;</span>
+    <span class="s">&quot;.byte 0x00, 0x00, 0x00, 0x00</span><span class="se">\n</span><span class="s">&quot;</span>
+    <span class="o">:</span> <span class="o">:</span> <span class="s">&quot;a&quot;</span> <span class="p">(</span><span class="n">THIS</span><span class="o">-&gt;</span><span class="n">message</span><span class="p">)</span>
+  <span class="p">);</span>
+<span class="o">%</span><span class="p">}</span>
+
+<span class="cp"># SystemTap also allows to paste arbitrary C code.</span>
+<span class="cp"># This is useful when calling other C functions.</span>
+
+<span class="o">%</span><span class="p">{</span>
+<span class="c1">// Make the specified buffer symbolic and assign a name to it.</span>
+<span class="k">static</span> <span class="kr">inline</span> <span class="kt">void</span> <span class="n">s2e_make_symbolic</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">int</span> <span class="n">size</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">__asm__</span> <span class="n">__volatile__</span><span class="p">(</span>
+    <span class="s">&quot;.byte 0x0f, 0x3f</span><span class="se">\n</span><span class="s">&quot;</span>
+    <span class="s">&quot;.byte 0x00, 0x03, 0x00, 0x00</span><span class="se">\n</span><span class="s">&quot;</span>
+    <span class="s">&quot;.byte 0x00, 0x00, 0x00, 0x00</span><span class="se">\n</span><span class="s">&quot;</span>
+    <span class="o">:</span> <span class="o">:</span> <span class="s">&quot;a&quot;</span> <span class="p">(</span><span class="n">buf</span><span class="p">),</span> <span class="s">&quot;b&quot;</span> <span class="p">(</span><span class="n">size</span><span class="p">),</span> <span class="s">&quot;c&quot;</span> <span class="p">(</span><span class="n">name</span><span class="p">)</span>
+  <span class="p">);</span>
+<span class="p">}</span>
+<span class="o">%</span><span class="p">}</span>
+
+<span class="cp">#### Now comes the real stuff ####</span>
+
+<span class="cp"># Take a pointer to the IP header, and make the options length field symbolic.</span>
+<span class="n">function</span> <span class="n">s2e_inject_symbolic_ip_optionlength</span><span class="p">(</span><span class="n">ipheader</span><span class="o">:</span> <span class="kt">long</span><span class="p">)</span> <span class="o">%</span><span class="p">{</span>
+  <span class="kt">uint8_t</span> <span class="o">*</span><span class="n">data</span> <span class="o">=</span> <span class="p">(</span><span class="kt">uint8_t</span><span class="o">*</span><span class="p">)((</span><span class="kt">uintptr_t</span><span class="p">)(</span><span class="n">THIS</span><span class="o">-&gt;</span><span class="n">ipheader</span> <span class="o">+</span> <span class="mi">0</span><span class="p">));</span>
+
+  <span class="kt">uint8_t</span> <span class="n">len</span><span class="p">;</span>
+  <span class="n">s2e_make_symbolic</span><span class="p">(</span><span class="o">&amp;</span><span class="n">len</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&quot;ip_headerlength&quot;</span><span class="p">);</span>
+  <span class="o">*</span><span class="n">data</span> <span class="o">=</span> <span class="o">*</span><span class="n">data</span> <span class="o">&amp;</span> <span class="mh">0xF0</span><span class="p">;</span>
+  <span class="o">*</span><span class="n">data</span> <span class="o">=</span> <span class="o">*</span><span class="n">data</span> <span class="o">|</span> <span class="p">((</span><span class="n">len</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xF</span><span class="p">);</span>
+<span class="o">%</span><span class="p">}</span>
+
+
+<span class="cp"># Instruct SystemTap to intercept the netif_receive_skb kernel function.</span>
+<span class="cp"># NIC drivers call this function when they are ready to give the received packet</span>
+<span class="cp"># to the kernel.</span>
+<span class="n">probe</span> <span class="n">kernel</span><span class="p">.</span><span class="n">function</span><span class="p">(</span><span class="s">&quot;netif_receive_skb&quot;</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">msg</span> <span class="o">=</span> <span class="n">sprintf</span><span class="p">(</span><span class="s">&quot;%s: len=%d datalen=%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">probefunc</span><span class="p">(),</span> <span class="err">$</span><span class="n">skb</span><span class="o">-&gt;</span><span class="n">len</span><span class="p">,</span> <span class="err">$</span><span class="n">skb</span><span class="o">-&gt;</span><span class="n">data_len</span><span class="p">)</span>
+  <span class="n">s2e_message</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+  <span class="n">s2e_inject_symbolic_ip_optionlength</span><span class="p">(</span><span class="err">$</span><span class="n">skb</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">)</span>
+<span class="p">}</span>
+
+
+<span class="cp"># Instruct SystemTap to intercept the pcnet32_start_xmit in the pcnet32 driver.</span>
+<span class="cp"># We also tell S2E to kill the current state.</span>
+<span class="cp"># Intercepting this function can be useful to analyze the reaction of the kernel</span>
+<span class="cp"># to the reception of a (symbolic) packet.</span>
+<span class="n">probe</span> <span class="n">module</span><span class="p">(</span><span class="s">&quot;pcnet32&quot;</span><span class="p">).</span><span class="n">function</span><span class="p">(</span><span class="s">&quot;pcnet32_start_xmit&quot;</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">msg</span> <span class="o">=</span> <span class="n">sprintf</span><span class="p">(</span><span class="s">&quot;%s: len=%d datalen=%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">probefunc</span><span class="p">(),</span> <span class="err">$</span><span class="n">skb</span><span class="o">-&gt;</span><span class="n">len</span><span class="p">,</span> <span class="err">$</span><span class="n">skb</span><span class="o">-&gt;</span><span class="n">data_len</span><span class="p">)</span>
+  <span class="n">s2e_message</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+  <span class="n">s2e_kill_state</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">&quot;pcnet32_start_xmit&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+<p>Compile the script with SystemTap in the <tt class="docutils literal">chroot</tt> environment, adjusting the kernel version to suit your needs.</p>
+<pre class="literal-block">
+$ stap -r 2.6.26.8-s2e -g -m pcnet_probe pcnet32.stp
+WARNING: kernel release/architecture mismatch with host forces last-pass 4.
+pcnet_probe.ko
+</pre>
+<p>This will result in a module called <tt class="docutils literal">pcnet_probe.ko</tt> that we will upload to the VM.
+Refer to <a class="reference external" href="ImageInstallation.html">how to prepare an OS image</a> to learn how to do
+it efficiently.</p>
+</div>
+<div class="section" id="running-the-script-in-s2e">
+<h1>Running the script in S2E</h1>
+<p>Create the <tt class="docutils literal">tcpip.lua</tt> configuration file with the following content:</p>
+<pre class="literal-block">
+s2e = {
+  kleeArgs = {
+     &quot;--use-batching-search&quot;,
+     &quot;--use-random-path&quot;,
+  }
+}
+
+
+plugins = {
+  --This is required for s2e_make_symbolic
+  &quot;BaseInstructions&quot;,
+}
+
+pluginsConfig = {}
+</pre>
+<p>To prepare a snapshot for S2E: start the vanilla QEMU with port forwarding enabled
+by adding <tt class="docutils literal"><span class="pre">-net</span> <span class="pre">user,hostfwd=tcp::2222-:22,hostfwd=udp::2222-:22</span></tt> to the QEMU command line.
+This will redirect port 2222 from <tt class="docutils literal">localhost</tt> to guest port 22. Adapt the
+name of the disk image to suit your needs.</p>
+<pre class="literal-block">
+$ $S2EBUILD/qemu-release/i386-softmmu/qemu-system-i386 -rtc clock=vm \
+    -net nic,model=pcnet -net user,hostfwd=tcp::2222-:22,hostfwd=udp::2222-:22 \
+    -hda s2e_disk.raw.s2e
+# Press Ctrl-Alt-2 to reach the QEMU monitor, then save the snapshot with a tag (e.g., ready)
+$ savevm ready
+# Press Ctrl-Alt-1 to return to the emulation screen, then shut down the QEMU machine
+$ su -c halt
+</pre>
+<p>Start the S2E-enabled QEMU with port forwarding enabled:</p>
+<pre class="literal-block">
+$ $S2EBUILD/qemu-release/i386-s2e-softmmu/qemu-system-i386 -rtc clock=vm \
+    -net nic,model=pcnet -net user,hostfwd=tcp::2222-:22,hostfwd=udp::2222-:22 \
+    -hda s2e_disk.raw.s2e -s2e-config-file tcpip.lua -loadvm ready
+</pre>
+<p>Once you uploaded the <tt class="docutils literal">pcnet_probe.ko</tt> module to the guest OS, run the following command in the guest:</p>
+<pre class="literal-block">
+$ staprun pcnet_probe.ko &amp;
+</pre>
+<p>This will load the probe into the kernel. Symbolic execution will start when the network card
+receives the first packet. To send a packet, use <tt class="docutils literal">netcat</tt> (in the guest) to send a UDP
+packet:</p>
+<pre class="literal-block">
+$ nc -u localhost 2222
+</pre>
+<p>Type some characters, and press enter.</p>
+</div>
+</div>
+<div class="footer">
+<hr class="footer" />
+<a class="reference external" href="SystemTap.rst">View document source</a>.
+
+</div>
+</body>
+</html>

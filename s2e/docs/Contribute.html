@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.11: http://docutils.sourceforge.net/" />
+<title>Contributing to S2E</title>
+<link rel="stylesheet" href="./s2e.css" type="text/css" />
+</head>
+<body>
+<div class="document" id="contributing-to-s2e">
+<h1 class="title">Contributing to S2E</h1>
+
+<div class="section" id="submitting-patches">
+<h1>Submitting patches</h1>
+<p>S2E welcomes contributions of code (either fixing bugs or adding new functionality).
+However, we get a lot of patches, and so we have some guidelines about submitting patches.
+If you follow these, you'll help make our task of code review easier and your patch is likely to be committed faster.</p>
+<p>Since S2E is based on QEMU, patch submissions mostly follow the QEMU <a class="reference external" href="http://wiki.qemu.org/Contribute/SubmitAPatch">guidelines</a>
+(most of the text is taken from the QEMU wiki). Here are the relevant parts applicable to S2E.</p>
+<p>All contributions to S2E must be <strong>sent as pull requests</strong> on GitHub. Please create an account and create a private fork of S2E.
+Patch contributions should not be posted on the mailing list, bug tracker, posted on forums, or externally hosted and linked to.</p>
+<p><strong>Patches must include a Signed-off-by: line</strong>.  For more information see
+<a class="reference external" href="http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git;a=blob;f=Documentation/SubmittingPatches;h=689e2371095cc5dfea9927120009341f369159aa;hb=f6f94e2ab1b33f0082ac22d71f66385a60d8157f#l297">SubmittingPatches 1.12</a>. This is vital or we will not be able to apply your patch! Please use your real name to sign a patch (not an alias name).</p>
+<p><strong>Correct English</strong> is appreciated. If you are not sure, <a class="reference external" href="http://wiki.qemu.org/Contribute/SpellCheck">codespell</a> or other programs
+help finding the most common spelling mistakes in code and documentation.</p>
+<p><strong>Patches should be against current git master</strong>. There's no point submitting a patch which is based on a
+released version of S2E because development will have moved on from then and it probably won't even apply to master.</p>
+<p><strong>Split up longer patches</strong> into a patch series of logical code changes.  Each change should compile and execute successfully.
+For instance, don't add a file to the makefile in patch one and then add the file itself in patch two.
+(This rule is here so that people can later use tools like <a class="reference external" href="http://git-scm.com/docs/git-bisect">git bisect</a>
+without hitting points in the commit history where S2E doesn't work for reasons unrelated to the bug they're chasing.)</p>
+<p><strong>Patches that touch QEMU only</strong> should also be sent upstream. If your patch modifies QEMU and S2E, check whether the part
+that changes QEMU could also be applied upstream. Split up the patch if necessary.</p>
+<p><strong>Don't include irrelevant changes</strong>. In particular, don't include formatting, coding style or whitespace
+changes to bits of code that would otherwise not be touched by the patch.
+(It's OK to fix coding style issues in the immediate area (few lines) of the lines you're changing.)
+If you think a section of code really does need a reindent or other large-scale style fix,
+submit this as a separate patch which makes no semantic changes; don't put it in the same patch as your bug fix.</p>
+<p><strong>Write a good commit message</strong>. S2E follows the usual standard for git commit messages:
+the first line (which becomes the email subject line) is &quot;single line summary of change&quot;.
+Then there is a blank line and a more detailed description of the patch, another blank and your
+Signed-off-by: line. Don't include comments like &quot;This is a suggestion for fixing this bug&quot;
+(they can go below the &quot;---&quot; line in the email so they don't go into the final commit message).</p>
+</div>
+<div class="section" id="submitting-larger-contributions">
+<h1>Submitting larger contributions</h1>
+<p>The process for submitting larger contributions is the same as submitting bug fixes.
+Everything goes through GitHub.</p>
+<p>To be accepted, your code must follow the following rules:</p>
+<ol class="arabic">
+<li><p class="first">All files must be prefixed with the S2E copyright header.
+All contributions must use the BSD 3-clause license.</p>
+<p>You can use the following template:</p>
+</li>
+</ol>
+<div class="highlight"><pre><span class="cm">/*</span>
+<span class="cm"> * S2E Selective Symbolic Execution Platform</span>
+<span class="cm"> *</span>
+<span class="cm"> * Copyright (c) 2013, ***** YOUR COPYRIGHT ******</span>
+<span class="cm"> * All rights reserved.</span>
+<span class="cm"> *</span>
+<span class="cm"> * Redistribution and use in source and binary forms, with or without</span>
+<span class="cm"> * modification, are permitted provided that the following conditions are met:</span>
+<span class="cm"> *     * Redistributions of source code must retain the above copyright</span>
+<span class="cm"> *       notice, this list of conditions and the following disclaimer.</span>
+<span class="cm"> *     * Redistributions in binary form must reproduce the above copyright</span>
+<span class="cm"> *       notice, this list of conditions and the following disclaimer in the</span>
+<span class="cm"> *       documentation and/or other materials provided with the distribution.</span>
+<span class="cm"> *     * Neither the name of the copyright holder nor the</span>
+<span class="cm"> *       names of its contributors may be used to endorse or promote products</span>
+<span class="cm"> *       derived from this software without specific prior written permission.</span>
+<span class="cm"> *</span>
+<span class="cm"> * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND</span>
+<span class="cm"> * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED</span>
+<span class="cm"> * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</span>
+<span class="cm"> * DISCLAIMED. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE</span>
+<span class="cm"> * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES</span>
+<span class="cm"> * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;</span>
+<span class="cm"> * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND</span>
+<span class="cm"> * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT</span>
+<span class="cm"> * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS</span>
+<span class="cm"> * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+<span class="cm"> *</span>
+<span class="cm"> * All contributors are listed in the S2E-AUTHORS file.</span>
+<span class="cm"> */</span>
+</pre></div>
+<ol class="arabic simple" start="2">
+<li>Your code must be documented. If you write a plugin, please add both the RST and the corresponding HTML file
+to the documentation. The documentation should at least describe all the plugin settings and provide usage examples.
+Please be as thorough as possible in the documentation. The clearer it is, the fewer questions will be asked.</li>
+<li>Notes about coding style/commits/commit messages, etc. described in the previous section also apply here.</li>
+</ol>
+</div>
+</div>
+<div class="footer">
+<hr class="footer" />
+<a class="reference external" href="Contribute.rst">View document source</a>.
+
+</div>
+</body>
+</html>

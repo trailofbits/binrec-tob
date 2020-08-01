@@ -1,0 +1,3 @@
+#!/bin/bash
+
+tail -q -n 1 $S2EDIR/test/spec2006/benchspec/CPU2006/*/run/run_base_test_gcc4.8.4-O0-32bit.0000/speccmds.cmd | cut -d ' ' -f 1-4 --complement | cut -d '/' -f 3- > conf

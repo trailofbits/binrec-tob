@@ -1,0 +1,17 @@
+void * __memcpy_chk (void *dest, const void *src, size_t n, size_t os);
+void * __mempcpy_chk (void *dest, const void *src, size_t n, size_t os);
+void * __memmove_chk (void *dest, const void *src, size_t n, size_t os);
+void * __memset_chk (void *s, int c, size_t n, size_t os);
+char * __strcpy_chk (char *dest, const char *src, size_t os);
+char * __strncpy_chk (char *dest, const char *src, size_t n, size_t os);
+char * __stpcpy_chk (char *dest, const char *src, size_t os);
+char * __strcat_chk (char *dest, const char *src, size_t os);
+char * __strncat_chk (char *dest, const char *src, size_t n, size_t os);
+int __sprintf_chk (char *s, int flag, size_t os, const char *fmt, ...);
+int __snprintf_chk (char *s, size_t maxlen, int flag, size_t os);
+int __vsprintf_chk (char *s, int flag, size_t os, const char *fmt,va_list ap);
+int __vsnprintf_chk (char *s, size_t maxlen, int flag, size_t os, const char *fmt, va_list ap);
+int __printf (int flag, const char *format, ...);
+int __vprintf (int flag, const char *format, va_list ap);
+int __fprintf (FILE *stream, int flag, const char *format, ...);
+int __vfprintf (FILE *stream, int flag, const char *format, va_list ap);

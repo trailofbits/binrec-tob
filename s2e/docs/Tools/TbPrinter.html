@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.11: http://docutils.sourceforge.net/" />
+<title>Trace Printer</title>
+<link rel="stylesheet" href="../s2e.css" type="text/css" />
+</head>
+<body>
+<div class="document" id="trace-printer">
+<h1 class="title">Trace Printer</h1>
+
+<p>The trace printer tool outputs for each specified path all the trace items that were collected in these states.
+Items include memory accesses, executed translation blocks, or test cases.
+This tool is useful to quickly observe the execution sequence that led to a particular event that caused a state to terminate.
+It can also be useful for debugging.</p>
+<div class="section" id="examples">
+<h1>Examples</h1>
+<p>A complete tutorial on how to generate and display a trace can be found <a class="reference external" href="../Howtos/ExecutionTracers.html">here</a></p>
+<p>Assuming you have obtained a trace in <tt class="docutils literal">ExecutionTracer.dat</tt>,
+the following command outputs the translation block trace for paths 0 and 34.
+Omitting the <tt class="docutils literal"><span class="pre">-pathId</span></tt> option will cause the command to output the trace for all paths.</p>
+<p>If the <tt class="docutils literal"><span class="pre">-printRegisters</span></tt> option is specified, the command also prints the contents of
+the registers before and after the execution of each translation block (provided that <tt class="docutils literal">TranslationBlockTracer</tt> was enabled).</p>
+<p><tt class="docutils literal"><span class="pre">-printMemory</span></tt> also shows all memory accesses (provided that <cite>MemoryTracer`</cite> was enabled).</p>
+<blockquote>
+<pre class="literal-block">
+$ $S2EDIR/build/tools/Release+Asserts/bin/tbtrace -trace=s2e-last/ExecutionTracer.dat \
+  -outputdir=s2e-last/traces -pathId=0 -pathId=34 -printMemory
+</pre>
+</blockquote>
+</div>
+<div class="section" id="required-plugins">
+<h1>Required Plugins</h1>
+<ul class="simple">
+<li>ModuleExecutionDetector (only the translation blocks of those modules that are configured will be traced)</li>
+<li>ExecutionTracer</li>
+<li>TranslationBlockTracer</li>
+<li>ModuleTracer (for module information)</li>
+</ul>
+</div>
+<div class="section" id="optional-plugins">
+<h1>Optional Plugins</h1>
+<ul class="simple">
+<li>TestCaseGenerator (for test cases)</li>
+<li>MemoryTracer (for memory traces)</li>
+<li>TranslationBlockTracer (for executed translation blocks)</li>
+</ul>
+</div>
+</div>
+<div class="footer">
+<hr class="footer" />
+<a class="reference external" href="TbPrinter.rst">View document source</a>.
+
+</div>
+</body>
+</html>

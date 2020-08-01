@@ -1,0 +1,12 @@
+-no-aa -tbaa -targetlibinfo -basicaa -env-aa -preverify -domtree -verify
+-simplifycfg -domtree -sroa -early-cse -lower-expect -targetlibinfo -no-aa
+-tbaa -basicaa -env-aa -globalopt -ipsccp -deadargelim -instcombine
+-simplifycfg -basiccg -prune-eh -inline -functionattrs -argpromotion -sroa
+-domtree -early-cse -simplify-libcalls -lazy-value-info -jump-threading
+-correlated-propagation -simplifycfg -instcombine -tailcallelim -simplifycfg
+-reassociate -domtree -loops -loop-simplify -lcssa -loop-rotate -licm -lcssa
+-loop-unswitch -instcombine -scalar-evolution -loop-simplify -lcssa -indvars
+-loop-idiom -loop-deletion -loop-unroll -memdep -gvn -memdep -memcpyopt -sccp
+-instcombine -lazy-value-info -jump-threading -correlated-propagation -domtree
+-memdep -dse -adce -simplifycfg -instcombine -strip-dead-prototypes -globaldce
+-constmerge -preverify -domtree -verify

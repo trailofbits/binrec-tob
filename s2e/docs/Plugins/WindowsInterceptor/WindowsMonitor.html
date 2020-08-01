@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.8.1: http://docutils.sourceforge.net/" />
+<title>WindowsMonitor</title>
+<link rel="stylesheet" href="../../s2e.css" type="text/css" />
+</head>
+<body>
+<div class="document" id="windowsmonitor">
+<h1 class="title">WindowsMonitor</h1>
+
+<p>The WindowsMonitor plugin implements the detection of module and process loads/unloads on the Windows operating system.
+It can be referred to as &quot;Interceptor&quot; by other plugins.
+The plugin catches the invocation of specific kernel functions to detect these events.</p>
+<div class="section" id="options">
+<h1>Options</h1>
+<div class="section" id="version-sp2-sp3">
+<h2>version=[&quot;sp2&quot;|&quot;sp3&quot;]</h2>
+<p>Indicates the version of the Windows kernel to monitor.
+These functions have different locations in different versions.
+Specifying a wrong version will prevent the plugin from detecting the events.</p>
+</div>
+<div class="section" id="usermode-true-false">
+<h2>userMode=[true|false]</h2>
+<p>Specifies whether the plugin should track user-mode events like DLL load and unload.
+If you do not analyze user-mode applications, assigning false to this setting will reduce the
+amount of instrumentation.</p>
+</div>
+<div class="section" id="kernelmode-true-false">
+<h2>kernelMode=[true|false]</h2>
+<p>Specifies whether the plugin should track driver load and unload.
+If you do not analyze kernel-mode drivers, assigning false to this setting will reduce the
+amount of instrumentation.</p>
+<p>If not specified, the default value is false.</p>
+</div>
+<div class="section" id="monitormoduleload-true-false">
+<h2>monitorModuleLoad=[true|false]</h2>
+<p>For debugging only. In normal operation must be set to true.</p>
+</div>
+<div class="section" id="monitormoduleunload-true-false">
+<h2>monitorModuleUnload=[true|false]</h2>
+<p>For debugging only. In normal operation must be set to true.</p>
+</div>
+<div class="section" id="monitorprocessunload-true-false">
+<h2>monitorProcessUnload=[true|false]</h2>
+<p>For debugging only. In normal operation must be set to true.</p>
+</div>
+</div>
+<div class="section" id="configuration-sample">
+<h1>Configuration Sample</h1>
+<pre class="literal-block">
+pluginsConfig.WindowsMonitor = {
+  version=&quot;XPSP3&quot;,
+  userMode=true,
+  kernelMode=true,
+  monitorModuleLoad=true,
+  monitorModuleUnload=true,
+  monitorProcessUnload=true
+  }
+</pre>
+</div>
+</div>
+<div class="footer">
+<hr class="footer" />
+<a class="reference external" href="WindowsMonitor.rst">View document source</a>.
+
+</div>
+</body>
+</html>

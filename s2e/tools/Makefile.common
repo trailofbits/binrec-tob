@@ -1,0 +1,36 @@
+# -*- Makefile -*-
+
+include $(LEVEL)/Makefile.config
+
+# Include LLVM's Master Makefile config and rules.
+include $(LLVM_OBJ_ROOT)/Makefile.config
+
+ifeq ($(BYTECODE_LIBRARY), 1)
+#
+# Override make variables based on the runtime configuration. We want
+# to override whatever the user may have said on the command line,
+# hence the use of override.
+#
+
+override ENABLE_OPTIMIZED := 1
+#override DISABLE_ASSERTIONS := 1
+#override ENABLE_PROFILING := $(RUNTIME_ENABLE_PROFILING)
+#override ENABLE_COVERAGE := $(RUNTIME_ENABLE_COVERAGE)
+endif
+
+include $(LLVM_SRC_ROOT)/Makefile.rules
+
+# LLVMCC was added in 2.7.
+ifeq ($(LLVMCC),)
+LLVMCC := $(LLVMGCC)
+LLVMCXX := $(LLVMGXX)
+endif
+
+CXX.Flags += -I$(S2E_SRC_ROOT)/ -I$(PROJ_SRC_ROOT)/
+
+OS := $(shell uname)
+ifeq ($(OS),Darwin)
+    # bfd.h is typically in /opt/local/include on Mac
+    CXX.Flags += -I/opt/local/include
+    LD.Flags += -L/opt/local/lib -L/opt/local/lib/x86_64
+endif

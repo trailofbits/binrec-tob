@@ -1,0 +1,294 @@
+' ******************************************************************************
+' Header: VirtualizerSDK64.inc
+' Description: PowerBasic64 macros definitions
+'
+' Author/s: Oreans Technologies 
+' (c) 2013 Oreans Technologies
+'
+' --- File generated automatically from Oreans VM Generator (11/11/2013) ---
+' ******************************************************************************
+
+' ******************************************************************************
+'                                 Macros definition
+' ******************************************************************************
+
+MACRO VIRTUALIZER_TIGER_WHITE_START
+  !db &HEB
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+  !db 0x67
+  !db 0x00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+END MACRO
+
+MACRO VIRTUALIZER_TIGER_WHITE_END
+  !db &HEB
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+  !db 0xF7
+  !db 0x01
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+END MACRO
+
+MACRO VIRTUALIZER_TIGER_RED_START
+  !db &HEB
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+  !db 0x68
+  !db 0x00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+END MACRO
+
+MACRO VIRTUALIZER_TIGER_RED_END
+  !db &HEB
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+  !db 0xF8
+  !db 0x01
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+END MACRO
+
+MACRO VIRTUALIZER_TIGER_BLACK_START
+  !db &HEB
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+  !db 0x69
+  !db 0x00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+END MACRO
+
+MACRO VIRTUALIZER_TIGER_BLACK_END
+  !db &HEB
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+  !db 0xF9
+  !db 0x01
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+END MACRO
+
+MACRO VIRTUALIZER_FISH_WHITE_START
+  !db &HEB
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+  !db 0x6B
+  !db 0x00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+END MACRO
+
+MACRO VIRTUALIZER_FISH_WHITE_END
+  !db &HEB
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+  !db 0xFB
+  !db 0x01
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+END MACRO
+
+MACRO VIRTUALIZER_FISH_RED_START
+  !db &HEB
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+  !db 0x6D
+  !db 0x00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+END MACRO
+
+MACRO VIRTUALIZER_FISH_RED_END
+  !db &HEB
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+  !db 0xFD
+  !db 0x01
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+END MACRO
+
+MACRO VIRTUALIZER_FISH_BLACK_START
+  !db &HEB
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+  !db 0x6F
+  !db 0x00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+END MACRO
+
+MACRO VIRTUALIZER_FISH_BLACK_END
+  !db &HEB
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+  !db 0xFF
+  !db 0x01
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+END MACRO
+
+MACRO VIRTUALIZER_MUTATE_ONLY_START
+  !db &HEB
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+  !db 0x10
+  !db 0x00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+END MACRO
+
+MACRO VIRTUALIZER_MUTATE_ONLY_END
+  !db &HEB
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+  !db 0x11
+  !db 0x00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H00
+  !db &H43
+  !db &H56
+  !db &H20
+  !db &H20
+END MACRO
+

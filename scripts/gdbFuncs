@@ -1,0 +1,21 @@
+define pRegs
+p "eax"
+x/wx 0x900605c
+p "ecx"
+x/wx 0x9006044
+p "edx"
+x/wx 0x9006040
+p "ebx"
+x/wx 0x9006050
+p "esp"
+x/wx 0x9006054
+p "ebp"
+x/wx 0x9006058
+p "esi"
+x/wx 0x900604c
+p "edi"
+x/wx 0x9006048
+p "eip"
+x/wx 0x9006030
+x/32x *0x9006054
+end

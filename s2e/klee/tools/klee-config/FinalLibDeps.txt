@@ -1,0 +1,5 @@
+libkleeBasic.a:
+libkleeSupport.a:
+libkleaverExpr.a:
+libkleaverSolver.a: libkleaverExpr.a
+libkleeCore.a libkleeModule.a: libkleeBasic.a libkleeSupport.a libkleaverSolver.a libkleaverExpr.a

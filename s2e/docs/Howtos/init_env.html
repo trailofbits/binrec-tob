@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.11: http://docutils.sourceforge.net/" />
+<title>How to symbolically execute Linux binaries?</title>
+<link rel="stylesheet" href="../s2e.css" type="text/css" />
+</head>
+<body>
+<div class="document" id="how-to-symbolically-execute-linux-binaries">
+<h1 class="title">How to symbolically execute Linux binaries?</h1>
+
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#obtaining-and-compiling-init-env" id="id1">1. Obtaining and compiling <tt class="docutils literal">init_env</tt></a></li>
+<li><a class="reference internal" href="#configuring-s2e-for-use-with-init-env" id="id2">2. Configuring S2E for use with <tt class="docutils literal">init_env</tt></a></li>
+<li><a class="reference internal" href="#using-init-env" id="id3">3. Using <tt class="docutils literal">init_env</tt></a></li>
+<li><a class="reference internal" href="#analyzing-large-programs-with-concolic-execution" id="id4">4. Analyzing large programs with concolic execution</a></li>
+<li><a class="reference internal" href="#what-about-other-symbolic-input" id="id5">5. What about other symbolic input?</a></li>
+</ul>
+</div>
+<p>In this tutorial, we will show how to symbolically (or concolically) execute <em>existing</em> Linux programs,
+<em>without</em> modifying their source code. In the <a class="reference external" href="../TestingMinimalProgram.html">Testing a Simple Program</a> tutorial,
+we instrumented the source code with S2E instructions to inject symbolic values.
+This tutorial shows how to do this directly from the program's command line.</p>
+<p>To do so, we use the <tt class="docutils literal">init_env</tt> shared library and <tt class="docutils literal">LD_PRELOAD</tt>.
+This library intercepts the call to the <tt class="docutils literal">main</tt> function and inserts user-configured symbolic arguments.
+This library can also restrict symbolic execution to the program itself or to all the code in the program's address space.</p>
+<div class="section" id="obtaining-and-compiling-init-env">
+<h1>1. Obtaining and compiling <tt class="docutils literal">init_env</tt></h1>
+<p>The <tt class="docutils literal">init_env</tt> library can be found in the <tt class="docutils literal">guest</tt> folder of the S2E
+distribution. Copy the entire guest directory to your guest virtual machine, and
+run <tt class="docutils literal">make</tt>. This will compile <tt class="docutils literal">init_env</tt> along with some other useful
+tools.</p>
+</div>
+<div class="section" id="configuring-s2e-for-use-with-init-env">
+<h1>2. Configuring S2E for use with <tt class="docutils literal">init_env</tt></h1>
+<p><tt class="docutils literal">init_env</tt> communicates with several S2E plugins in order to restrict
+symbolic execution to the program of interest. The S2E configuration
+file must contain default settings for these plugins, as follows:</p>
+<pre class="literal-block">
+plugins = {
+  -- Enable S2E custom opcodes
+  &quot;BaseInstructions&quot;,
+
+  -- Track when the guest loads programs
+  &quot;RawMonitor&quot;,
+
+  -- Detect when execution enters
+  -- the program of interest
+  &quot;ModuleExecutionDetector&quot;,
+
+  -- Restrict symbolic execution to
+  -- the programs of interest
+  &quot;CodeSelector&quot;,
+}
+</pre>
+<p>Note that it is not necessary to declare empty configuration blocks
+for <tt class="docutils literal">RawMonitor</tt>, <tt class="docutils literal">ModuleExecutionDetector</tt>, or <tt class="docutils literal">CodeSelector</tt>.</p>
+</div>
+<div class="section" id="using-init-env">
+<h1>3. Using <tt class="docutils literal">init_env</tt></h1>
+<p>The <tt class="docutils literal">init_env</tt> library needs to be pre-loaded to your binary using
+<tt class="docutils literal">LD_PRELOAD</tt>. <tt class="docutils literal">init_env</tt> intercepts the program's entry point invocation, parses
+the command line arguments of the program, configures symbolic execution, and removes <tt class="docutils literal">init_env</tt>-related
+parameters, before invoking the original program's entry point.</p>
+<p>For example, the following invokes <tt class="docutils literal">echo</tt> from GNU CoreUtils, using up to two
+symbolic command line arguments, selecting only code from the <tt class="docutils literal">echo</tt>
+binary, and terminating the execution path after <tt class="docutils literal">echo</tt> returns:</p>
+<pre class="literal-block">
+$ LD_PRELOAD=/path/to/guest/init_env/init_env.so /bin/echo \
+--select-process-code --sym-args 0 2 4 ; /path/to/guest/s2ecmd/s2ecmd kill 0 &quot;echo done&quot;
+</pre>
+<p>The <tt class="docutils literal">s2ecmd</tt> utility can be found in <tt class="docutils literal">$S2EDIR/guest/</tt> and allows to control S2E from
+the guest's command line. Here, we ask it to kill the execution path after <tt class="docutils literal">echo</tt> returns.
+It is important to do so, otherwise S2E will run forever, all 100s of paths generated by <tt class="docutils literal">echo</tt> will eventually
+wait indefinitely at the prompt.</p>
+<p>The <tt class="docutils literal">init_env</tt> library supports the following commands. Each command is added
+as a command-line parameter to the program being executed. It is removed before
+the program sees the actual command line. In the above example, <tt class="docutils literal">echo</tt> would
+see zero to two command line arguments of up to four bytes, but would not see
+the <tt class="docutils literal"><span class="pre">--select-process-code</span></tt> or <tt class="docutils literal"><span class="pre">--sym-args</span></tt> argument.</p>
+<pre class="literal-block">
+--select-process               Enable forking in the current process only
+--select-process-userspace     Enable forking in userspace-code of the
+                               current process only
+--select-process-code          Enable forking in the code section of the
+                               current binary only
+--concolic                     Augment all concrete arguments with symbolic values
+--sym-arg &lt;N&gt;                  Replace by a symbolic argument of length N
+--sym-args &lt;MIN&gt; &lt;MAX&gt; &lt;N&gt;     Replace by at least MIN arguments and at most
+                               MAX arguments, each with maximum length N
+</pre>
+<p>Additionally, <tt class="docutils literal">init_env</tt> will show a usage message if the sole argument given
+is <tt class="docutils literal"><span class="pre">--help</span></tt>.</p>
+</div>
+<div class="section" id="analyzing-large-programs-with-concolic-execution">
+<h1>4. Analyzing large programs with concolic execution</h1>
+<p>Depending on the program under analysis, normal symbolic execution may get stuck in the constraint
+solver. It is better in general to use <a class="reference external" href="Concolic.html">concolic execution</a>. The following
+command runs <tt class="docutils literal">echo</tt> in concolic mode, based on the concrete parameter <tt class="docutils literal">abc</tt> (i.e., the first
+path will print <tt class="docutils literal">abc</tt>, while the others will print other strings):</p>
+<pre class="literal-block">
+$ LD_PRELOAD=/path/to/guest/init_env/init_env.so /bin/echo --concolic abc ; /path/to/guest/s2ecmd/s2ecmd kill 0 &quot;echo done&quot;
+</pre>
+<p>You may also want to add <tt class="docutils literal">&gt; /dev/null</tt> to prevent the program from forking in the kernel
+when printing symbolic content.</p>
+</div>
+<div class="section" id="what-about-other-symbolic-input">
+<h1>5. What about other symbolic input?</h1>
+<p>You can easily feed symbolic data to your program via <tt class="docutils literal">stdin</tt>.
+The idea is to pipe the symbolic output of one program to the input of another.
+Symbolic output can be generated using the <tt class="docutils literal">s2ecmd</tt> utility, located in the
+guest tools directory.</p>
+<pre class="literal-block">
+$ /path/to/guest/s2ecmd/s2ecmd symbwrite 4 | echo
+</pre>
+<p>The command above will pass 4 symbolic bytes to <tt class="docutils literal">echo</tt>.</p>
+<p>The easiest way to have your program read symbolic data from <em>files</em> (other than
+<tt class="docutils literal">stdin</tt>) currently involves a ramdisk. You need to redirect the symbolic output
+of <tt class="docutils literal">s2ecmd symbwrite</tt> to a file residing on the ramdisk, then have your program under
+test read that file. On many Linux distributions, the <tt class="docutils literal">/tmp</tt> filesystem resides in
+RAM, so using a file in <tt class="docutils literal">/tmp</tt> works. This can be checked using the <tt class="docutils literal">df</tt>
+command: it should print something similar to <tt class="docutils literal">tmpfs 123 456 123 1% /tmp</tt>.</p>
+</div>
+</div>
+<div class="footer">
+<hr class="footer" />
+<a class="reference external" href="init_env.rst">View document source</a>.
+
+</div>
+</body>
+</html>

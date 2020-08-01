@@ -1,0 +1,23 @@
+#!/bin/bash
+PASSES=${1-80000000}
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+run() {
+    if [ "$FP" = x ]; then
+        echo $PASSES | ./$1 | egrep '^Microseconds|^Dhrystones'
+    else
+        echo $PASSES | ./$1 2>&1 >/dev/null | python $DIR/time.py
+    fi
+}
+
+echo "cc without register ($PASSES passes)"
+run cc_dry2
+echo
+echo "cc with register ($PASSES passes)"
+run cc_dry2reg
+echo
+echo "gcc without register ($PASSES passes)"
+run gcc_dry2
+echo
+echo "gcc with register ($PASSES passes)"
+run gcc_dry2reg

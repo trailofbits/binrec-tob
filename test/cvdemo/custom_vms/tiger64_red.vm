@@ -1,0 +1,84 @@
+/*********************************************************/
+ /* Machine: TIGER64 (Red)                                
+ /*                                                       
+ /* (c) 2013 Oreans Technologies                          
+/*********************************************************/
+
+[General]
+
+MachineId =  0x28E9D505
+MachineSignature = 0xEB7DE165
+ProductSupport = WinLicense, Virtualizer, Themida
+FileVersionEncoded = 0x51829392
+
+
+[Architecture]
+
+Name = TIGER64
+Bits = 64
+MaxCPUs = 8
+Emulates = IA64
+
+
+[Processor]
+
+Name = (Red)
+HardwareEncryption = 97Jd7N1826GTuwemaps82ysklftK726Hg4g7a81ms623H529Ks728sntJKKIIslH6Ksy1nal4l25amdtB
+
+MemoryUsage = 1900 KB
+Speed = 90
+Complexity = 45
+RelocateRegs = Yes
+RelocateStages = Yes
+OpcodePermutation = Yes
+RelocateHandlers = Yes
+JoinUndefinedOpcodes = No
+AllowAvidFields = Yes
+ExpandedInstructionSet = Yes
+MergeStages = Yes
+EnableRevirtualization = Yes
+EnableJoinHandlers = Yes
+EnableStageGarbage = Yes
+SmartInstructionsRelocation = Yes
+EnableHandlerTimes = Yes
+
+EnableBreakPoints = No
+EnableDebugMode = No
+EnableInterruptTrace = No
+
+
+EnableFakeJumps = No
+EnableFakeConditionalJumps = No
+PermutateHandlers = No
+MutateHandlers = No
+
+
+/* Explicit modification for specific opcodes */
+
+[Opcodes]
+
+Group1Mnemonics = ADD, MOV, SUB, AND, XOR, OR, POP, PUSH
+Group1Garbage = [5]
+Group1Avid = [2..6]
+Group1Times = [2..4]
+
+Group2Mnemonics = ROL, ROR, RCL, SHL, RCR, SHR, MOVZX, MOVSX
+Group2Garbage = [3]
+Group2Avid = [2..4]
+Group2Times = [1..3]
+
+Group3Mnemonics = CMP, TEST, DEC, INC, NOT, NEG
+Group3Garbage = [4]
+Group3Avid = [2..5]
+Group3Times = [1..4]
+
+Group4Mnemonics = IMUL, LODSB, LODSW, LODSD, LODSQ, SCASB, SCASW, SCASD, SCASQ, CMPSB, CMPSW, CMPSD, CMPSQ, STOSB, STOSW, STOSD, STOSQ, MOVSB, MOVSW, MOVSD, MOVSQ, PUSHFD, POPFD
+Group4Garbage = [2]
+Group4Avid = [2..5]
+Group4Times = [1..2]
+
+Group5Mnemonics = JCC_INSIDE, JUMP_OUTSIDE, JUMP_INSIDE, CALL, UNDEF, RET, JCC_OUTSIDE
+Group5Garbage = [5]
+Group5Avid = [0..0]
+Group5Times = [2..5]
+

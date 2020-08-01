@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings version="1.0">
+	<category name="Test.c">
+		<category name="Window">
+			<property name="Left" type="integer">-4</property>
+			<property name="Top" type="integer">-30</property>
+			<property name="Right" type="integer">991</property>
+			<property name="Bottom" type="integer">663</property>
+			<property name="Maximized" type="integer">1</property>
+			<property name="Active" type="integer">1</property>
+		</category>
+	</category>
+</settings>

@@ -1,0 +1,74 @@
+/*********************************************************/
+/* Machine: FISH32 (Red)                              
+/*                                                       
+/* (c) 2013 Oreans Technologies                          
+/*********************************************************/
+
+[General]
+
+MachineId =  0x92858B05
+MachineSignature = 0xA385F070
+ProductSupport = WinLicense, Virtualizer, Themida
+FileVersionEncoded = 0x51829392
+
+
+[Architecture]
+
+Name = FISH32
+Bits = 32
+MaxCPUs = 8
+Emulates = IA32
+
+
+[Processor]
+
+Name = (Red)
+HardwareEncryption = Not available
+
+MemoryUsage = 260 KB
+Speed = 61
+Complexity = 24
+RelocateRegs = Yes
+RelocateStages = Yes
+OpcodePermutation = Yes
+RelocateHandlers = Yes
+JoinUndefinedOpcodes = No
+AllowAvidFields = Yes
+ExpandedInstructionSet = Yes
+MergeStages = Yes
+EnableRevirtualization = Yes
+EnableJoinHandlers = Yes
+EnableStageGarbage = Yes
+SmartInstructionsRelocation = Yes
+EnableHandlerTimes = Yes
+
+EnableBreakPoints = No
+EnableDebugMode = No
+EnableInterruptTrace = No
+
+EnableFakeJumps = Yes
+EnableFakeConditionalJumps = No
+PermutateHandlers = Yes
+MutateHandlers = No
+
+
+/* Explicit modification for specific opcodes */
+
+[Opcodes]
+
+Group1Mnemonics = COMMON_BINARY_OP, COMMON_UNARY_OP, POP, PUSH
+Group1Garbage = [8]
+Group1Avid = [5..20]
+Group1Times = [3..10]
+
+Group2Mnemonics = LODSB, LODSW, LODSD, SCASB, SCASW, SCASD, CMPSB, CMPSW, CMPSD, STOSB, STOSW, STOSD, MOVSB, MOVSW, MOVSD, PUSHFD, POPFD
+Group2Garbage = [5]
+Group2Avid = [2..15]
+Group2Times = [2..6]
+
+Group3Mnemonics = JCC_INSIDE, JUMP_OUTSIDE, JUMP_INSIDE, CALL, UNDEF, RET, JCC_OUTSIDE
+Group3Garbage = [7]
+Group3Avid = [0..0]
+Group3Times = [5..10]
+
+

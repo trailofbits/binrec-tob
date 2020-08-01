@@ -1,0 +1,13 @@
+#!/bin/bash
+if [ $# -lt 1 ]; then
+    echo "usage: $0 [ -h|--help ] TARFILE"
+    exit 1
+fi
+
+tarfile=$1
+
+s2eget $tarfile || { s2ecmd message "tarfile $tarfile not found"; exit 1; }
+tar -xf $tarfile
+export LD_PRELOAD=$HOME/guest/build/init_env.so
+./command
+s2ecmd kill 0 "$bin finished"

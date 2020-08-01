@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.11: http://docutils.sourceforge.net/" />
+<title>How to Use Execution Tracers?</title>
+<link rel="stylesheet" href="../s2e.css" type="text/css" />
+</head>
+<body>
+<div class="document" id="how-to-use-execution-tracers">
+<h1 class="title">How to Use Execution Tracers?</h1>
+
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#minimal-configuration-file" id="id2">1. Minimal Configuration File</a></li>
+<li><a class="reference internal" href="#guest-configuration" id="id3">2. Guest Configuration</a></li>
+<li><a class="reference internal" href="#viewing-the-traces" id="id4">3. Viewing the Traces</a></li>
+<li><a class="reference internal" href="#mini-faq" id="id5">Mini-FAQ</a></li>
+</ul>
+</div>
+<p>Execution tracers are S2E analysis plugins that record various information along the execution of each path.
+Here is a list of currently available plugins:</p>
+<ul class="simple">
+<li><strong>ExecutionTracer</strong>: Base plugin upon which all tracers depend. This plugin records fork points so that offline
+analysis tools can reconstruct the execution tree. This plugin is useful by itself to obtain a fork profile
+of the system and answer questions such as: Which branch forks the most? What is causing path explosion?</li>
+<li><strong>ModuleTracer</strong>: Records when and where the guest OS loads modules, programs, or libraries. Offline analysis tools
+rely on this plugin to display debug information such as which line of code corresponds to which program counter.
+If ModuleTracer is disabled, no debug information will be displayed.</li>
+<li><strong>TestCaseGenerator</strong>: Outputs a test case whenever a path terminates. The test case consists of concrete input values
+that would exercise the given path.</li>
+<li><strong>TranslationBlockTracer</strong>: Records information about the executed translation blocks, including the program counter of
+each executed block and the content of registers before and after execution. This plugin is useful to obtain basic block
+coverage.</li>
+<li><strong>InstructionCounter</strong>: Counts the number of instructions executed on each path in the modules of interest.</li>
+</ul>
+<p>Most of the tracers record information only for the configured modules (except ExecutionTracer, which records forks
+anywhere in the system). For this, tracers need to know when execution enters and leaves the modules of interest.
+Tracers rely on the ModuleExecutionDetector plugin to obtain this information. ModuleExecutionDetector relies itself
+on OS monitor plugins to be notified whenever the OS loads or unloads the modules.</p>
+<p>Here is an end-to-end example of how to generate an execution trace for the <tt class="docutils literal">echo</tt> utility using the <a class="reference external" href="../Howtos/init_env.html">init_env.so</a> library.
+The trace will contain all memory accesses done by <tt class="docutils literal">echo</tt>, as well as the list of executed translation blocks and test cases.</p>
+<div class="section" id="minimal-configuration-file">
+<h1>1. Minimal Configuration File</h1>
+<blockquote>
+<pre class="literal-block">
+s2e = {
+  kleeArgs = {}
+}
+
+plugins = {
+  &quot;BaseInstructions&quot;,
+  &quot;ExecutionTracer&quot;,
+  &quot;ModuleTracer&quot;,
+
+  &quot;RawMonitor&quot;,
+  &quot;ModuleExecutionDetector&quot;,
+
+  --The following plugins can be enabled as needed
+  &quot;MemoryTracer&quot;,
+  &quot;TestCaseGenerator&quot;,
+  &quot;TranslationBlockTracer&quot;
+}
+
+pluginsConfig = {}
+
+pluginsConfig.MemoryTracer = {
+  monitorMemory = true,
+  monitorModules = true,
+}
+</pre>
+</blockquote>
+</div>
+<div class="section" id="guest-configuration">
+<h1>2. Guest Configuration</h1>
+<p>Preparing the guest program for tracing is easy. The <a class="reference external" href="../Howtos/init_env.html">init_env.so</a> library will instruct
+S2E to trace the program as specified in the configuration file.</p>
+<blockquote>
+<pre class="literal-block">
+$ LD_PRELOAD=/home/s2e/init_env.so /bin/echo abc ab &gt; /dev/null
+</pre>
+</blockquote>
+</div>
+<div class="section" id="viewing-the-traces">
+<h1>3. Viewing the Traces</h1>
+<p>S2E comes with several tools that parse and display the execution traces.
+They are located in the <cite>tools</cite>  folder of the source distribution.
+You can find the documentation for them on the <a class="reference external" href="../index.html">main page</a>.</p>
+<p>Here is an example that prints the list of executed translation blocks and all memory accesses performed in paths #0 and #34.</p>
+<blockquote>
+<pre class="literal-block">
+$ $S2EDIR/build/tools/Release+Asserts/bin/tbtrace -trace=s2e-last/ExecutionTracer.dat \
+  -outputdir=s2e-last/traces -pathId=0 -pathId=34 -printMemory
+</pre>
+</blockquote>
+</div>
+<div class="section" id="mini-faq">
+<h1>Mini-FAQ</h1>
+<ul class="simple">
+<li>You followed all steps and no debug information is displayed by the offline tools.<ul>
+<li>Some programs might be relocated by the OS and their load base will differ from their native base. Try to disable ASLR.</li>
+<li>Check that your binutils library understands the debug information in the binaries.</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="footer">
+<hr class="footer" />
+<a class="reference external" href="ExecutionTracers.rst">View document source</a>.
+
+</div>
+</body>
+</html>
