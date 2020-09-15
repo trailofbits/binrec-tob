@@ -10,8 +10,8 @@
 
 using namespace llvm;
 
-char FixCFG::ID = 0;
-static RegisterPass<FixCFG> X("fix-cfg",
+char FixCFGLib::ID = 0;
+static RegisterPass<FixCFGLib> X("fix-cfg-lib",
         "Fix cfg by finding escaping pointers",
         false, false);
 
@@ -35,7 +35,7 @@ static bool copyMetadata(Instruction *from, Instruction *to) {
 }
 
 
-void FixCFG::loadFunctionMetadata(){
+void FixCFGLib::loadFunctionMetadata(){
     std::ifstream f;
     uint32_t func_start, func_end, caller, followUp;
     s2eOpen(f, "entryToCaller");
@@ -104,7 +104,7 @@ void FixCFG::loadFunctionMetadata(){
 */
 }
 
-bool FixCFG::hasPc(BasicBlock *bb, GlobalVariable *PC, uint32_t pc) {
+bool FixCFGLib::hasPc(BasicBlock *bb, GlobalVariable *PC, uint32_t pc) {
     for (Instruction &inst : *bb) {
         if (StoreInst *store = dyn_cast<StoreInst>(&inst)) {
             if (PC == store->getPointerOperand()) {
@@ -121,7 +121,7 @@ bool FixCFG::hasPc(BasicBlock *bb, GlobalVariable *PC, uint32_t pc) {
 }
 
 
-void FixCFG::findCallerBBs(Function &F, std::unordered_map<unsigned, std::unordered_set<BasicBlock*> > &callerPcToCallerBB){
+void FixCFGLib::findCallerBBs(Function &F, std::unordered_map<unsigned, std::unordered_set<BasicBlock*> > &callerPcToCallerBB){
     GlobalVariable *PC = F.getParent()->getNamedGlobal("PC");
 
     for(auto &p : callerPcToFollowUpPc){
@@ -153,7 +153,7 @@ void FixCFG::findCallerBBs(Function &F, std::unordered_map<unsigned, std::unorde
     }
 }
 
-void FixCFG::getBBs(Function &F, std::map<unsigned, BasicBlock*> &BBMap){
+void FixCFGLib::getBBs(Function &F, std::map<unsigned, BasicBlock*> &BBMap){
     BasicBlock &entryBB = F.getEntryBlock();
     for(BasicBlock &B : F){
         if(!isRecoveredBlock(&B))
@@ -170,7 +170,7 @@ void FixCFG::getBBs(Function &F, std::map<unsigned, BasicBlock*> &BBMap){
 }
 
 //TODO: check BB_8049b70.from_BB_8049aa0 and BB_8049b70
-void FixCFG::getBBsWithLibCalls(Function &F, std::unordered_set<BasicBlock*> &BBSet){
+void FixCFGLib::getBBsWithLibCalls(Function &F, std::unordered_set<BasicBlock*> &BBSet){
     BasicBlock &entryBB = F.getEntryBlock();
     for(BasicBlock &B : F){
         if(!isRecoveredBlock(&B))
@@ -198,7 +198,7 @@ void FixCFG::getBBsWithLibCalls(Function &F, std::unordered_set<BasicBlock*> &BB
 }
 
 /*
-void FixCFG::addSwitchCases(std::map<unsigned, BasicBlock*> &BBMap,
+void FixCFGLib::addSwitchCases(std::map<unsigned, BasicBlock*> &BBMap,
                              std::unordered_map<BasicBlock *, std::unordered_set<unsigned> > &newSuccs){
 
     for(auto &p : newSuccs){
@@ -228,7 +228,7 @@ void FixCFG::addSwitchCases(std::map<unsigned, BasicBlock*> &BBMap,
 }
 */
 
-void FixCFG::addSwitchCases(std::map<unsigned, BasicBlock*> &BBMap,
+void FixCFGLib::addSwitchCases(std::map<unsigned, BasicBlock*> &BBMap,
                              std::unordered_map<BasicBlock *, std::unordered_set<unsigned> > &newSuccs){
 
     for(auto &p : newSuccs){
@@ -263,7 +263,7 @@ void FixCFG::addSwitchCases(std::map<unsigned, BasicBlock*> &BBMap,
     }
 }
 
-void FixCFG::optimizeEdges(std::unordered_set<BasicBlock*> &BBSet){
+void FixCFGLib::optimizeEdges(std::unordered_set<BasicBlock*> &BBSet){
     DBG("----------Optimizing Edges of lib Calls----------");
     for(BasicBlock *B : BBSet){
         DBG("BB: " << B->getName());
@@ -313,7 +313,7 @@ void FixCFG::optimizeEdges(std::unordered_set<BasicBlock*> &BBSet){
     }
 }
 
-bool FixCFG::runOnModule(Module &m) {
+bool FixCFGLib::runOnModule(Module &m) {
 
     loadFunctionMetadata();
 

@@ -1,5 +1,5 @@
-#ifndef _FIX_CFG_H
-#define _FIX_CFG_H
+#ifndef _FIX_CFG_LIB_H
+#define _FIX_CFG_LIB_H
 
 #include "llvm/Pass.h"
 #include "llvm/IR/Instructions.h"
@@ -11,9 +11,9 @@
 
 using namespace llvm;
 
-struct FixCFG : public ModulePass {
+struct FixCFGLib : public ModulePass {
     static char ID;
-    FixCFG() : ModulePass(ID) {}
+    FixCFGLib() : ModulePass(ID) {}
 
     virtual bool runOnModule(Module &m);
 

@@ -26,6 +26,7 @@ add_llvm_loadable_module( translator
     ExternalizeFunctions.cpp
     ExternPLT.cpp
     FixCFG.cpp
+    FixCFGAndBackUpRemovingUnnecessarySuccsFromLibBBs.cpp
     FixCFGWithoutFuncData.cpp
     FixOverlaps.cpp
     HaltOnDeclarations.cpp
