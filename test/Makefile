@@ -7,7 +7,7 @@ BIN     := ab ab2 aorb hello fib args pwcheck pwcheck-vm fileptr sha2 simple \
 	consecutive_calls abs eq2 aiethel/qsort
 
 CPPBIN	:= aiethel/virtual aiethel/qsort_function_ptrs aiethel/operator_new aiethel/iostream_basics \
-	aiethel/inheritance simple_class heapover uaf uas globaloob stackoob
+	aiethel/inheritance simple_class heapover uaf globaloob stackoob
 SOURCES := $(addsuffix .c,$(BIN)) Makefile *.h
 CPPSOURCES := $(addsuffix .cpp,$(CPPBIN)) Makefile *.h
 WINBIN  := $(addsuffix .exe,ab ab2 aorb hello fib args fileptr)
