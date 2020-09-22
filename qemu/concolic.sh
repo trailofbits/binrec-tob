@@ -60,8 +60,9 @@ printf -- "$cmd_config" > $outdir/cmd-config
 ln -s $S2EDIR/scripts/s2eout_makefile $outdir/Makefile
 
 # run qemu with configured timeout
+# FPar: when using the timeout command without --foreground, S2E can freeze when not run from a shell prompt.
 `which time` -f "time elapsed: %es (%E)" \
-timeout -s INT -k $kill_after $timeout \
+timeout --foreground -s INT -k $kill_after $timeout \
 $ROOT/build/qemu-$release/i386-s2e-softmmu/qemu-system-i386 \
     -net none -loadvm $state -m ${MEM_AMOUNT-$DEFAULT_MEM_AMOUNT} \
     -s2e-config-file $config_file -s2e-verbose \
