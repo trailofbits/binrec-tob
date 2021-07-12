@@ -1,10 +1,10 @@
+#include "VirtualizerSDK.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "VirtualizerSDK.h"
 
 int fib(int n) {
     VIRTUALIZER_START;
-    return n > 1 ? n * fib(n - 1) : n;
+    return n < 2 ? n : fib(n - 1) + fib(n - 2);
     VIRTUALIZER_END;
 }
 

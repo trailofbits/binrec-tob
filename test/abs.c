@@ -4,6 +4,6 @@
 int main(void) {
     int a = -1;
     a = abs(a);
-    //puts("Hello, world!");
+    // puts("Hello, world!");
     return 0;
 }

@@ -18,19 +18,15 @@
 
 struct A {
     std::string value;
-    
-    A( std::string& str ) : value( str ) {
-        std::cout << "I was stolen from!:" << str << std::endl;
-    }
 
-    void shout() {
-        std::cout << value << std::endl;
-    }
+    A(std::string &str) : value(str) { std::cout << "I was stolen from!:" << str << std::endl; }
+
+    void shout() { std::cout << value << std::endl; }
 };
 
 int main() {
     std::cout << "Hello World!" << std::endl;
     std::string precious = "My little precious";
-    A a( precious );
+    A a(precious);
     a.shout();
 }

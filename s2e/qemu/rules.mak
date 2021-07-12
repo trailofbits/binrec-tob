@@ -17,15 +17,12 @@ QEMU_DGFLAGS += -MMD -MP -MT $@ -MF $(*D)/$(*F).d
 
 
 %.o: %.c
-	@mkdir -p $(@D)
 	$(call quiet-command,$(CC) $(QEMU_INCLUDES) $(QEMU_CFLAGS) $(QEMU_DGFLAGS) $(CFLAGS) -c -o $@ $<,"  CC    $(TARGET_DIR)$@")
 
 %.o: %.cpp
-	@mkdir -p $(@D)
 	$(call quiet-command,$(CXX) $(QEMU_INCLUDES) $(QEMU_CFLAGS) $(QEMU_CXXFLAGS) $(QEMU_DGFLAGS) $(CXXFLAGS) -c -o $@ $<,"  CXX   $(TARGET_DIR)$@")
 
 %.o: %.m
-	@mkdir -p $(@D)
 	$(call quiet-command,$(CC) $(QEMU_INCLUDES) $(QEMU_CFLAGS) $(QEMU_DGFLAGS) $(CFLAGS) -c -o $@ $<,"  OBJC  $(TARGET_DIR)$@")
 
 
@@ -53,7 +50,7 @@ LINK = $(call quiet-command,$(CXX) $(QEMU_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ $(s
 	$(call quiet-command,rm -f $@ && $(AR) rcs $@ $^,"  AR    $(TARGET_DIR)$@")
 
 %.bc: %.c $(GENERATED_HEADERS)
-	$(call quiet-command,$(CC) $(filter-out -g -Wold-style-declaration, $(QEMU_INCLUDES) $(QEMU_CFLAGS) $(QEMU_DGFLAGS) $(CFLAGS)) -c -DS2E_LLVM_LIB -emit-llvm -o $@ $<,"  LLVMCC    $(TARGET_DIR)$@")
+	$(call quiet-command,${CLANG32} $(filter-out -g -Wold-style-declaration, $(QEMU_INCLUDES) $(QEMU_CFLAGS) $(QEMU_DGFLAGS) $(CFLAGS)) -c -DS2E_LLVM_LIB -emit-llvm -o $@ $<,"  LLVMCC    $(TARGET_DIR)$@")
 
 %.bca:
 	$(call quiet-command,rm -f $@ && $(LLVMAR) rcs $@ $^,"  LLVMAR    $(TARGET_DIR)$@")

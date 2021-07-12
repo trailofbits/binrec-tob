@@ -40,9 +40,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
-#include <unistd.h>
-#include <libgen.h>
+
 #include <s2e.h>
 
 //When defined, DEBUG_NATIVE skips custom instructions
@@ -327,54 +325,33 @@ static void __s2e_init_env(int *argcPtr, char ***argvPtr)
     *argvPtr = final_argv;
 }
 
-static void __s2e_fini_env()
-{
-    s2e_moduleexec_remove_module("init_env.so");
-}
-
 // ****************************
 // Overriding __libc_start_main
 // ****************************
 
 // The type of __libc_start_main
-typedef int (*T_main)(int, char**, char**);
-
 typedef int (*T_libc_start_main)(
-        T_main main,
+        int *(main) (int, char**, char**),
         int argc,
         char ** ubp_av,
         void (*init) (void),
         void (*fini) (void),
         void (*rtld_fini) (void),
         void (*stack_end)
-        ) __attribute__((noreturn));
+        );
 
-static int __s2e_is_target_program(void) {
-    char buf[PATH_MAX];
-    char *target = getenv("S2E_TARGET_BASENAME");
+int __libc_start_main(
+        int *(main) (int, char **, char **),
+        int argc,
+        char ** ubp_av,
+        void (*init) (void),
+        void (*fini) (void),
+        void (*rtld_fini) (void),
+        void *stack_end)
+        __attribute__ ((noreturn));
 
-    // If no target is specified, instrument, the first encountered binary
-    if (!target)
-        return 1;
-
-    if (readlink("/proc/self/exe", buf, sizeof (buf)) < 0)
-        __emit_error("could not resolve /proc/self/exe");
-
-    return !strcmp(basename(buf), target);
-}
-
-static T_main __s2e_oldmain;
-
-static int __s2e_main(int argc, char **argv, char **envp) {
-    int status;
-    __s2e_init_env(&argc, &argv);
-    status = __s2e_oldmain(argc, argv, envp);
-    __s2e_fini_env();
-    return status;
-}
-
-int __attribute__((noreturn)) __libc_start_main(
-        T_main main,
+int __libc_start_main(
+        int *(main) (int, char **, char **),
         int argc,
         char ** ubp_av,
         void (*init) (void),
@@ -382,12 +359,10 @@ int __attribute__((noreturn)) __libc_start_main(
         void (*rtld_fini) (void),
         void *stack_end) {
 
+    __s2e_init_env(&argc, &ubp_av);
+
     T_libc_start_main orig_libc_start_main = (T_libc_start_main)dlsym(RTLD_NEXT, "__libc_start_main");
-
-    if (__s2e_is_target_program()) {
-        __s2e_oldmain = main;
-        main = __s2e_main;
-    }
-
     (*orig_libc_start_main)(main, argc, ubp_av, init, fini, rtld_fini, stack_end);
+
+    exit(1); // This is never reached
 }

@@ -502,17 +502,8 @@ static inline void s2e_moduleexec_add_module(const char *moduleId, const char *m
     __s2e_touch_string(moduleId);
     __s2e_touch_string(moduleName);
     __asm__ __volatile__(
-        S2E_INSTRUCTION_COMPLEX(AF, 00)
+        S2E_INSTRUCTION_SIMPLE(AF)
             : : "c" (moduleId), "a" (moduleName), "d" (kernelMode)
-    );
-}
-
-static inline void s2e_moduleexec_remove_module(const char *moduleId)
-{
-    __s2e_touch_string(moduleId);
-    __asm__ __volatile__(
-        S2E_INSTRUCTION_COMPLEX(AF, 01)
-            : : "c" (moduleId)
     );
 }
 

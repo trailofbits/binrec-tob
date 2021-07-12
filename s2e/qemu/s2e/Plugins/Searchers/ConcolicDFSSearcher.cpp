@@ -44,6 +44,7 @@
  * RESERVES THE CUSTOM OPCODE 0xAB
  */
 
+#include <glib.h>
 extern "C" {
 #include "config.h"
 #include "qemu-common.h"

@@ -15,7 +15,13 @@ $LLVMBIN/llvm-profdata merge -output=default.profdata default.profraw
 #$LLVMBIN/opt  -pgo-instr-use default.profdata ${infile%.bc}_pre_prof.bc -o "$outfile"
 $LLVMBIN/opt  -pgo-instr-use -pgo-test-profile-file=default.profdata ${infile%.bc}_pre_prof.bc -o "$outfile"
 
-run -O3
+header "transform environment globals into allocas"
+run -env-to-allocas
+
+header "optimization"
+run -basicaa -scev-aa  -env-aa -argpromotion -licm -globalopt -O3
+
+#run -O3
 
 # disassemble final bc file for manual debugging
 header "disassemble generated bitcode"

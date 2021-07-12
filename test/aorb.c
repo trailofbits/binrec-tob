@@ -1,5 +1,5 @@
-#include <stdio.h>
 #include "VirtualizerSDK.h"
+#include <stdio.h>
 
 void foo(char a) {
     VIRTUALIZER_START;

@@ -34,6 +34,7 @@
  */
 
 // XXX: qemu stuff should be included before anything from KLEE or LLVM !
+#include <glib.h>
 extern "C" {
 #include <qemu-common.h>
 #include <cpus.h>
@@ -436,11 +437,8 @@ void S2E::initOutputDirectory(const string& outputDirectory, int verbose, bool f
         }
 
         if (symlink(m_outputDirectoryBase.c_str(), s2eLast.c_str()) < 0) {
-						struct stat buffer;
-						if (stat (s2eLast.c_str(), &buffer) != 0) {
-							perror("ERROR: Cannot make symlink s2e-last");
-							exit(1);
-						}
+            perror("ERROR: Cannot make symlink s2e-last");
+            exit(1);
         }
     }
 #endif

@@ -203,7 +203,7 @@ QError *qobject_to_qerror(const QObject *obj);
     "{ 'class': 'PropertyValueNotFound', 'data': { 'device': %s, 'property': %s, 'value': %s } }"
 
 #define QERR_PROPERTY_VALUE_OUT_OF_RANGE \
-    "{ 'class': 'PropertyValueOutOfRange', 'data': { 'device': %s, 'property': %s, 'value': %"PRId64", 'min': %"PRId64", 'max': %"PRId64" } }"
+    "{ 'class': 'PropertyValueOutOfRange', 'data': { 'device': %s, 'property': %s, 'value': %" PRId64", 'min': %" PRId64", 'max': %" PRId64" } }"
 
 #define QERR_QGA_COMMAND_FAILED \
     "{ 'class': 'QgaCommandFailed', 'data': { 'message': %s } }"

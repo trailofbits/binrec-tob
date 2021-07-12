@@ -28,7 +28,7 @@ image_base=$1
 mode=dbt
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-QEMU=$DIR/../build/qemu-release/i386-softmmu/qemu-system-i386
+QEMU=$DIR/../build/s2e/qemu/i386-softmmu/qemu-system-i386
 base_args="-cpu pentium -smp 1 -name $image_base -m ${MEM_AMOUNT-$DEFAULT_MEM_AMOUNT}"
 macaddress=$(printf "52:55:00:d1:55:%02g" $instance_id)
 #echo $macaddress

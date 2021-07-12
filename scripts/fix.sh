@@ -11,8 +11,7 @@ for f in BB_*.ll; do
 done
 
 header "rename blocks and remove blocks from BB_*.ll"
-myopt -s2e-out-dir . \
-    -rename-block-funcs \
+myopt -rename-block-funcs \
     -remove-blocks $rmargs \
     -S -o ${outfile%.bc}.ll $infile
 

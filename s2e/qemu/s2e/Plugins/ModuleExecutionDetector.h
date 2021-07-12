@@ -149,11 +149,6 @@ public:
        const ModuleDescriptor &
     >onModuleLoad;
 
-    sigc::signal<void,
-       S2EExecutionState*,
-       const ModuleExecutionCfg &
-    >onModuleSignal;
-
 private:
     OSMonitor *m_Monitor;
 
@@ -165,7 +160,6 @@ private:
 
     void initializeConfiguration();
     bool opAddModuleConfigEntry(S2EExecutionState *state);
-    bool opModuleSignal(S2EExecutionState *state);
 
     void onCustomInstruction(
             S2EExecutionState *state,

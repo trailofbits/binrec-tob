@@ -88,12 +88,12 @@ namespace BEEV
     // Print the arguments in lisp format
     friend ostream &LispPrintVec(ostream &os, 
                                  const ASTVec &v, 
-                                 int indentation = 0);
+                                 int indentation);
 
     // Print the arguments in lisp format
     friend ostream &LispPrintVecSpecial(ostream &os, 
                                         const vector<const ASTNode*> &v, 
-                                        int indentation = 0);
+                                        int indentation);
 
     // Check if it points to a null node
     inline bool IsNull() const 
@@ -386,6 +386,12 @@ namespace BEEV
     }; //End of ASTNodeEqual
 
   }; //End of Class ASTNode
+
+  ostream &LispPrintVec(ostream &os, const ASTVec &v,
+                        int indentation = 0);
+  ostream &LispPrintVecSpecial(ostream &os,
+                               const vector<const ASTNode*> &v,
+                               int indentation = 0);
 
 }; //end of namespace
 #endif

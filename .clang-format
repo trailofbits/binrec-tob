@@ -1,0 +1,12 @@
+AccessModifierOffset: -4
+BasedOnStyle: LLVM
+ColumnLimit: 120
+IncludeBlocks: Merge
+IncludeCategories:
+  - Regex: '^"binrec/'
+    Priority: 2
+  - Regex: '^<'
+    Priority: 3
+  - Regex: '.*'
+    Priority: 1
+IndentWidth: 4

@@ -14,8 +14,3 @@ done
 merge_all_inputs $1
 echo "Finished merging program $1"
 set +e
-
-
-
-
-

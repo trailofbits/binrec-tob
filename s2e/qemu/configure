@@ -225,6 +225,9 @@ zlib="yes"
 guest_agent="yes"
 libiscsi=""
 coroutine=""
+binrec="no"
+binrecsource=""
+binrecbuild=""
 
 # parse CC options first
 for opt do
@@ -560,7 +563,7 @@ fi
 
 : ${make=${MAKE-make}}
 : ${install=${INSTALL-install}}
-: ${python=${PYTHON-python}}
+: ${python=${PYTHON-python2}}
 : ${smbd=${SMBD-/usr/sbin/smbd}}
 
 if test "$mingw32" = "yes" ; then
@@ -769,6 +772,14 @@ for opt do
   --with-klee=*) kleedir="$optarg"
   ;;
   --with-stp=*) stpdir="$optarg"
+  ;;
+  --enable-binrec)
+      s2e="yes"
+      binrec="yes"
+  ;;
+  --binrec-source=*) binrecsource="$optarg"
+  ;;
+  --binrec-build=*) binrecbuild="$optarg"
   ;;
   --disable-kvm) kvm="no"
   ;;
@@ -1158,6 +1169,9 @@ echo "  --enable-s2e             enable S2E"
 echo "  --s2e-ext-plugins-dir    location of the external plugins source folder"
 echo "  --with-klee=PATH         KLEE path (PATH/bin/klee-config must exist)"
 echo "  --with-stp=PATH          STP path (PATH/lib/libstp.a must exist)"
+echo "  --enable-binrec          enable BinRec tracing"
+echo "  --binrec-source=PATH     BinRec source path"
+echo "  --binrec-build=PATH      BinRec build path"
 echo "  --disable-kvm            disable KVM acceleration support"
 echo "  --enable-kvm             enable KVM acceleration support"
 echo "  --enable-tcg-interpreter enable TCG with bytecode interpreter (TCI)"
@@ -3823,6 +3837,7 @@ if test "$target_s2e" = "yes"; then
   S2E_DIRS="s2e s2e/Interceptor s2e/Plugins s2e/Plugins/WindowsInterceptor s2e/Configuration s2e/Signals"
   S2E_DIRS="$S2E_DIRS s2e/Plugins/DataSelectors s2e/Plugins/ExecutionTracers"
   S2E_DIRS="$S2E_DIRS s2e/Plugins/WindowsApi s2e/Plugins/Searchers"
+  S2E_DIRS="$S2E_DIRS s2e/Plugins/BinRec"
   for dir in $S2E_DIRS ; do
     mkdir -p $target_dir/$dir
   done
@@ -4087,6 +4102,14 @@ if test "$target_s2e" = "yes" ; then
   if test "$boost" = "yes"; then
       echo "LIBS+=-lboost_serialization" >> $config_target_mak
   fi
+  if test "$binrec" = "yes"; then
+      echo "CONFIG_BINREC=y" >> $config_target_mak
+      echo "S2E_CXXFLAGS+=-I$binrecsource/binrec-traceinfo/include" >> $config_target_mak
+      echo "S2E_CXXFLAGS+=-I$binrecsource/third_party/nlohmann_json/include" >> $config_target_mak
+  fi
+  if test "$llvmdir" != ""; then
+      echo "CLANG32=$llvmdir/bin/clang" >> $config_target_mak
+  fi
 fi
 
 if [ "$llvm" = "yes" ]; then
@@ -4250,6 +4273,10 @@ if test "$target_s2e" = "yes" ; then
   echo "LIBS+=$lua_libs $sigcxx2_libs" >> $config_target_mak
   echo "LIBS+=\$(filter-out $llvm_ldflags, $klee_ldflags) $llvm_ldflags" >> $config_target_mak
   echo "KLEE_LIBFILES=$klee_libfiles" >> $config_target_mak
+  if test "$binrec" = "yes"; then
+      echo "LIBS+=$binrecbuild/lib/libbinrec-traceinfo.a" >> $config_target_mak
+      echo "CONFIG_LIBBINRECTRACEINFO=$binrecbuild/lib/libbinrec-traceinfo.a" >> $config_target_mak
+  fi
 fi
 
 

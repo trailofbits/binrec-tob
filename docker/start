@@ -1,4 +1,0 @@
-#!/bin/bash
-docker-compose -f $S2EDIR/docker/docker-compose.yml up -d $@
-
-

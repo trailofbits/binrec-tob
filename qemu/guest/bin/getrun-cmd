@@ -18,7 +18,7 @@ bin=`head -n1 cmd-config`
 args="`tail -n+2 cmd-config | head -n1`"
 stdin="`tail -n+3 cmd-config | head -n1`"
 sym_stdin="`tail -n1 cmd-config`"
-cmd="LD_PRELOAD=$HOME/guest/build/init_env.so ./$bin $args"
+cmd="LD_PRELOAD=$HOME/lib/init_env.so ./$bin $args"
 
 check s2eget $bin
 check chmod +x $bin

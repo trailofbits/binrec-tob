@@ -1,15 +1,15 @@
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <unistd.h>
 
 void sig_handler(int);
 
 int main() {
     signal(SIGALRM, sig_handler);
-    //send SIGALRM after one sec
+    // send SIGALRM after one sec
     alarm(1);
-    //pause process until a signal is received.
+    // pause process until a signal is received.
     pause();
 }
 
@@ -30,20 +30,20 @@ void sig_handler(int sig) {
     }
 }
 /*
-#include<stdio.h> 
-#include<signal.h> 
+#include<signal.h>
+#include<stdio.h>
 #include<wait.h>
 
-// Handler for SIGINT, caused by 
-// Ctrl-C at keyboard 
-void handle_sigint(int sig) 
-{ 
-    printf("Caught signal %d\n", sig); 
-} 
-  
-int main() 
-{ 
-    signal(SIGINT, handle_sigint); 
+// Handler for SIGINT, caused by
+// Ctrl-C at keyboard
+void handle_sigint(int sig)
+{
+    printf("Caught signal %d\n", sig);
+}
+
+int main()
+{
+    signal(SIGINT, handle_sigint);
     exit(0);
-    return 0; 
+    return 0;
 } */

@@ -3598,7 +3598,6 @@ static inline void gen_goto_tb(DisasContext *s, int n, uint32_t dest)
     tb = s->tb;
 
 #ifdef CONFIG_S2E
-    tb->llvm_first_pc_after_bb = s->pc;
     s2e_on_translate_block_end(g_s2e, g_s2e_state,
                                tb, s->insPc, 1, dest);
     gen_instr_end(s);
@@ -10211,7 +10210,6 @@ static inline void gen_intermediate_code_internal(CPUARMState *env,
             /* indicate that the hash table must be used to find the next TB */
 
 #ifdef CONFIG_S2E
-        	tb->llvm_first_pc_after_bb = dc->pc;
             s2e_on_translate_block_end(g_s2e, g_s2e_state,
                                tb, dc->insPc, 0, 0);
             gen_instr_end(dc);

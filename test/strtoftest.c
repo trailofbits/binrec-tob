@@ -6,7 +6,7 @@ int main(int argc, char **argv) {
         return 1;
 
     float a = strtof(argv[1], NULL);
-    printf("%f, %lx\n", a, *(long unsigned*)&a);
+    printf("%f, %lx\n", a, *(long unsigned *)&a);
 
     return 0;
 }

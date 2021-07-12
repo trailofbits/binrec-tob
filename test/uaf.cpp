@@ -1,7 +1,6 @@
-//known violation with asan, binrec catches
+// known violation with asan, binrec catches
 int main(int argc, char **argv) {
-      int *array = new int[100];
-            delete [] array;
-              return array[argc];
-
+    int *array = new int[100];
+    delete[] array;
+    return array[argc];
 }

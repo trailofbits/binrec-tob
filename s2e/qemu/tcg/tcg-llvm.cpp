@@ -33,6 +33,7 @@
  * All contributors are listed in the S2E-AUTHORS file.
  */
 
+#include <glib.h>
 extern "C" {
 #include "tcg.h"
 }
@@ -450,7 +451,7 @@ Value* TCGLLVMContextPrivate::getPtrForValue(int idx)
     TCGTemp &temp = s->temps[idx];
 
     assert(idx < s->nb_globals || s->temps[idx].temp_local);
-    
+
     if(m_memValuesPtr[idx] == NULL) {
         assert(idx < s->nb_globals);
 

@@ -21,71 +21,55 @@
 struct Person {
 protected:
     unsigned age;
-public:
-    Person( unsigned old ) : age( old ) {
-        puts("Person created");
-    }
 
-    virtual ~Person() {
-        puts("Person destroyed");
-    }
+public:
+    Person(unsigned old) : age(old) { puts("Person created"); }
+
+    virtual ~Person() { puts("Person destroyed"); }
 
     virtual void shout() = 0;
-    
+
     void incAge() {
-       ++age;
-       puts("age incremented");
+        ++age;
+        puts("age incremented");
     }
 };
 
 struct Calm : Person {
-    Calm( unsigned age ) : Person( age + 10 ) {
-        puts("Calm person created");
-    }
+    Calm(unsigned age) : Person(age + 10) { puts("Calm person created"); }
 
-    virtual ~Calm() {
-        puts("Calm person destroyed");
-    }
+    virtual ~Calm() { puts("Calm person destroyed"); }
 
-    void shout() override {
-        puts("I am calm, can't shout");
-    }
-
+    void shout() override { puts("I am calm, can't shout"); }
 };
 
 class MyArray {
 protected:
     int *int_array = nullptr;
+
 public:
     size_t size;
-    MyArray(size_t s) : int_array(new int(s)), size(s){
-        puts("MyArray created");
-    }
+    MyArray(size_t s) : int_array(new int[s]), size(s) { puts("MyArray created"); }
 
-    MyArray(){
-        MyArray(10);
-    }
-    
+    MyArray() { MyArray(10); }
+
     virtual ~MyArray() {
         delete[] int_array;
         puts("MyArray destroyed");
     }
 
-    void operator delete[](void *ptr){
+    void operator delete[](void *ptr) {
         puts("Custom delete[] is called");
         ::operator delete[](ptr);
     }
-    
-    void operator delete(void *ptr){
+
+    void operator delete(void *ptr) {
         puts("Custom delete is called");
         ::operator delete(ptr);
     }
 
-    void insert(int i) {
-       int_array[0] = i;
-    }
+    void insert(int i) { int_array[0] = i; }
 };
-
 
 int main(int argc, char **argv) {
     MyArray *ptr_array = new MyArray[2];
@@ -94,30 +78,30 @@ int main(int argc, char **argv) {
     arr->insert(argv[2][0] - '0');
     printf("size: %d \n", arr->size);
     ptr_array[0] = *arr;
-//    delete arr;
+    //    delete arr;
 
     arr = new MyArray(argv[2][0] - '0');
     arr->insert(argv[1][0] - '0');
     printf("size: %d \n", arr->size);
     ptr_array[1] = *arr;
-//    delete arr;
+    //    delete arr;
 
-//    delete ptr_array[0];
-//    delete ptr_array[1];
+    //    delete ptr_array[0];
+    //    delete ptr_array[1];
     delete[] ptr_array;
 
-/*    
-    MyArray array[2];
-    MyArray *arr = new MyArray(argv[1][0] - '0');
-    arr->insert(argv[2][0] - '0');
-    printf("size: %d \n", arr->size);
-    array[0] = *arr;
-    delete arr;
-    arr = new MyArray(argv[2][0] - '0');
-    arr->insert(argv[1][0] - '0');
-    printf("size: %d \n", arr->size);
-    array[1] = *arr;
-    delete arr;
-*/
+    /*
+        MyArray array[2];
+        MyArray *arr = new MyArray(argv[1][0] - '0');
+        arr->insert(argv[2][0] - '0');
+        printf("size: %d \n", arr->size);
+        array[0] = *arr;
+        delete arr;
+        arr = new MyArray(argv[2][0] - '0');
+        arr->insert(argv[1][0] - '0');
+        printf("size: %d \n", arr->size);
+        array[1] = *arr;
+        delete arr;
+    */
     return 0;
 }

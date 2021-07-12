@@ -18,50 +18,34 @@
 //#include <string>
 #include <iostream>
 
-void execute(){
-    puts("Executed");
-}
+void execute() { puts("Executed"); }
 
-void executer(void (*ex)()){
-    ex();
-}
+void executer(void (*ex)()) { ex(); }
 
 struct Person {
 protected:
     unsigned age;
-public:
-    Person( unsigned old ) : age( old ) {
-        puts("Person created");
-    }
 
-    virtual ~Person() {
-        puts("Person destroyed");
-    }
+public:
+    Person(unsigned old) : age(old) { puts("Person created"); }
+
+    virtual ~Person() { puts("Person destroyed"); }
 
     virtual void shout() = 0;
-    
+
     void incAge() {
-       ++age;
-       puts("age incremented");
+        ++age;
+        puts("age incremented");
     }
 };
 
 struct Calm : Person {
-    Calm( unsigned age ) : Person( age + 10 ) {
-        puts("Calm person created");
-    }
+    Calm(unsigned age) : Person(age + 10) { puts("Calm person created"); }
 
-    virtual ~Calm() {
-        puts("Calm person destroyed");
-    }
+    virtual ~Calm() { puts("Calm person destroyed"); }
 
-    void shout() override {
-        puts("I am calm, can't shout");
-    }
-
+    void shout() override { puts("I am calm, can't shout"); }
 };
-
-
 
 int main() {
     Person *p = new Calm(27);

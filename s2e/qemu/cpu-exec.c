@@ -63,6 +63,14 @@ void cpu_loop_exit(CPUArchState *env)
     s2e_longjmp(env->jmp_env, 1);
 }
 
+void cpu_loop_exit_restore(CPUArchState *env, uintptr_t pc)
+{
+    if (pc) {
+        cpu_restore_state(env->current_tb, env, pc);
+    }
+    s2e_longjmp(env->jmp_env, 1);
+}
+
 /* exit the current TB from a signal handler. The host registers are
    restored in a state compatible with the CPU emulator
  */
@@ -563,6 +571,12 @@ int cpu_exec(CPUArchState *env)
                     env->exception_index = EXCP_INTERRUPT;
                     cpu_loop_exit(env);
                 }
+#if defined(CONFIG_S2E)
+                /* Ensures that exception_index is cleaned when
+                   S2E leaves the cpu loop and goes back to
+                   exception handling */
+                env->exception_index = -1;
+#endif
 #if defined(DEBUG_DISAS) || defined(CONFIG_DEBUG_EXEC)
                 if (qemu_loglevel_mask(CPU_LOG_TB_CPU)) {
                     /* restore flags in standard format */

@@ -1,21 +1,18 @@
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
 //#include <unistd_32.h>
 
 #define __NR_signal 48
 typedef void (*signal_handler)(int);
 
-//Implement signal system call with interrupt
+// Implement signal system call with interrupt
 signal_handler reg_signal(int signum, signal_handler handler) {
     signal_handler ret;
-    __asm__ __volatile__
-    (
-        "int $0x80"
-        : "=a" (ret)
-        : "0"(__NR_signal), "b"(signum), "c"(handler)
-        : "cc", "edi", "esi", "memory"
-    );
+    __asm__ __volatile__("int $0x80"
+                         : "=a"(ret)
+                         : "0"(__NR_signal), "b"(signum), "c"(handler)
+                         : "cc", "edi", "esi", "memory");
     return ret;
 }
 
@@ -32,8 +29,8 @@ void sig_handler(int sig) {
 
 int main() {
     reg_signal(SIGSEGV, sig_handler);
-    
+
     int *i_ptr = NULL;
-    //trigger SIGSEGV
+    // trigger SIGSEGV
     return *i_ptr;
 }

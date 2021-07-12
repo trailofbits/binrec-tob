@@ -60,7 +60,7 @@ private:
     static const unsigned SECTOR_SIZE = 512;
 
     /* Give 64GB of KLEE address space for each block device */
-    static const uint64_t BLOCK_DEV_AS = (1024 * 1024 * 1024) * 64;
+    static const uint64_t BLOCK_DEV_AS = (1024 * 1024 * 1024) * 64ull;
 
     static std::vector<void *> s_devices;
     static std::set<std::string> s_customDevices;
@@ -68,14 +68,8 @@ private:
 
     static QEMUFile *s_memFile;
 
-    /* Scratch buffer for the first snapshot */
-    static uint8_t *s_tempStateBuffer;
-
-    /* Once determined, the size of the device state is constant */
-    static unsigned s_tempStateSize;
-    static unsigned s_finalStateSize;
-
     uint8_t *m_stateBuffer;
+    unsigned m_stateBufferSize;
 
 
     static llvm::SmallVector<struct BlockDriverState*, 5> s_blockDevices;
@@ -85,8 +79,6 @@ private:
 
     static unsigned getBlockDeviceId(struct BlockDriverState* dev);
     static uint64_t getBlockDeviceStart(struct BlockDriverState* dev);
-
-    void initFirstSnapshot();
 
 public:
     S2EDeviceState(klee::ExecutionState *state);

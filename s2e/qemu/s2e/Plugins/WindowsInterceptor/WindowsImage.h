@@ -45,9 +45,6 @@
 #include <inttypes.h>
 #include <map>
 #include <string>
-#include <iostream>
-#include <fstream>
-
 
 namespace s2e {
 namespace windows {
@@ -1382,7 +1379,6 @@ private:
   uint64_t m_ImageBase;
   uint64_t m_EntryPoint;
   unsigned m_ImageSize;
-  std::ifstream m_infile;
 
   /* Stores the relative addresses of all exported functions */
   Exports m_Exports;
@@ -1401,20 +1397,8 @@ private:
   bool InitSections(S2EExecutionState *s);
 
   static bool IsValidString(const char *str);
-
-  size_t getFileOffset(uint64_t addr);
-  bool readHeader(S2EExecutionState *state, uint64_t Base);
-  bool readFromFileOrMemory(S2EExecutionState *state, uint64_t addr, void *buf, uint64_t size);
-  bool readString(S2EExecutionState *state, uint64_t address, std::string &s, unsigned maxLen=256);
-
-  int m_err;
 public:
-  WindowsImage(S2EExecutionState *state, uint64_t Base);
-  WindowsImage(const char *path);
-  WindowsImage() {}
-  virtual ~WindowsImage() {}
-
-  bool setFile(const char *path);
+  WindowsImage(S2EExecutionState *s, uint64_t Base);
 
   virtual uint64_t GetBase() const {
     return m_Base;
@@ -1437,7 +1421,6 @@ public:
   virtual const Imports& GetImports(S2EExecutionState *s);
   virtual void DumpInfo(std::ostream &os) const;
   virtual const ModuleSections &GetSections(S2EExecutionState *s);
-  int error() { return m_err; }
 };
 
 /*

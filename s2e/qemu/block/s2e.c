@@ -614,10 +614,9 @@ static int s2e_snapshot_goto(BlockDriverState *bs, const char *snapshot_id)
     if (header.base_image_timestamp != s2e_get_mtime(bs->filename)) {
         printf("Modification timestamp of %s changed since the creation of "
                "the snapshot %s.\n"
-               "Please recreate a new snapshot, or proceed at your own risk\n", bs->filename, snapshot_id);
-        printf("Base time: %lu\nSnapshot time: %lu\n", header.base_image_timestamp , s2e_get_mtime(bs->filename));
-        /*ret = -1;*/
-        /*goto fail1;*/
+               "Please recreate a new snapshot.\n", bs->filename, snapshot_id);
+        ret = -1;
+        goto fail1;
     }
 
     /* Read the sector data */
@@ -800,6 +799,19 @@ static int s2e_load_vmstate(BlockDriverState *bs, uint8_t *buf,
     return size;
 }
 
+static int s2e_file_open(BlockDriverState *bs, const char *filename, int flags)
+{
+    /* This wraps the file open process, to allow read-only opening of images */
+    int ret;
+    ret = bdrv_file_open(&bs->file, filename, flags & ~BDRV_O_RDWR);
+    if (ret < 0) {
+        return ret;
+    }
+    ret = s2e_open(bs, flags);
+
+    return ret;
+}
+
 static BlockDriver bdrv_s2e = {
     .format_name        = "s2e",
 
@@ -808,6 +820,8 @@ static BlockDriver bdrv_s2e = {
 
     .bdrv_open          = s2e_open,
     .bdrv_close         = s2e_close,
+
+    .bdrv_file_open     = s2e_file_open,
 
     .bdrv_co_readv          = s2e_co_readv,
     .bdrv_co_writev         = s2e_co_writev,

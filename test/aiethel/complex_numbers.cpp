@@ -19,63 +19,70 @@
 #include <stdio.h>
 
 void FooFloat() {
-  float complex initial_value = 3.14f + 4.2*I;
-  float complex exponent = 2.0f - 1.12*I;
-  float complex result = cpowf(initial_value, exponent);
+    float complex initial_value = 3.14f + 4.2 * I;
+    float complex exponent = 2.0f - 1.12 * I;
+    float complex result = cpowf(initial_value, exponent);
 
-  float real_part = crealf(result);
-  float imag_part = cimagf(result);
+    float real_part = crealf(result);
+    float imag_part = cimagf(result);
 
-  int int_real = static_cast<int>(real_part);
-  int int_imag = static_cast<int>(imag_part);
-  printf("%i %i\n", int_real, int_imag);
-  if (int_real == 77 && int_imag == 0) puts("Okay");
-  else puts("Nok");
+    int int_real = static_cast<int>(real_part);
+    int int_imag = static_cast<int>(imag_part);
+    printf("%i %i\n", int_real, int_imag);
+    if (int_real == 77 && int_imag == 0)
+        puts("Okay");
+    else
+        puts("Nok");
 
-  result = csinf(initial_value);
-  
-  real_part = crealf(result);
-  imag_part = cimagf(result);
+    result = csinf(initial_value);
 
-  int_real = static_cast<int>(real_part);
-  int_imag = static_cast<int>(imag_part);
-  printf("%i %i\n", int_real, int_imag);
-  
-  if (int_real == 0 && int_imag == -33) puts("Okay");
-  else puts("Nok");
+    real_part = crealf(result);
+    imag_part = cimagf(result);
+
+    int_real = static_cast<int>(real_part);
+    int_imag = static_cast<int>(imag_part);
+    printf("%i %i\n", int_real, int_imag);
+
+    if (int_real == 0 && int_imag == -33)
+        puts("Okay");
+    else
+        puts("Nok");
 }
 
 void FooDouble() {
-  double complex initial_value = 3.14 + 4.2*I;
-  double complex exponent = 2.0f - 1.12*I;
-  double complex result = cpow(initial_value, exponent);
+    double complex initial_value = 3.14 + 4.2 * I;
+    double complex exponent = 2.0f - 1.12 * I;
+    double complex result = cpow(initial_value, exponent);
 
-  double real_part = creal(result);
-  double imag_part = cimag(result);
+    double real_part = creal(result);
+    double imag_part = cimag(result);
 
-  int int_real = static_cast<int>(real_part);
-  int int_imag = static_cast<int>(imag_part);
-  printf("%i %i\n", int_real, int_imag);
-  if (int_real == 77 && int_imag == 0) puts("Okay");
-  else puts("Nok");
+    int int_real = static_cast<int>(real_part);
+    int int_imag = static_cast<int>(imag_part);
+    printf("%i %i\n", int_real, int_imag);
+    if (int_real == 77 && int_imag == 0)
+        puts("Okay");
+    else
+        puts("Nok");
 
-  result = csin(initial_value);
-  
-  real_part = creal(result);
-  imag_part = cimag(result);
+    result = csin(initial_value);
 
-  int_real = static_cast<int>(real_part);
-  int_imag = static_cast<int>(imag_part);
-  
-  printf("%i %i\n", int_real, int_imag);
-  if (int_real == 0 && int_imag == -33) puts("Okay");
-  else puts("Nok");
+    real_part = creal(result);
+    imag_part = cimag(result);
+
+    int_real = static_cast<int>(real_part);
+    int_imag = static_cast<int>(imag_part);
+
+    printf("%i %i\n", int_real, int_imag);
+    if (int_real == 0 && int_imag == -33)
+        puts("Okay");
+    else
+        puts("Nok");
 }
 
-int main(void)
-{
-  FooFloat();
-  FooDouble();
-  //TODO: Crashing with floating point exception
-  //FooLongDouble();
+int main(void) {
+    FooFloat();
+    FooDouble();
+    // TODO: Crashing with floating point exception
+    // FooLongDouble();
 }

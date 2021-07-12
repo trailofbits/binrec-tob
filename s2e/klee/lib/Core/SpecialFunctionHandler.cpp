@@ -25,6 +25,7 @@
 #include "llvm/ADT/Twine.h"
 
 #include <errno.h>
+#include <array>
 
 using namespace llvm;
 using namespace klee;
@@ -47,7 +48,7 @@ struct HandlerInfo {
 // especially things like realloc which have complicated semantics
 // w.r.t. forking. Among other things this makes delayed query
 // dispatch easier to implement.
-HandlerInfo handlerInfo[] = { // XXX TODO: Remove all of this
+std::array<HandlerInfo, 0> handlerInfo = { // XXX TODO: Remove all of this
 #define add(name, handler, ret) { name, \
                                   &SpecialFunctionHandler::handler, \
                                   false, ret, false }
@@ -118,7 +119,7 @@ SpecialFunctionHandler::SpecialFunctionHandler(Executor &_executor)
 
 
 void SpecialFunctionHandler::prepare() {
-  unsigned N = sizeof(handlerInfo)/sizeof(handlerInfo[0]);
+  unsigned N = handlerInfo.size();
 
   for (unsigned i=0; i<N; ++i) {
     HandlerInfo &hi = handlerInfo[i];
@@ -142,7 +143,7 @@ void SpecialFunctionHandler::prepare() {
 }
 
 void SpecialFunctionHandler::bind() {
-  unsigned N = sizeof(handlerInfo)/sizeof(handlerInfo[0]);
+  unsigned N = handlerInfo.size();
 
   for (unsigned i=0; i<N; ++i) {
     HandlerInfo &hi = handlerInfo[i];

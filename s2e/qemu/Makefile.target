@@ -451,7 +451,7 @@ endif # CONFIG_SOFTMMU
 ifdef CONFIG_S2E
 $(call set-vpath, $(SRC_PATH))
 
-s2eobj-arm-y =
+s2eobj-arm-y = 
 s2eobj-arm-y += s2e/Plugins/ArmFunctionMonitor.o
 
 s2eobj-i386-y =
@@ -475,6 +475,24 @@ s2eobj-win-y += s2e/Plugins/WindowsApi/NtoskrnlHandlers.o
 s2eobj-win-y += s2e/Plugins/WindowsApi/HalHandlers.o
 s2eobj-win-y += s2e/Plugins/WindowsApi/Api.o
 s2eobj-win-y += s2e/Plugins/WindowsApi/WindowsDriverExerciser.o
+
+s2eobj-binrec-y =
+ifdef CONFIG_BINREC
+s2eobj-binrec-y += s2e/Plugins/BinRec/AddrLog.o
+s2eobj-binrec-y += s2e/Plugins/BinRec/BBExport.o
+s2eobj-binrec-y += s2e/Plugins/BinRec/DebugLog.o
+s2eobj-binrec-y += s2e/Plugins/BinRec/ELFSelector.o
+s2eobj-binrec-y += s2e/Plugins/BinRec/Export.o
+s2eobj-binrec-y += s2e/Plugins/BinRec/ExportELF.o
+s2eobj-binrec-y += s2e/Plugins/BinRec/ExportPE.o
+s2eobj-binrec-y += s2e/Plugins/BinRec/ForkLimiter.o
+s2eobj-binrec-y += s2e/Plugins/BinRec/FunctionLog.o
+s2eobj-binrec-y += s2e/Plugins/BinRec/PELibCallMonitor.o
+s2eobj-binrec-y += s2e/Plugins/BinRec/PESelector.o
+s2eobj-binrec-y += s2e/Plugins/BinRec/RegisterLog.o
+s2eobj-binrec-y += s2e/Plugins/BinRec/SymbolizeArgsPE.o
+s2eobj-binrec-y += s2e/Plugins/BinRec/TestCaseLog.o
+endif
 
 #s2eobj-y = s2e/Base.o
 s2eobj-y =
@@ -528,20 +546,8 @@ s2eobj-y += s2e/ExprInterface.o
 s2eobj-y += s2e/S2E.o
 s2eobj-y += s2e/x64.o
 
-#LLVM translator files
-#s2eobj-y += s2e/Plugins/LLVMTranslator/RecursiveDescentDisassembler.o
-s2eobj-y += s2e/llvm_passes/S2EExtractAndBuildPass.o
-s2eobj-y += s2e/llvm_passes/S2ETransformPass.o
-s2eobj-y += s2e/llvm_passes/S2EReplaceConstantLoadsPass.o
-s2eobj-y += s2e/llvm_passes/S2EARMMergePcThumbPass.o
-s2eobj-y += s2e/llvm_passes/S2EInlineHelpersPass.o
-
-# Thesis plugins
-include ../../../plugins/make-targets.mk
-s2eobj-y += $(patsubst %,s2e/Plugins/thesis/%.o,$(THESIS_PLUGINS))
-
 ifeq ($(TARGET_BASE_ARCH), i386)
-	s2eobj-y += $(s2eobj-i386-y) $(s2eobj-win-y)
+	s2eobj-y += $(s2eobj-i386-y) $(s2eobj-win-y) $(s2eobj-binrec-y)
 endif
 
 ifeq ($(TARGET_BASE_ARCH), arm)
@@ -617,7 +623,7 @@ $(QEMU_PROGW): $(obj-y) $(obj-$(TARGET_BASE_ARCH)-y) $(s2eobj-y)
 $(QEMU_PROG): $(QEMU_PROGW)
 	$(call quiet-command,$(OBJCOPY) --subsystem console $(QEMU_PROGW) $(QEMU_PROG),"  GEN   $(TARGET_DIR)$(QEMU_PROG)")
 else
-$(QEMU_PROG): $(obj-y) $(obj-$(TARGET_BASE_ARCH)-y) $(s2eobj-y)
+$(QEMU_PROG): $(obj-y) $(obj-$(TARGET_BASE_ARCH)-y) $(s2eobj-y) $(CONFIG_LIBBINRECTRACEINFO)
 	$(call LINK,$^)
 endif
 

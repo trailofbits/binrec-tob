@@ -83,7 +83,7 @@ protected:
     void slotTranslateBlockStart(ExecutionSignal *signal, S2EExecutionState *state,
                                   TranslationBlock *tb, uint64_t pc);
     void callFunction(S2EExecutionState *state, uint64_t pc, uint64_t functionAddress);
-    void callFunctionIndirect(S2EExecutionState *state, uint64_t pc, target_ulong register);
+    void callFunctionIndirect(S2EExecutionState *state, uint64_t pc, target_ulong reg);
 
 
     void slotCall(S2EExecutionState* state, uint64_t pc);

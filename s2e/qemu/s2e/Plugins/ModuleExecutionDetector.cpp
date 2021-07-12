@@ -54,6 +54,7 @@
 //#define NDEBUG
 
 
+#include <glib.h>
 extern "C" {
 #include "config.h"
 #include "qemu-common.h"
@@ -235,44 +236,6 @@ bool ModuleExecutionDetector::opAddModuleConfigEntry(S2EExecutionState *state)
     return true;
 }
 
-bool ModuleExecutionDetector::opModuleSignal(S2EExecutionState *state)
-{
-    //XXX: 32-bits guests only
-    target_ulong moduleId;
-
-    if(!state->readCpuRegisterConcrete(CPU_OFFSET(MODULEID), &moduleId, sizeof(moduleId))) {
-        s2e()->getWarningsStream(state)
-            << "ModuleExecutionDetector: Could not read parameters.\n";
-        return false;
-    }
-
-    std::string strModuleId;
-    if (!state->readString(moduleId, strModuleId)) {
-        s2e()->getWarningsStream(state)
-            << "ModuleExecutionDetector: Could not read the module id string.\n";
-        return false;
-    }
-
-    ModuleExecutionCfg desc;
-    desc.id = strModuleId;
-    ConfiguredModulesById::iterator it = m_ConfiguredModulesId.find(desc);
-
-    if (it == m_ConfiguredModulesId.end()) {
-        s2e()->getWarningsStream() << "ModuleExecutionDetector: " <<
-                "module id " << desc.id << " does not exist\n";
-        return false;
-    }
-
-    const ModuleExecutionCfg &existing = *it;
-
-    s2e()->getMessagesStream() << "ModuleExecutionDetector: Signal from module " <<
-            "id=" << existing.id << " moduleName=" << existing.moduleName << "\n";
-
-    onModuleSignal.emit(state, existing);
-
-    return true;
-}
-
 void ModuleExecutionDetector::onCustomInstruction(
         S2EExecutionState *state,
         uint64_t operand
@@ -298,10 +261,6 @@ void ModuleExecutionDetector::onCustomInstruction(
                 state->setPc(state->getPc() + OPCODE_SIZE);
                 throw CpuExitException();
             }
-            break;
-        }
-        case 1: {
-            opModuleSignal(state);
             break;
         }
     }

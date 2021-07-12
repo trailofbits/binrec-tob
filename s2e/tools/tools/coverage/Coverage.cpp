@@ -86,12 +86,6 @@ cl::opt<bool>
 
 namespace s2etools
 {
-
-static inline unsigned pct(unsigned partial, unsigned total)
-{
-    return (unsigned)(partial * 100.0 / total + 0.5);
-}
-
 BasicBlockCoverage::BasicBlockCoverage(const std::string &moduleDir,
            const std::string &moduleName)
 {
@@ -297,11 +291,11 @@ void BasicBlockCoverage::printReport(std::ostream &os, uint64_t pathCount,
 
         if (csv) {
             snprintf(line, sizeof(line), "%u,%u,%u,%s,",
-                     pct(coveredCount, fcnbb.size()), coveredCount, (unsigned)fcnbb.size(),
+                     (unsigned)(coveredCount*100/fcnbb.size()), coveredCount, (unsigned)fcnbb.size(),
                      (*fit).first.c_str());
         } else {
             snprintf(line, sizeof(line), "(%3u%%) %03u/%03u %-50s ",
-                     pct(coveredCount, fcnbb.size()), coveredCount, (unsigned)fcnbb.size(),
+                     (unsigned)(coveredCount*100/fcnbb.size()), coveredCount, (unsigned)fcnbb.size(),
                      (*fit).first.c_str());
         }
 
@@ -335,14 +329,14 @@ void BasicBlockCoverage::printReport(std::ostream &os, uint64_t pathCount,
 
     if (useIgnoreList) {
         os << "Basic block coverage:    " << std::dec << touchedFunctionsBb << "/" << allFunctionsBb <<
-                "(" << pct(touchedFunctionsBb, allFunctionsBb) << "%)"  << std::endl;
+                "(" << (touchedFunctionsBb*100/allFunctionsBb) << "%)"  << std::endl;
 
     } else {
         os << "Basic block coverage:    " << std::dec << m_coveredBbs.size() << "/" << m_allBbs.size() <<
-                "(" << pct(m_coveredBbs.size(), m_allBbs.size()) << "%)"  << std::endl;
+                "(" << (m_coveredBbs.size()*100/m_allBbs.size()) << "%)"  << std::endl;
 
         os << "Function block coverage: " << std::dec << touchedFunctionsBb << "/" << touchedFunctionsTotalBb <<
-                "(" << pct(touchedFunctionsBb, touchedFunctionsTotalBb) << "%)"  << std::endl;
+                "(" << (touchedFunctionsBb*100/touchedFunctionsTotalBb) << "%)"  << std::endl;
     }
 
 
@@ -350,13 +344,13 @@ void BasicBlockCoverage::printReport(std::ostream &os, uint64_t pathCount,
 
     if (useIgnoreList) {
         os << "Fully covered functions: " << std::dec << fullyCoveredFunctions << "/" << touchedFunctions <<
-                "(" << pct(fullyCoveredFunctions, touchedFunctions) << "%)"  << std::endl;
+                "(" << (fullyCoveredFunctions*100/touchedFunctions) << "%)"  << std::endl;
     } else {
         os << "Total touched functions: " << std::dec << touchedFunctions << "/" << m_functions.size() <<
-                "(" << pct(touchedFunctions, m_functions.size()) << "%)"  << std::endl;
+                "(" << (touchedFunctions*100/m_functions.size()) << "%)"  << std::endl;
 
         os << "Fully covered functions: " << std::dec << fullyCoveredFunctions << "/" << m_functions.size() <<
-                "(" << pct(fullyCoveredFunctions, m_functions.size()) << "%)"  << std::endl;
+                "(" << (fullyCoveredFunctions*100/m_functions.size()) << "%)"  << std::endl;
     }
 
 

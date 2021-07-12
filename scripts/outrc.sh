@@ -1,10 +1,10 @@
-export LLVMBIN=$S2EDIR/multicompiler/bin
+export LLVMBIN=$S2EDIR/build/llvm/bin
 #LLVMBIN=$S2EDIR/build/llvm-release/Release+Asserts/bin
-TRANSLATOR=$S2EDIR/build/tran-passes-release/translator/translator.so
+TRANSLATOR=$S2EDIR/build/lib/libbinrec-translator.so
 
 myopt() {
-    $LLVMBIN/opt \
-        -load $TRANSLATOR \
+    opt \
+        -load $TRANSLATOR -load-pass-plugin $TRANSLATOR \
         -disable-verify -debug-verbosity "$debug_level" "$@"
         #-debug-verbosity "$debug_level"  -v "$@" #note, will not be able to run the first pass with verifier on, unknown why
 }
@@ -12,14 +12,19 @@ myopt() {
 outfile=${outfile-out.bc}
 
 run() {
-    myopt -loglevel "$log_level" -s2e-out-dir . -o "$outfile" "$outfile" "$@"
+    myopt -loglevel "$log_level" -o "$outfile" "$outfile" -passes="$@"
+}
+
+run2() {
+    myopt -loglevel "$log_level" -o "$outfile" "$outfile" $@
 }
 
 run_alt() {
-    $S2EDIR/obbuild/bin/opt -v -disable-verify -s2e-out-dir . -o "$outfile" "$outfile" "$@"
+    $S2EDIR/obbuild/bin/opt -v -disable-verify -o "$outfile" "$outfile" "$@"
 }
 
 QUEUE=
+SEPARATOR=
 
 queue() {
     if [ $# -ge 1 ]; then
@@ -27,7 +32,8 @@ queue() {
             run $@
             mymake -s ${outfile%.bc}.ll
         else
-            QUEUE+=" $@"
+            QUEUE+="${SEPARATOR}$@"
+            SEPARATOR=","
         fi
     fi
 }
@@ -38,6 +44,7 @@ run-queue() {
         [ $time_passes -eq 1 ] && queue -time-passes
         run $QUEUE
         QUEUE=
+        SEPARATOR=
     fi
 }
 
@@ -47,7 +54,7 @@ header() {
 }
 
 mylink() {
-    $LLVMBIN/llvm-link "$@"
+    llvm-link "$@"
 }
 
 mymake() {

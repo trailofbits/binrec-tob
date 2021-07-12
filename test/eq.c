@@ -7,7 +7,7 @@ int main(int argc, char **argv) {
         char b = argv[2][0];
         if (a == b) {
             puts("arguments are equal");
-        }else{
+        } else {
             puts("arguments are NOT equal");
         }
     }

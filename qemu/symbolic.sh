@@ -29,12 +29,6 @@ outdir=$ROOT/$outdirbase
 if [ "$DEBUG" = x ]; then release=debug; else release=release; fi
 #release=debug
 
-# make sure that the qemu binary is up to date
-if [ -z "$PARALLEL_LIFTING" ]; then
-  make -C $ROOT --no-print-directory quick-$release
-fi
-[ $? -ne 0 ] && exit 1
-
 # produce core file when in debug mode
 if [ "$DEBUG" = x ]
 then
@@ -61,9 +55,8 @@ ln -s $S2EDIR/scripts/s2eout_makefile $outdir/Makefile
 
 # run qemu with configured timeout
 # FPar: when using the timeout command without --foreground, S2E can freeze when not run from a shell prompt.
-`which time` -f "time elapsed: %es (%E)" \
-timeout --foreground -s INT -k $kill_after $timeout \
-$ROOT/build/qemu-$release/i386-s2e-softmmu/qemu-system-i386 \
+#timeout --foreground -s INT -k $kill_after $timeout \
+$ROOT/build/s2e/qemu/i386-s2e-softmmu/qemu-system-i386 \
     -net none -loadvm $state -m ${MEM_AMOUNT-$DEFAULT_MEM_AMOUNT} \
     -nographic -s2e-max-processes 40 \
     -s2e-config-file $config_file -s2e-verbose \

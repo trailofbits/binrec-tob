@@ -10,10 +10,6 @@ usage() {
 
 if [ "$DEBUG" = x ]; then release=debug; else release=release; fi
 
-#make -C $ROOT --no-print-directory quick-$release
-
-#bins="${@:1}"
-
 filename=$1
 set -a
 PARALLEL_LIFTING=true

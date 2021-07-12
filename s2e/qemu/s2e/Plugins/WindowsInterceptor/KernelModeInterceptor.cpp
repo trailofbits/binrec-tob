@@ -35,6 +35,7 @@
 
 
 // XXX: qemu stuff should be included before anything from KLEE or LLVM !
+#include <glib.h>
 extern "C" {
 #include "config.h"
 //#include "cpu.h"

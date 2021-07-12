@@ -25,11 +25,6 @@
 #
 # The <format-string> should be a sprintf()-compatible format string.
 
-# qemu-malloc.c
-g_malloc(size_t size, void *ptr) "size %zu ptr %p"
-g_realloc(void *ptr, size_t size, void *newptr) "ptr %p size %zu newptr %p"
-g_free(void *ptr) "ptr %p"
-
 # osdep.c
 qemu_memalign(size_t alignment, size_t size, void *ptr) "alignment %zu size %zu ptr %p"
 qemu_vmalloc(size_t size, void *ptr) "size %zu ptr %p"

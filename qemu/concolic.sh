@@ -29,12 +29,6 @@ outdir=$ROOT/$outdirbase
 if [ "$DEBUG" = x ]; then release=debug; else release=release; fi
 #release=debug
 
-# make sure that the qemu binary is up to date
-if [ -z "$PARALLEL_LIFTING" ]; then
-  make -C $ROOT --no-print-directory quick-$release
-fi
-[ $? -ne 0 ] && exit 1
-
 # produce core file when in debug mode
 if [ "$DEBUG" = x ]
 then

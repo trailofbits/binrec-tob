@@ -259,12 +259,16 @@ typedef union {
     uint64_t ll;
 } CPU_DoubleU;
 
-typedef union __attribute__((packed)) {
+typedef union {
      floatx80 d;
-     struct __attribute__((packed)) {
+     // FPar: See floatx80 for note on padding and alignment.
+     struct {
          uint64_t lower;
          uint16_t upper;
-     } l;
+         uint16_t padding1;
+         uint16_t padding2;
+         uint16_t padding3;
+     } __attribute__((aligned(8))) l;
 } CPU_LDoubleU;
 
 typedef union {

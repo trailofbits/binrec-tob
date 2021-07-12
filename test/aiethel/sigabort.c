@@ -1,13 +1,13 @@
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <unistd.h>
 
 void sig_handler(int);
 
 int main() {
     signal(SIGABRT, sig_handler);
-    //send abort signal
+    // send abort signal
     abort();
 }
 

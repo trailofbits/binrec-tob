@@ -35,6 +35,7 @@
 
 ///XXX: Do not use, deprecated
 
+#include <glib.h>
 extern "C" {
 #include "config.h"
 #include "qemu-common.h"

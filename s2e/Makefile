@@ -62,14 +62,13 @@ COMPILER_RT_SRC_DIR=compiler-rt-$(LLVM_VERSION).src
 COMPILER_RT_DEST_DIR=$(LLVM_NATIVE_SRC_DIR)/projects/compiler-rt
 
 KLEE_QEMU_DIRS = $(foreach suffix,-debug -release,$(addsuffix $(suffix),klee klee-asan qemu qemu-asan))
-EXTRA_PASSES_DIRS = $(foreach suffix,-debug -release,$(addsuffix $(suffix),passes tran-passes))
 
 ifeq ($(LLVMBUILD),$(S2EBUILD))
-LLVM_DIRS = llvm-debug llvm-native llvm-release llvm-cmake
+LLVM_DIRS = llvm-debug llvm-native llvm-release
 endif
 
 clean:
-	-rm -Rf $(KLEE_QEMU_DIRS) $(EXTRA_PASSES_DIRS)
+	-rm -Rf $(KLEE_QEMU_DIRS)
 	-rm -Rf stamps
 
 guestclean:
@@ -85,7 +84,7 @@ distclean: clean guestclean
 
 ALWAYS:
 
-guest-tools32 guest-tools64 $(KLEE_QEMU_DIRS) $(EXTRA_PASSES_DIRS) $(LLVM_DIRS) stamps tools-debug tools-release:
+guest-tools32 guest-tools64 $(KLEE_QEMU_DIRS) $(LLVM_DIRS) stamps tools-debug tools-release:
 	mkdir -p $@
 
 stamps/%-configure: | % stamps
@@ -97,18 +96,14 @@ stamps/%-make:
 	touch $@
 
 # On Ubuntu 14.04, c++config.h is located in a platform-specific path
-ifeq ("",$(wildcard /usr/include/x86_64-linux-gnu/c++/4.8/c++config.h))
+ifeq (,$(wildcard /usr/include/x86_64-linux-gnu/c++/4.8/c++config.h))
  export CPLUS_INCLUDE_PATH=/usr/include:/usr/include/x86_64-linux-gnu:/usr/include/x86_64-linux-gnu/c++/4.8
  export C_INCLUDE_PATH=/usr/include:/usr/include/x86_64-linux-gnu
 endif
 
 #############
-
 # Downloads #
 #############
-
-A := $(shell echo abc) 
-$(info $(A)) 
 
 ifeq ($(LLVMBUILD),$(S2EBUILD))
 LLVM_SRC_URL = http://llvm.org/releases/$(LLVM_VERSION)/
@@ -157,16 +152,6 @@ stamps/llvm-native-configure: CONFIGURE_COMMAND = $(S2EBUILD)/$(LLVM_NATIVE_SRC_
 
 stamps/llvm-native-make: stamps/llvm-native-configure
 stamps/llvm-native-make: BUILD_OPTS = ENABLE_OPTIMIZED=1
-
-stamps/llvm-cmake-configure: CONFIGURE_COMMAND = cmake -G "Unix Makefiles" -DCMAKE_C_COMPILER=$(CLANG_CC) \
-                                                 -DCMAKE_CXX_COMPILER=$(CLANG_CXX) \
-												 -DCMAKE_INSTALL_PREFIX=$(S2EBUILD)/opt \
-												 -DLLVM_INSTALL_PREFIX=$(S2EBUILD)/opt \
-												 -DCMAKE_BUILD_TYPE=Release \
-												 -DLLVM_REQUIRES_RTTI=1 \
-												 -DLLVM_TARGET_ARCH=X86_64 \
-												 -DLLVM_TARGETS_TO_BUILD=X86 \
-												 $(S2EBUILD)/$(LLVM_SRC_DIR)
 
 #Then, build LLVM with the clang compiler.
 #Note that we build LLVM without clang and compiler-rt, because S2E does not need them.
@@ -338,18 +323,6 @@ stamps/qemu-asan-release-configure: CONFIGURE_COMMAND = $(S2ESRC)/qemu/configure
 
 stamps/qemu-asan-debug-make: stamps/qemu-asan-debug-configure
 stamps/qemu-asan-release-make: stamps/qemu-asan-release-configure
-
-stamps/tran-passes-release-configure: stamps/llvm-cmake-make
-#change next line to generate ninja?
-stamps/tran-passes-release-configure: CONFIGURE_COMMAND = cmake -G "Unix Makefiles" \
-                                 -DLLVM_DIR=$(S2EDIR)/multicompiler/share/llvm/cmake \
-                                 -DCMAKE_CXX_COMPILER=$(S2EDIR)/multicompiler/bin/clang++ \
-								 $(S2ESRC)/tran-passes
-$(info Trans passes configured with multicompiler-3.8)
-#stamps/tran-passes-release-configure: CONFIGURE_COMMAND = cmake -G "Unix Makefiles" \
-                                 -DLLVM_DIR=$(S2EBUILD)/llvm-cmake/share/llvm/cmake \
-                                 -DCMAKE_CXX_COMPILER=$(CLANG_CXX) \
-								 $(S2ESRC)/tran-passes
 
 #########
 # Tools #

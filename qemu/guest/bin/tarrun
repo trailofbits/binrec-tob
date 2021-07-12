@@ -8,6 +8,7 @@ tarfile=$1
 
 s2eget $tarfile || { s2ecmd message "tarfile $tarfile not found"; exit 1; }
 tar -xf $tarfile
-export LD_PRELOAD=$HOME/guest/build/init_env.so
-./command
+export LD_PRELOAD=$HOME/lib/init_env.so
+source ./command
+unset LD_PRELOAD
 s2ecmd kill 0 "$bin finished"

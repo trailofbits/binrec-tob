@@ -33,6 +33,7 @@
  * All contributors are listed in the S2E-AUTHORS file.
  */
 
+
 #include "WindowsMonitor.h"
 #include "WindowsImage.h"
 
@@ -99,108 +100,28 @@ bool WindowsImage::IsValidString(const char *str)
 
 WindowsImage::WindowsImage(S2EExecutionState *state, uint64_t Base)
 {
-    readHeader(state, Base);
-}
-
-WindowsImage::WindowsImage(const char *path)
-{
-    if (!setFile(path))
-        s2e_debug_print("WindowsImage: error while reading input file\n");
-}
-
-bool WindowsImage::setFile(const char *path)
-{
-    m_infile.open(path);
-
-    if (!m_infile) {
-        s2e_debug_print("Could not open file \"%s\")\n", path);
-        return false;
-    }
-
-    if (!readHeader(NULL, 0))
-        return false;
-
-    InitSections(NULL);
-    m_sectionsInited = true;
-
-    return true;
-}
-
-size_t WindowsImage::getFileOffset(uint64_t addr)
-{
-    if (m_sectionsInited) {
-        // addr is virtual, find the section in which it is located
-        foreach2(s, m_Sections.begin(), m_Sections.end()) {
-            if (addr >= s->loadBase && addr < s->loadBase + s->size) {
-                return s->fileOffset + (addr - s->loadBase);
-            }
-        }
-
-        s2e_debug_print("Could not convert virtual address %08x to file offset\n", addr);
-        return 0xffffffff;
-    } else {
-        // SHT address: addr is m_Base + file offset
-        return addr - m_Base;
-    }
-}
-
-bool WindowsImage::readFromFileOrMemory(S2EExecutionState *state,
-        uint64_t addr, void *buf, uint64_t size)
-{
-    if (m_infile.is_open()) {
-        m_infile.seekg(getFileOffset(addr), ios::beg);
-        m_infile.read((char*)buf, size);
-        return !!m_infile;
-    } else {
-        return state->readMemoryConcrete(addr, buf, size);
-    }
-}
-
-bool WindowsImage::readString(S2EExecutionState *state, uint64_t addr, std::string &s, unsigned maxlen)
-{
-    if (m_infile.is_open()) {
-        m_infile.seekg(getFileOffset(addr), ios::beg);
-        s = "";
-
-        do {
-            char c = m_infile.get();
-            if (c) {
-                s += c;
-            } else {
-                return true;
-            }
-        } while (--maxlen > 0);
-
-        return false;
-    } else {
-        return state->readString(addr, s, maxlen);
-    }
-}
-
-bool WindowsImage::readHeader(S2EExecutionState *state, uint64_t Base)
-{
     m_Base = Base;
     m_ImageSize = 0;
     m_ImageBase = 0;
 
-    if (!readFromFileOrMemory(state, m_Base, &DosHeader, sizeof(DosHeader))) {
-        s2e_debug_print("Could not load IMAGE_DOS_HEADER structure (m_Base=%#"PRIx64")\n", m_Base);
-        return false;
+    if (!state->readMemoryConcrete(m_Base, &DosHeader, sizeof(DosHeader))) {
+        s2e_debug_print("Could not load IMAGE_DOS_HEADER structure (m_Base=%#" PRIx64")\n", m_Base);
+        return;
     }
 
     if (DosHeader.e_magic != s2e::windows::IMAGE_DOS_SIGNATURE)  {
         s2e_debug_print("PE image has invalid magic\n");
-        return false;
+        return;
     }
 
-    if (!readFromFileOrMemory(state, m_Base+DosHeader.e_lfanew, &NtHeader, sizeof(NtHeader))) {
-        s2e_debug_print("Could not load IMAGE_NT_HEADER structure (m_Base=%#"PRIx64")\n", m_Base+(unsigned)DosHeader.e_lfanew);
-        return false;
+    if (!state->readMemoryConcrete(m_Base+DosHeader.e_lfanew, &NtHeader, sizeof(NtHeader))) {
+        s2e_debug_print("Could not load IMAGE_NT_HEADER structure (m_Base=%#" PRIx64")\n", m_Base+(unsigned)DosHeader.e_lfanew);
+        return;
     }
 
     if (NtHeader.Signature != s2e::windows::IMAGE_NT_SIGNATURE) {
         s2e_debug_print("NT header has invalid magic\n");
-        return false;
+        return;
     }
 
     m_ImageSize = NtHeader.OptionalHeader.SizeOfImage;
@@ -211,8 +132,6 @@ bool WindowsImage::readHeader(S2EExecutionState *state, uint64_t Base)
     m_ImportsInited = false;
     m_ExportsInited = false;
     m_sectionsInited = false;
-
-    return true;
 }
 
 bool WindowsImage::InitSections(S2EExecutionState *state)
@@ -225,13 +144,12 @@ bool WindowsImage::InitSections(S2EExecutionState *state)
             sizeof(s2e::windows::IMAGE_FILE_HEADER) + sizeof(s2e::windows::IMAGE_OPTIONAL_HEADER);
 
     for (unsigned i=0; i<sections; ++i) {
-        if (!readFromFileOrMemory(state, pSection, &sectionHeader, sizeof(sectionHeader))) {
+        if (!state->readMemoryConcrete(pSection, &sectionHeader, sizeof(sectionHeader))) {
             return false;
         }
         SectionDescriptor sectionDesc;
         sectionDesc.loadBase = m_Base + sectionHeader.VirtualAddress;
         sectionDesc.size = sectionHeader.SizeOfRawData;
-        sectionDesc.fileOffset = sectionHeader.PointerToRawData;
 
         for (unsigned i=0; sectionHeader.Name[i] &&  i<IMAGE_SIZEOF_SHORT_NAME; ++i) {
             sectionDesc.name += sectionHeader.Name[i];
@@ -269,13 +187,12 @@ int WindowsImage::InitExports(S2EExecutionState *state)
     s2e_debug_print("ExportTableAddress=%#x ExportTableSize=%#x\n", ExportDataDir->VirtualAddress, ExportDataDir->Size);
 
     if (!ExportDataDir->VirtualAddress || !ExportTableSize) {
-        s2e_debug_print("Export table is empty\n");
-        return 0;
+        return -1;
     }
 
     ExportDir = (s2e::windows::PIMAGE_EXPORT_DIRECTORY)malloc(ExportTableSize);
 
-    if (!readFromFileOrMemory(state, ExportTableAddress, (uint8_t*)ExportDir, ExportTableSize)) {
+    if (!state->readMemoryConcrete(ExportTableAddress, (uint8_t*)ExportDir, ExportTableSize)) {
         s2e_debug_print("Could not load PIMAGE_EXPORT_DIRECTORY structures (m_Base=%#x)\n", ExportTableAddress);
         res = -5;
         goto err2;
@@ -293,27 +210,28 @@ int WindowsImage::InitExports(S2EExecutionState *state)
         return -1;
     }
 
-    if (!readFromFileOrMemory(state, m_Base + ExportDir->AddressOfNames, Names, TblSz)) {
+    if (!state->readMemoryConcrete(m_Base + ExportDir->AddressOfNames, Names, TblSz)) {
         s2e_debug_print("Could not load names of exported functions");
         res = -6;
         goto err2;
     }
 
-    if (!readFromFileOrMemory(state, m_Base + ExportDir->AddressOfFunctions, FcnPtrs, TblSz)) {
+    if (!state->readMemoryConcrete(m_Base + ExportDir->AddressOfFunctions, FcnPtrs, TblSz)) {
         s2e_debug_print("Could not load addresses of  exported functions");
         res = -7;
         goto err3;
     }
 
     for (i=0; i<ExportDir->NumberOfFunctions; i++) {
-        string FunctionName = " ";
+        string FunctionName;
 
         uint32_t EffAddr = Names[i] + m_Base;
         if (EffAddr < m_Base || EffAddr >= m_Base + m_ImageSize) {
             continue;
         }
 
-        if (!readString(state, EffAddr, FunctionName) || !IsValidString(FunctionName.c_str())) {
+        state->readString(Names[i] + m_Base, FunctionName);
+        if (!IsValidString(FunctionName.c_str())) {
             continue;
         }
 
@@ -346,8 +264,7 @@ int WindowsImage::InitImports(S2EExecutionState *state)
     ImportTableSize = ImportDir->Size;
 
     if (!ImportTableAddress || !ImportTableSize) {
-        s2e_debug_print("Import table is empty\n");
-        return 0;
+        return -1;
     }
 
     ImportDescCount = ImportTableSize / sizeof(s2e::windows::IMAGE_IMPORT_DESCRIPTOR);
@@ -357,8 +274,8 @@ int WindowsImage::InitImports(S2EExecutionState *state)
         return -5;
     }
 
-    if (!readFromFileOrMemory(state, ImportTableAddress, ImportDescriptors, ImportTableSize)) {
-        s2e_debug_print("Could not load IMAGE_IMPORT_DESCRIPTOR structures (base=%#"PRIx64", size=%d)\n", ImportTableAddress, ImportTableSize);
+    if (!state->readMemoryConcrete(ImportTableAddress, ImportDescriptors, ImportTableSize)) {
+        s2e_debug_print("Could not load IMAGE_IMPORT_DESCRIPTOR structures (base=%#" PRIx64")\n", ImportTableAddress);
         free(ImportDescriptors);
         return -6;
     }
@@ -367,8 +284,10 @@ int WindowsImage::InitImports(S2EExecutionState *state)
         s2e::windows::IMAGE_THUNK_DATA32 INaT;
         string DllName;
 
-        if (!readString(state, ImportDescriptors[i].Name + m_Base, DllName)
-                || !IsValidString(DllName.c_str())) {
+        if (!state->readString(ImportDescriptors[i].Name + m_Base, DllName)) {
+            continue;
+        }
+        if (!IsValidString(DllName.c_str())) {
             continue;
         }
 
@@ -382,9 +301,9 @@ int WindowsImage::InitImports(S2EExecutionState *state)
             s2e::windows::IMAGE_THUNK_DATA32 IAT;
             uint32_t Name;
             bool res1, res2;
-            res1 = readFromFileOrMemory(state, ImportAddressTable+j*sizeof(s2e::windows::IMAGE_THUNK_DATA32),
+            res1 = state->readMemoryConcrete(ImportAddressTable+j*sizeof(s2e::windows::IMAGE_THUNK_DATA32),
                 &IAT, sizeof(IAT));
-            res2 = readFromFileOrMemory(state, ImportNameTable+j*sizeof(s2e::windows::IMAGE_THUNK_DATA32),
+            res2 = state->readMemoryConcrete(ImportNameTable+j*sizeof(s2e::windows::IMAGE_THUNK_DATA32),
                 &INaT, sizeof(INaT));
 
             if (!res1 || !res2) {
@@ -396,8 +315,6 @@ int WindowsImage::InitImports(S2EExecutionState *state)
             if (!INaT.u1.AddressOfData)
                 break;
 
-            //s2e_debug_print("  data @%08x\n", INaT.u1.AddressOfData);
-
             if (INaT.u1.AddressOfData & IMAGE_ORDINAL_FLAG) {
                 uint32_t Tmp = INaT.u1.AddressOfData & ~0xFFFF;
                 Tmp &= ~IMAGE_ORDINAL_FLAG;
@@ -405,19 +322,19 @@ int WindowsImage::InitImports(S2EExecutionState *state)
                     s2e_debug_print("Does not support import by ordinals\n");
                     break;
                 }
-            } else {
-                //INaT.u1.AddressOfData += m_Base;
+            }else {
+                INaT.u1.AddressOfData += m_Base;
             }
 
             string FunctionName;
-            Name = m_Base + INaT.u1.AddressOfData + 2;
+            Name = INaT.u1.AddressOfData;
 
             if (Name < m_Base || Name >= m_Base + m_ImageSize) {
                 j++;
                 continue;
             }
 
-            if (!readString(state, Name, FunctionName)) {
+            if (!state->readString(Name+2, FunctionName)) {
                 j++;
                 continue;
             }
@@ -426,16 +343,17 @@ int WindowsImage::InitImports(S2EExecutionState *state)
                 j++;
                 continue;
             }
-            s2e_debug_print("  %s @%08x\n", FunctionName.c_str(), IAT.u1.Function);
+            //s2e_debug_print("  %s @%#x\n", FunctionName.c_str(), IAT.u1.Function);
 
-            std::transform(DllName.begin(), DllName.end(), DllName.begin(), ::tolower);
+            std::transform(DllName.begin(), DllName.end(), DllName.begin(),
+                           ::tolower);
             ImportedFunctions &ImpFcnIt = m_Imports[DllName];
             ImpFcnIt[FunctionName] = IAT.u1.Function;
 
             /* Check if we already hooked the given address */
             //iohook_winstrucs_hook_import(FunctionName, IAT.u1.Function);
             j++;
-        } while (INaT.u1.AddressOfData);
+        }while(INaT.u1.AddressOfData);
     }
 
     free(ImportDescriptors);
@@ -460,9 +378,7 @@ uint64_t WindowsImage::GetRoundedImageSize() const {
 const Exports& WindowsImage::GetExports(S2EExecutionState *s)
 {
     if (!m_ExportsInited) {
-        if ((m_err = InitExports(s)) != 0) {
-            s2e_debug_print("Could not initialize export table (%d)\n", m_err);
-        }
+        InitExports(s);
         m_ExportsInited = true;
     }
     return m_Exports;
@@ -471,10 +387,8 @@ const Exports& WindowsImage::GetExports(S2EExecutionState *s)
 const Imports& WindowsImage::GetImports(S2EExecutionState *s)
 {
     if (!m_ImportsInited) {
-        if ((m_err = InitImports(s)) != 0) {
-            s2e_debug_print("Could not initialize import table (%d)\n", m_err);
-        }
-        m_ImportsInited = true;
+      InitImports(s);
+      m_ImportsInited = true;
     }
     return m_Imports;
 }
@@ -482,11 +396,10 @@ const Imports& WindowsImage::GetImports(S2EExecutionState *s)
 const ModuleSections &WindowsImage::GetSections(S2EExecutionState *s)
 {
     if (!m_sectionsInited) {
-        if ((m_err = !InitSections(s)) != 0) {
-            s2e_debug_print("Could not initialize section table (%d)\n", m_err);
-        }
+        InitSections(s);
         m_sectionsInited = true;
     }
+
     return m_Sections;
 }
 

@@ -60,8 +60,8 @@ for file in $captured_dirs ; do
     if [[ -d $file ]] ; then
         #echo $file
         #llvm-link-3.8 -v -print-all-options -o $tmp -only-needed -suppress-warnings -override=$outfile $file/captured.bc && mv $tmp $outfile
-        #bash ./docker/run "ls $S2EDIR/multicompiler/bin"
-        command="$S2EDIR/multicompiler/bin/llvm-link -print-after-all -v -o $tmp -override=$outfile $file/0/captured-link-ready.bc && mv $tmp $outfile"
+        #bash ./docker/run "ls $S2EDIR/build/llvm/bin"
+        command="$S2EDIR/build/llvm/bin/llvm-link -print-after-all -v -o $tmp -override=$outfile $file/0/captured-link-ready.bc && mv $tmp $outfile"
         bash ./docker/run $command
         #mylink -only-needed -v -o $tmp $outfile $file/captured-link-ready.bc && mv $tmp $outfile
         #mylink -v -o $tmp -override=$outfile $file/captured-link-ready.bc && mv $tmp $outfile
@@ -70,43 +70,22 @@ for file in $captured_dirs ; do
 done
 header "Disassembling generated bitcode.."
 #mymake -s ${outfile%.bc}.ll
-bash ./docker/run "$S2EDIR/multicompiler/bin/llvm-dis $outfile"
+bash ./docker/run "$S2EDIR/build/llvm/bin/llvm-dis $outfile"
 
 #copy one of the succs.dat file to outdir and use it to merge with others
-header "Merging succ.dat files.."
-succsfile=$outdir/succs.dat
-echo "Outfile: "
-echo $succsfile
+header "Merging traceInfo.json files.."
 found=0
+traceInfoFiles=""
 for file in $captured_dirs ; do
     if [[ -d $file ]] ; then
-        echo $file
-        cp $file/0/succs.dat $succsfile
-        if [ "$func_data" -eq "1" ] ; then
-	echo "func=1"
-        cp $file/0/callerToFollowUp $outdir
-        cp $file/0/entryToCaller $outdir
-        cp $file/0/entryToReturn $outdir
-        fi
+        traceInfoFiles+=" $file/0/traceInfo.json"
         found=1
-        break
     fi
 done
 
 [ $found -ne 1 ] && exit 1
 
-#merge with other succs.dat
-for file in $captured_dirs ; do
-    if [[ -d $file ]] ; then
-        echo $file
-        python $ROOT/scripts/merge_succs.py $succsfile $file/0/succs.dat
-        if [ "$func_data" -eq "1" ] ; then
-        python $ROOT/scripts/merge_succs.py $outdir/callerToFollowUp $file/0/callerToFollowUp
-        python $ROOT/scripts/merge_succs.py $outdir/entryToCaller $file/0/entryToCaller
-        python $ROOT/scripts/merge_succs.py $outdir/entryToReturn $file/0/entryToReturn
-        fi
-    fi
-done
+$S2EDIR/build/bin/binrec-tracemerge $traceInfoFiles $outdir/traceInfo.json
 
 if [ "$func_data" -eq "1" ] ; then
 for file in $captured_dirs ; do
@@ -138,8 +117,3 @@ for file in $captured_dirs ; do
         break
     fi
 done
-
-
-
-
-

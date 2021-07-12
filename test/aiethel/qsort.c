@@ -17,39 +17,41 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void fill() {
-    printf(" F ");
-}
+void fill() { printf(" F "); }
 
-int compare1( const void* a, const void* b ) {
-    int arg1 = *( const int* ) a;
-    int arg2 = *( const int* ) b;
-    if ( arg1 < arg2 ) return -1;
-    if ( arg1 > arg2 ) return 1;
+int compare1(const void *a, const void *b) {
+    int arg1 = *(const int *)a;
+    int arg2 = *(const int *)b;
+    if (arg1 < arg2)
+        return -1;
+    if (arg1 > arg2)
+        return 1;
     return 0;
 }
 
-int compare2( const void* a, const void* b ) {
-    int arg1 = *( const int* ) a;
-    int arg2 = *( const int* ) b;
-    if ( arg1 > arg2 ) return -1;
-    if ( arg1 < arg2 ) return 1;
+int compare2(const void *a, const void *b) {
+    int arg1 = *(const int *)a;
+    int arg2 = *(const int *)b;
+    if (arg1 > arg2)
+        return -1;
+    if (arg1 < arg2)
+        return 1;
     return 0;
 }
 
 int main() {
-    //int arr[] = { -5, -2, 6, 8, 10, 15, 17, 22 };
+    // int arr[] = { -5, -2, 6, 8, 10, 15, 17, 22 };
     int arr[] = {5, 3, 1, -1};
     int size = sizeof arr / sizeof *arr;
 
-    qsort( arr, size, sizeof( int ), compare1);
-    printf( "Sorted: " );
-    for ( int i = 0; i < size; ++i ) {
-        printf("%i ", arr[i] );
+    qsort(arr, size, sizeof(int), compare1);
+    printf("Sorted: ");
+    for (int i = 0; i < size; ++i) {
+        printf("%i ", arr[i]);
         fill();
     }
     printf("\n");
-    
-    qsort( arr, size, sizeof( int ), compare2);
-    printf("%i \n", arr[0] );
+
+    qsort(arr, size, sizeof(int), compare2);
+    printf("%i \n", arr[0]);
 }

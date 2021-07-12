@@ -7,7 +7,7 @@ final_file=$outfile
 
 cd $s2e_outdir
 
-bash $S2EDIR/scripts/lift.sh $options $infile lifted.bc
+bash $S2EDIR/scripts/lift2.sh $options $infile lifted.bc
 
 outfile=optimized.bc
 cp lifted.bc $outfile
@@ -21,27 +21,27 @@ mv ${outfile%.bc}.ll ${outfile%.bc}-before.ll
 #mv ${outfile%.bc}.ll ${outfile%.bc}-after.ll
 
 header "run -env-aa and -licm"
-run -basicaa -globals-aa -env-aa -licm
+run2 -basicaa -globals-aa -env-aa -licm
 mymake -s ${outfile%.bc}.ll
 mv ${outfile%.bc}.ll ${outfile%.bc}-after-licm.ll
 
 header "inline helper functions for optimization"
-run -inline-wrapper -die -always-inline
+run2 -inline-wrapper -die -always-inline
 mymake -s ${outfile%.bc}.ll
 mv ${outfile%.bc}.ll ${outfile%.bc}-after-alwaysinline.ll
 
 header "run -gvn"
-run -dce -gvn -dce
+run2 -dce -gvn -dce
 mymake -s ${outfile%.bc}.ll
 mv ${outfile%.bc}.ll ${outfile%.bc}-after-gvn.ll
 
-header "transform environment globals into allocas"
-run -env-to-allocas
-mymake -s ${outfile%.bc}.ll
-mv ${outfile%.bc}.ll ${outfile%.bc}-after-allocas.ll
+#header "transform environment globals into allocas"
+#run2 -env-to-allocas
+#mymake -s ${outfile%.bc}.ll
+#mv ${outfile%.bc}.ll ${outfile%.bc}-after-allocas.ll
 
 header "optimization"
-run -env-aa -O3 -globalopt
+run2 --disable-simplify-libcalls -env-aa -O3 -globalopt
 #run -O3 -globalopt
 #run -O3
 

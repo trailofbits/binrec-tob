@@ -71,7 +71,7 @@ typedef struct TranslationBlock TranslationBlock;
  * and up to 4 + N parameters on 64-bit archs
  * (N = number of input arguments + output arguments).  */
 #define MAX_OPC_PARAM (4 + (MAX_OPC_PARAM_PER_ARG * MAX_OPC_PARAM_ARGS))
-#define OPC_BUF_SIZE 10000
+#define OPC_BUF_SIZE 10240 // Increase from 640 so we don't run out of space when tracing long blocks
 #define OPC_MAX_SIZE (OPC_BUF_SIZE - MAX_OP_PER_INSTR)
 
 /* Maximum size a TCG op can expand to.  This is complicated because a
@@ -111,11 +111,12 @@ int cpu_restore_state(struct TranslationBlock *tb,
                       CPUArchState *env, uintptr_t searched_pc);
 void QEMU_NORETURN cpu_resume_from_signal(CPUArchState *env1, void *puc);
 void QEMU_NORETURN cpu_io_recompile(CPUArchState *env, void *retaddr);
-TranslationBlock *tb_gen_code(CPUArchState *env,
+TranslationBlock *tb_gen_code(CPUArchState *env, 
                               target_ulong pc, target_ulong cs_base, int flags,
                               int cflags);
 void cpu_exec_init(CPUArchState *env);
 void QEMU_NORETURN cpu_loop_exit(CPUArchState *env1);
+void QEMU_NORETURN cpu_loop_exit_restore(CPUArchState *env1, uintptr_t pc);
 int page_unprotect(target_ulong address, uintptr_t pc, void *puc);
 void tb_invalidate_phys_page_range(tb_page_addr_t start, tb_page_addr_t end,
                                    int is_cpu_write_access);
@@ -220,8 +221,6 @@ struct TranslationBlock {
     uint8_t *llvm_tc_ptr;
     uint8_t *llvm_tc_end;
     struct TranslationBlock* llvm_tb_next[2];
-    uint64_t llvm_first_pc_after_bb;
-    uint64_t llvm_last_pc_in_bb;
 #endif
 
 #ifdef CONFIG_S2E

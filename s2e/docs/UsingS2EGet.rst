@@ -2,7 +2,7 @@
 Quickly Uploading Programs to the Guest with ``s2eget``
 =======================================================
 
-The ``s2eget`` tool allows to easily download files from the host into the guest in
+The ``s2eget`` tool allows to easily upload files from the host into the guest in
 S2E mode. The typical use case for this tool is to set up a VM snapshot that, when
 resumed in S2E mode, automatically downloads a program from the host and starts
 symbolically executing it.
@@ -12,15 +12,17 @@ symbolically executing it.
 Setting up HostFiles Plugin
 ===========================
 
-To use ``s2eget``, you enable the ``HostFiles`` plugin in the S2E configuration file.
-Add the following lines to your ``config.lua`` file:
+To use ``s2eget``, enable the ``HostFiles`` plugin in the S2E configuration file.
+Here is a minimal ``config.lua`` to use ``s2eget``:
 
 .. code-block:: lua
 
    plugins = {
-     ...
+     "BaseInstructions",
      "HostFiles"
    }
+
+   pluginsConfig = {}
 
    pluginsConfig.HostFiles = {
      baseDirs = {"/path/to/host/dir1", "/path/to/host/dir2"}
@@ -34,19 +36,37 @@ will be exported.
 Running ``s2eget``
 ==================
 
-First, boot the VM in the S2E version of QEMU in non-S2E mode. Copy ``s2eget``
-into the guest over SSH (or any other method). Then run the tool, for example,
-as follows::
+We need to copy the ``s2eget`` binary into the guest image.
 
-  guest$ ./s2eget <filename> && chmod +x ./<filename> && ./<filename>
+1. Boot the VM in the S2E version of QEMU in non-S2E mode::
 
-where ``<filename>`` specifies what file to download from the host and execute
-in the guest.
+    host$ $S2EDIR/build/qemu-release/i386-softmmu/qemu-system-i386 s2e_disk.raw.s2e
 
-When being run like that in non-S2E mode, ``s2eget`` simply waits. At that
-point, save the VM snapshot and then load it in S2E mode. ``s2eget`` will
-detect it and download the file. The rest of the command line will make it
-executable and execute it.
+2. Copy ``s2eget`` into the guest over SSH (or any other method).
 
-Note that you could resume this snapshot as many times as you want, changing
-the program and/or trying different S2E options.
+3. Launch ``s2eget``, for example, as follows::
+
+    guest$ ./s2eget <filename> && chmod +x ./<filename> && ./<filename>
+
+   where ``<filename>`` specifies what file to download from the host and execute
+   in the guest.
+
+   When being run like that in non-S2E mode, ``s2eget`` simply waits.
+
+4. Save a VM snapshot (e.g., call it "ready")
+
+5. Resume the snapshot in S2E mode. Here is an example of how to start in S2E mode::
+
+    host$ $S2EDIR/build/qemu-release/i386-s2e-softmmu/qemu-system-i386 s2e_disk.raw.s2e -s2e-config-file config.lua -loadvm ready
+
+   ``s2eget`` detects that it runs in
+   S2E mode and downloads the file. The rest of the command line makes
+   the downloaded file executable and then executes it.
+
+
+The most convenient way of using S2E is to download a bootstrap file
+with ``s2eget``, then launch the bootstrap file after resuming in
+S2E mode. The bootstrap file can further use ``s2eget`` to download
+and execute more files. This way, you can resume the snapshot as
+many times as you want, changing the code to run in S2E just by
+tweaking the bootstrap file.

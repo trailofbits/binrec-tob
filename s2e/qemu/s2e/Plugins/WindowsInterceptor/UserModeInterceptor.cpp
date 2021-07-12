@@ -34,6 +34,7 @@
  */
 
 // XXX: qemu stuff should be included before anything from KLEE or LLVM !
+#include <glib.h>
 extern "C" {
 #include "config.h"
 #include "qemu-common.h"
@@ -226,7 +227,7 @@ bool WindowsUmInterceptor::WaitForProcessInit(S2EExecutionState* state)
     m_LdrAddr = PebBlock.Ldr;
     m_ProcBase = PebBlock.ImageBaseAddress;
 
-    s2e_debug_print("Process %#"PRIx64" %#x %#x\n", m_ProcBase, LdrData.Initialized, LdrData.EntryInProgress);
+    s2e_debug_print("Process %#" PRIx64" %#x %#x\n", m_ProcBase, LdrData.Initialized, LdrData.EntryInProgress);
     return true;
 
 }
@@ -258,11 +259,11 @@ bool WindowsUmInterceptor::CatchProcessTerminationXp(S2EExecutionState *State)
     s2e::windows::EPROCESS32_XP EProcess;
 
     if (!State->readMemoryConcrete(pEProcess, &EProcess, sizeof(EProcess))) {
-        TRACE("Could not read EProcess data structure at %#"PRIx64"!\n", pEProcess);
+        TRACE("Could not read EProcess data structure at %#" PRIx64"!\n", pEProcess);
         return false;
     }
 
-    s2e_debug_print("Process %#"PRIx32" %16s unloaded\n", EProcess.Pcb.DirectoryTableBase,
+    s2e_debug_print("Process %#" PRIx32" %16s unloaded\n", EProcess.Pcb.DirectoryTableBase,
         EProcess.ImageFileName);
     m_Os->onProcessUnload.emit(State, EProcess.Pcb.DirectoryTableBase);
 
@@ -287,11 +288,11 @@ bool WindowsUmInterceptor::CatchProcessTerminationServer2008(S2EExecutionState *
     s2e::windows::EPROCESS32_XP EProcess;
 
     if (!State->readMemoryConcrete(pProcess, &EProcess, sizeof(EProcess))) {
-        TRACE("Could not read EProcess data structure at %#"PRIx64"!\n", pProcess);
+        TRACE("Could not read EProcess data structure at %#" PRIx64"!\n", pProcess);
         return false;
     }
 
-    s2e_debug_print("Process %#"PRIx32" %16s unloaded\n", EProcess.Pcb.DirectoryTableBase,
+    s2e_debug_print("Process %#" PRIx32" %16s unloaded\n", EProcess.Pcb.DirectoryTableBase,
         EProcess.ImageFileName);
     m_Os->onProcessUnload.emit(State, EProcess.Pcb.DirectoryTableBase);
 
@@ -315,7 +316,7 @@ bool WindowsUmInterceptor::CatchModuleUnloadBase(S2EExecutionState *State, uint6
     s2e::windows::LDR_DATA_TABLE_ENTRY32 LdrEntry;
 
     if (!State->readMemoryConcrete(pLdrEntry, &LdrEntry, sizeof(LdrEntry))) {
-        TRACE("Could not read pLdrEntry data structure at %#"PRIx64"!\n", pLdrEntry);
+        TRACE("Could not read pLdrEntry data structure at %#" PRIx64"!\n", pLdrEntry);
         return false;
     }
 
@@ -329,7 +330,7 @@ bool WindowsUmInterceptor::CatchModuleUnloadBase(S2EExecutionState *State, uint6
     Desc.LoadBase = LdrEntry.DllBase;
     Desc.Size = LdrEntry.SizeOfImage;
 
-    s2e_debug_print("Detected module unload %s pid=%#"PRIx64" LoadBase=%#"PRIx64"\n",
+    s2e_debug_print("Detected module unload %s pid=%#" PRIx64" LoadBase=%#" PRIx64"\n",
         Desc.Name.c_str(), Desc.Pid, Desc.LoadBase);
 
     m_Os->onModuleUnload.emit(State, Desc);

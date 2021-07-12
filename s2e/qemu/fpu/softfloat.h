@@ -131,10 +131,15 @@ typedef uint64_t float64;
 #define const_float32(x) (x)
 #define const_float64(x) (x)
 #endif
-typedef struct __attribute__((packed)) {
+// Fpar: Explicit padding to make the type the same size on 32 and 64 bit (we trace modules in 64-bit, but we want it
+// to run in 32-bit and the struct padding only causes issues.)
+typedef struct {
     uint64_t low;
     uint16_t high;
-} floatx80;
+    uint16_t padding1;
+    uint16_t padding2;
+    uint16_t padding3;
+} __attribute__((aligned(8))) floatx80;
 #define make_floatx80(exp, mant) ((floatx80) { mant, exp })
 #define make_floatx80_init(exp, mant) { .low = mant, .high = exp }
 typedef struct {

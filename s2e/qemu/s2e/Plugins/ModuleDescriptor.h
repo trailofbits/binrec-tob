@@ -52,11 +52,11 @@ namespace s2e {
 
 //Maps the name of the exported function to its actual address
 typedef std::map<std::string,uint64_t> Exports;
-
+  
 //Maps the name of the function to its actual address
 //XXX: Rename the type ImportedFunctions to ImportedSymbol.
 typedef std::map<std::string, uint64_t> ImportedFunctions;
-
+  
 //Maps the library name to the set of functions it exports
 typedef std::map<std::string, ImportedFunctions > Imports;
 
@@ -72,7 +72,6 @@ struct SectionDescriptor
 
     uint64_t loadBase;
     uint64_t size;
-    uint64_t fileOffset;
     SectionType type;
     std::string name;
 
@@ -116,17 +115,17 @@ typedef std::set<SymbolDescriptor, SymbolDescriptor> SymbolDescriptors;
 struct ModuleDescriptor
 {
   uint64_t  Pid;
-
+  
   //The name of the module (eg. MYAPP.EXE or DRIVER.SYS)
   std::string Name;
-
+  
   //Where the the preferred load address of the module.
   //This is defined by the linker and put into the header of the image.
   uint64_t NativeBase;
-
+  
   //Where the image of the module was actually loaded by the OS.
   uint64_t LoadBase;
-
+  
   //The size of the image of the module
   uint64_t Size;
 
@@ -167,7 +166,7 @@ struct ModuleDescriptor
   }
 
   struct ModuleByLoadBase {
-    bool operator()(const struct ModuleDescriptor& s1,
+    bool operator()(const struct ModuleDescriptor& s1, 
       const struct ModuleDescriptor& s2) const {
         if (s1.Pid == s2.Pid) {
             return s1.LoadBase + s1.Size <= s2.LoadBase;

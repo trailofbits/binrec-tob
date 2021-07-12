@@ -1,8 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import sys
 import re
 import fileinput
-
 
 sizes = {
     'char': 1,
@@ -104,7 +103,7 @@ if __name__ == '__main__':
     for line in fileinput.input():
         m = re.match(r'^((?:[^ ]+ +)+?\*?([^ (]+)) *\((.*)\);', line)
         if not m:
-            print >>sys.stderr, 'error:', line
+            print('error:', line, file=sys.stderr)
             continue
 
         ftypename, fname, args = m.groups()
@@ -119,5 +118,5 @@ if __name__ == '__main__':
                 continue
 
         isfloat = 'float' in ftypename or 'double' in ftypename
-        print '%s %d %s%s' % (fname, int(isfloat), argsize(ftypename),
-                ''.join(' ' + str(argsize(x)) for x in args))
+        print('%s %d %s%s' % (fname, int(isfloat), argsize(ftypename),
+                              ''.join(' ' + str(argsize(x)) for x in args)))

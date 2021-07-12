@@ -1,11 +1,9 @@
 # this file must be used from an S2E output directory
-#LLVMBIN := ${S2EDIR}/build/llvm-release/Release+Asserts/bin
-LLVMBIN := ${S2EDIR}/multicompiler/bin
-LLC := $(LLVMBIN)/llc
-DIS := $(LLVMBIN)/llvm-dis
-AS := $(LLVMBIN)/llvm-as
-OPT := $(LLVMBIN)/opt
-CLANG := $(LLVMBIN)/clang
+LLC := llc
+DIS := llvm-dis
+AS := llvm-as-10
+OPT := opt-10
+CLANG := clang-10
 
 .PHONY: all export_dylibs
 all:

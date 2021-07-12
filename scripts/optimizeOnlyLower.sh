@@ -14,9 +14,10 @@ header "transform environment globals into allocas"
 run -env-to-allocas
 
 header "optimization"
-run -basicaa -scev-aa  -env-aa -O3 -globalopt 
+#run -basicaa -scev-aa  -env-aa -argpromotion -licm -globalopt 
+run -basicaa -scev-aa  -env-aa -argpromotion -licm -globalopt -O3
 #run -basicaa -scev-aa -env-aa -ipsccp -argpromotion
 
 
-export OPTIMIZE_STACK_BITCASTS=1
+#export OPTIMIZE_STACK_BITCASTS=1
 exec bash $S2EDIR/scripts/lower.sh $options optimized.bc $final_file

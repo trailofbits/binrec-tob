@@ -60,15 +60,15 @@
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #endif
 
-#ifndef always_inline
-#if !((__GNUC__ < 3) || defined(__APPLE__))
-#ifdef __OPTIMIZE__
-#define inline __attribute__ (( always_inline )) __inline__
-#endif
-#endif
-#else
-#define inline always_inline
-#endif
+// #ifndef always_inline
+// #if !((__GNUC__ < 3) || defined(__APPLE__))
+// #ifdef __OPTIMIZE__
+// #define inline __attribute__ (( always_inline )) __inline__
+// #endif
+// #endif
+// #else
+// #define inline always_inline
+// #endif
 
 #define qemu_printf printf
 

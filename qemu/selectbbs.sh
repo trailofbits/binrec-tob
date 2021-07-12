@@ -16,10 +16,6 @@ outdir=$S2EDIR/s2e-out-$binary-BB_$addr
 
 if [ "$DEBUG" = x ]; then release=debug; else release=release; fi
 
-# make sure that the qemu binary is up to date
-make -C $S2EDIR --no-print-directory quick-$release
-[ $? -ne 0 ] && exit 1
-
 # produce core file when in debug mode
 if [ "$DEBUG" = x ]; then
     ulimit -c unlimited
@@ -33,6 +29,7 @@ mkdir -p $outdir
 cat $S2EDIR/s2e-out-$binary/symbols > $outdir/symbols
 readelf -S $S2EDIR/s2e-out-$binary/binary | awk '$2==".plt" {print $4, $2 >> "'${outdir}/symbols'"}'
 
+# TODO: succs.dat was superseded by traceinfo. Update this if you want to use this.
 echo "pluginsConfig.BBExport = { predecessor = '$pred', \
                                  address = '$addr', \
                                  prevSuccs = '$S2EDIR/s2e-out-$binary/succs.dat', \

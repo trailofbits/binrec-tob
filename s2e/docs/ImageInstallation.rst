@@ -27,28 +27,29 @@ followed the installation tutorials.
    $ # Create an empty disk image
    $ $S2EDIR/build/qemu-release/qemu-img create -f raw s2e_disk.raw 2G
 
-   $ # Download debian install CD
-   $ wget http://cdimage.debian.org/debian-cd/current/i386/iso-cd/debian-6.0.6-i386-businesscard.iso
+   $ # Download debian install CD (the exact version doesn't really matter, below is an example)
+   $ wget http://cdimage.debian.org/debian-cd/7.7.0/i386/iso-cd/debian-7.7.0-i386-CD-1.iso
 
    $ # Run QEMU and install the OS
-   $ $S2EDIR/build/qemu-release/i386-softmmu/qemu-system-i386 s2e_disk.raw -cdrom debian-6.0.2.1-i386-businesscard.iso
-   > Follow on-screen instructions to install Debian Linux inside VM
-   > Select only "Standard System" component to install
+   $ $S2EDIR/build/qemu-release/i386-softmmu/qemu-system-i386 s2e_disk.raw -enable-kvm -m 1024 -cdrom debian-7.7.0-i386-CD-1.iso
+   > Follow on-screen instructions to install Debian Linux inside VM (use the most basic setup that includes ssh)
+   > If you have trouble navigating the menus, try specifying a keymap (e.g., add "-k en-us") 
+   > Using "-enable-kvm" is faster, but KVM must be installed and you must be in the 'kvm' group (otherwise remove "-enable-kvm")
 
-   $ # When you system is installed and rebooted, run the following command
+   $ # When your system is installed and rebooted, run the following command
    $ # inside the guest to install C and C++ compilers
    guest$ su -c "apt-get install build-essential"
 
-You have just set up a disk image in RAW format. You need to convert it to the S2E format for use
-with S2E (the reasons for this are described in the next section).
-
-The S2E image format is identical to the RAW format, except that the
-image file name has the ".s2e" extension. Therefore, to convert from
-RAW to S2E, renaming the file is enough (a symlink is fine too).
+You have just set up a disk image in RAW format. You will need to give it
+a .s2e extension for use with S2E (the reasons for this are described in 
+the next section).  The S2E image format is identical to the RAW format, so
+no conversion needs to take place.  We therefore create a .raw.s2e copy that
+will be treated as read-only by S2E, and we keep around the .raw image in
+case we want to make modifications to the base image in the future.
 
 ::
 
-   $ cp s2e_disk.raw s2e_disk.raw.s2e
+   $ ln s2e_disk.raw s2e_disk.raw.s2e
 
 The S2E VM Image Format
 =======================
@@ -60,16 +61,12 @@ VM image corruptions. QCOW2 is one example of such formats.
 
 The S2E image format, unlike the other formats, is multi-path aware.
 When in S2E mode, writes are local to each state and do not clobber other states.
-Moreover, writes are NEVER written to the image (or the snapshot). This makes it possible
+Moreover, writes are NEVER propagated from the state to the image (or the snapshot). This makes it possible
 to share one disk image and snapshots among many instances of S2E.
-
-The S2E image format is identical to the RAW format, except that the
-image file name has the ``.s2e`` extension. Therefore, to convert from
-RAW to S2E, renaming the file is enough (a symlink is fine too).
 
 The S2E image format stores snapshots in a separate file, suffixed by the name of the
 snapshot. For example, if the base image is called "my_image.raw.s2e",
-the snapshot ``ready`` (as in ``savevm ready``) will be saved in the file
+the snapshot ``ready`` (generated with ``savevm ready``) will be saved in the file
 ``my_image.raw.s2e.ready`` in the same folder as ``my_image.raw.s2e``.
 
 

@@ -42,6 +42,7 @@
  *  RESERVES THE CUSTOM OPCODE 0xAA
  */
 
+#include <glib.h>
 extern "C" {
 #include "config.h"
 #include "qemu-common.h"

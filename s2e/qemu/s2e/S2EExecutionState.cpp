@@ -33,6 +33,7 @@
  * All contributors are listed in the S2E-AUTHORS file.
  */
 
+#include <glib.h>
 extern "C" {
 #include "config.h"
 #include "qemu-common.h"
@@ -82,7 +83,7 @@ extern llvm::cl::opt<bool> DebugLogStateMerge;
 }
 
 namespace {
-CPUTLBEntry s_cputlb_empty_entry = { -1, -1, -1, -1 };
+CPUTLBEntry s_cputlb_empty_entry = { static_cast<target_ulong>(-1), static_cast<target_ulong>(-1), static_cast<target_ulong>(-1), static_cast<target_ulong>(-1) };
 }
 
 extern llvm::cl::opt<bool> PrintModeSwitch;
@@ -110,7 +111,10 @@ S2EExecutionState::S2EExecutionState(klee::KFunction *kf) :
         m_qemuIcount(0),
         m_lastS2ETb(NULL),
         m_lastMergeICount((uint64_t)-1),
-        m_needFinalizeTBExec(false), m_nextSymbVarId(0), m_runningExceptionEmulationCode(false)
+        m_needFinalizeTBExec(false),
+        m_forkAborted(false),
+        m_nextSymbVarId(0),
+        m_runningExceptionEmulationCode(false)
 {
     //XXX: make this a struct, not a pointer...
     m_timersState = new TimersState;

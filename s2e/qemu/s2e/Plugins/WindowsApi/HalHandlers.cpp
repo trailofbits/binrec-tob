@@ -33,6 +33,7 @@
  * All contributors are listed in the S2E-AUTHORS file.
  */
 
+#include <glib.h>
 extern "C" {
 #include <qemu-common.h>
 #include <cpu-all.h>

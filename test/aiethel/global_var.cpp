@@ -18,24 +18,20 @@
 #include <string.h>
 
 class A {
-  public:
-  char name[256];
+public:
+    char name[256];
 
-  A(const char *nameIn) {
-    printf("class A constructor!\n");
-    strcpy(name, nameIn);
-  }
+    A(const char *nameIn) {
+        printf("class A constructor!\n");
+        strcpy(name, nameIn);
+    }
 
-  ~A(void) {
-    printf("Class A destructor!\n");
-  }
+    ~A(void) { printf("Class A destructor!\n"); }
 };
 
 A global("Global");
 
 int main(void) {
-  printf("Variable name %s\n", global.name);
-  return 0;
+    printf("Variable name %s\n", global.name);
+    return 0;
 }
-
-

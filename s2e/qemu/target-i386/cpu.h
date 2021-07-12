@@ -574,7 +574,7 @@ typedef union {
     uint32_t _l[2];
     float32 _s[2];
     uint64_t q;
-} MMXReg;
+} __attribute__((aligned(8))) MMXReg;
 
 #ifdef HOST_WORDS_BIGENDIAN
 #define XMM_B(n) _b[15 - (n)]
@@ -1151,8 +1151,12 @@ void cpu_x86_inject_mce(Monitor *mon, CPUX86State *cenv, int bank,
 void do_interrupt(CPUX86State *env);
 void do_interrupt_x86_hardirq(CPUX86State *env, int intno, int is_hw);
 void QEMU_NORETURN raise_exception_env(int exception_index, CPUX86State *nenv);
+void QEMU_NORETURN raise_exception_ra(CPUX86State *nenv, int exception_index,
+                                        uintptr_t retaddr);
 void QEMU_NORETURN raise_exception_err_env(CPUX86State *nenv, int exception_index,
                                            int error_code);
+void QEMU_NORETURN raise_exception_err_ra(CPUX86State *nenv, int exception_index,
+                                            int error_code, uintptr_t retaddr);
 
 void do_smm_enter(CPUX86State *env1);
 

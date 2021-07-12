@@ -37,7 +37,6 @@ outfile=$outdir/captured.bc
 found=0
 for file in $capdir_regex ; do
     if [[ -d $file ]] ; then
-        #echo $file
         cp $file/captured-link-ready.bc $outfile
         found=1
         break
@@ -52,7 +51,7 @@ for file in $capdir_regex ; do
     if [[ -d $file ]] ; then
         #echo $file
         #llvm-link-3.8 -v -print-all-options -o $tmp -only-needed -suppress-warnings -override=$outfile $file/captured.bc && mv $tmp $outfile
-        command="$LLVMBIN/llvm-link -print-after-all -v -o $tmp -override=$outfile $file/captured-link-ready.bc && mv $tmp $outfile"
+        command="llvm-link -print-after-all -v -o $tmp -override=$outfile $file/captured-link-ready.bc && mv $tmp $outfile"
         eval $command
         #mylink -only-needed -v -o $tmp $outfile $file/captured-link-ready.bc && mv $tmp $outfile
         #mylink -v -o $tmp -override=$outfile $file/captured-link-ready.bc && mv $tmp $outfile
@@ -61,59 +60,23 @@ for file in $capdir_regex ; do
 done
 header "Disassembling generated bitcode.."
 #mymake -s ${outfile%.bc}.ll
-eval "$LLVMBIN/llvm-dis $outfile"
+eval "llvm-dis $outfile"
 
-#copy one of the succs.dat file to outdir and use it to merge with others
-header "Merging succ.dat files.."
+header "Merging traceInfo.json files.."
 found=0
+traceInfoFiles=""
 for file in $capdir_regex ; do
     if [[ -d $file ]] ; then
-        cp $file/succs.dat $outdir
-        cp $file/callerToFollowUp $outdir
-        cp $file/entryToCaller $outdir
-        cp $file/entryToReturn $outdir
+        traceInfoFiles+=" $file/traceInfo.json"
         found=1
-        break
     fi
 done
 
 [ $found -ne 1 ] && echo "Did not find frontend data, " && exit 1
 
-echo "finished 1 succ"
-#merge with other succs.dat
-for file in $capdir_regex ; do
-    if [[ -d $file ]] ; then
-        python $ROOT/scripts/merge_succs.py $outdir/succs.dat $file/succs.dat
-        python $ROOT/scripts/merge_succs.py $outdir/callerToFollowUp $file/callerToFollowUp
-        python $ROOT/scripts/merge_succs.py $outdir/entryToCaller $file/entryToCaller
-        python $ROOT/scripts/merge_succs.py $outdir/entryToReturn $file/entryToReturn
-    fi
-done
-echo "finished all succ"
+$S2EDIR/build/bin/binrec-tracemerge $traceInfoFiles $outdir/traceInfo.json
+echo "finished all traceInfo.json"
 
-#func_regex=$(find $file -maxdepth 1 -print | grep "func_*")
-#echo "funcregex: $func_regex "
-for file in $capdir_regex ; do
-    if [[ -d $file ]] ; then
-        echo $file
-        #funcbase=$file/func
-        func_regex=$(find $file -maxdepth 1 -print | grep "func_*")
-        echo "funcregex: $func_regex "
-        for func_file_p in $func_regex ; do
-        #for func_file_p in `find $file -maxdepth 1 -name "func_*"` ; do
-            #echo $func_file_p
-            if [[ -f $func_file_p ]] ; then
-                func_file_n="$(basename $func_file_p)"
-                if [[ -f $outdir/$func_file_n ]] ; then
-                    #if exists this file in the outdir, merge others into it
-                    python $ROOT/scripts/merge_funcs.py $outdir/$func_file_n $func_file_p
-                else
-                    cp $func_file_p $outdir
-                fi
-            fi
-        done
-    fi
-done
 echo "done mi"
 }
 
@@ -146,5 +109,3 @@ merge_one_input() {
     cp -P $ROOT/$outdirbase/Makefile $outdir/Makefile
     echo "moi-end"
 }
-
-

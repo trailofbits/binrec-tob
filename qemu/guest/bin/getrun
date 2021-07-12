@@ -33,7 +33,7 @@ done
 
 bin=$1
 args="${@:2}"
-cmd="LD_PRELOAD=$HOME/guest/build/init_env.so ./$bin $args"
+cmd="LD_PRELOAD=$HOME/lib/init_env.so ./$bin $args"
 
 s2eget $bin && \
 chmod +x ./$bin && \

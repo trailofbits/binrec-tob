@@ -36,6 +36,7 @@
  * All contributors are listed in the S2E-AUTHORS file.
  */
 
+#include <glib.h>
 extern "C" {
 #include "config.h"
 #include "qemu-common.h"
@@ -110,7 +111,7 @@ void BaseInstructions::makeSymbolic(S2EExecutionState *state, bool makeConcolic)
             << " with name '" << nameStr << "'\n";
 
     std::vector<unsigned char> concreteData;
-    vector<ref<Expr> > symb;
+    vector<klee::ref<Expr> > symb;
 
     if (makeConcolic) {
         for (unsigned i = 0; i< size; ++i) {
@@ -227,7 +228,7 @@ void BaseInstructions::printExpression(S2EExecutionState *state)
     target_ulong name;
     bool ok = true;
 
-    ref<Expr> val = state->readCpuRegister(PARAM0, width);
+    klee::ref<Expr> val = state->readCpuRegister(PARAM0, width);
     ok &= state->readCpuRegisterConcrete(PARAM2, &name, sizeof name);
 
     if(!ok) {
@@ -284,7 +285,7 @@ void BaseInstructions::printMemory(S2EExecutionState *state)
     for (uint32_t i=0; i<size; ++i) {
 
         s2e()->getMessagesStream() << hexval(address+i) << ": ";
-        ref<Expr> res = state->readMemory8(address+i);
+        klee::ref<Expr> res = state->readMemory8(address+i);
         if (res.isNull()) {
             s2e()->getMessagesStream() << "Invalid pointer\n";
         }else {

@@ -263,7 +263,7 @@ void s2e_flush_tlb_cache_page(void *objectState, int mmu_idx, int index);
 uintptr_t s2e_qemu_tb_exec(CPUArchState* env1, struct TranslationBlock* tb);
 
 /* Called by QEMU when execution is aborted using longjmp */
-void s2e_qemu_cleanup_tb_exec();
+void s2e_qemu_cleanup_tb_exec(void);
 
 int s2e_qemu_finalize_tb_exec(struct S2E *s2e, struct S2EExecutionState* state);
 
@@ -332,6 +332,9 @@ void s2e_on_monitor_event(struct QDict *ret);
 
 int s2e_is_load_balancing(void);
 int s2e_is_forking(void);
+
+void s2e_phys_section_print(void);
+void s2e_phys_section_check(CPUArchState *cpu_state);
 
 /******************************************************/
 /* Prototypes for special functions used in LLVM code */

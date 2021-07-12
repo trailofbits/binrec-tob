@@ -1,6 +1,6 @@
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <unistd.h>
 
 void sig_handler(int sig) {
@@ -16,8 +16,8 @@ void sig_handler(int sig) {
 
 int main() {
     signal(SIGSEGV, sig_handler);
-    
+
     int *i_ptr = NULL;
-    //trigger SIGSEGV
+    // trigger SIGSEGV
     return *i_ptr;
 }
