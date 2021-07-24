@@ -1,20 +1,15 @@
-#include "binrec/rt/CpuX86.h"
-#include "binrec/rt/Print.h"
-#include "binrec/rt/StackTracer.h"
-#include "binrec/rt/Syscall.h"
+#include "binrec/rt/cpu_x86.hpp"
 #include <cassert>
 #include <cstdint>
+#include <cstdio>
 #include <cstdlib>
 
 extern "C" {
-#include <alloca.h>
 #include <asm/ldt.h>
 #include <linux/unistd.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-#define DEBUG_FD STDERR_FILENO
 
 typedef target_ulong addr_t;
 typedef addr_t stackword_t;
@@ -25,40 +20,40 @@ extern uint32_t debug_verbosity;
 extern SegmentCache segs[6];
 
 extern void Func_wrapper(void);
-// This comes with captured.bc. Originially implemented in op_helper.c. op_helper.bc is already linked with captured.bc
-// in s2e.
+// This comes with captured.bc. Originially implemented in op_helper.c. op_helper.bc is already
+// linked with captured.bc in s2e.
 extern void helper_fninit(void);
 
 typedef unsigned uint;
 
-void raise_interrupt(int intno, int is_int, int error_code, int next_eip_addend) {
-    /*    binrec_rt_fdprintf(STDERR_FILENO, "interrupt intno=");
-        binrec_rt_write_dec(DEBUG_FD, intno);
-        binrec_rt_fdprintf(STDERR_FILENO, " is_int=");
-        binrec_rt_write_dec(DEBUG_FD, is_int);
-        binrec_rt_fdprintf(STDERR_FILENO, " error_code=");
-        binrec_rt_write_dec(DEBUG_FD, error_code);
-        binrec_rt_fdprintf(STDERR_FILENO, " next_eip_addend=");
-        binrec_rt_write_hex(DEBUG_FD, next_eip_addend);
-        binrec_rt_write_char(DEBUG_FD, '\n');
-    */
-    binrec_rt_exit(-1);
+void raise_interrupt(int intno, int is_int, int error_code, int next_eip_addend)
+{
+    printf(
+        "interrupt intno=%x, is_int=%x, error_code=%x, next_eip_addend=%x\n",
+        intno,
+        is_int,
+        error_code,
+        next_eip_addend);
+    exit(-1);
 }
 
-void __attribute__((noinline)) helper_raise_exception(uint32_t index) {
-    binrec_rt_fdprintf(STDERR_FILENO, "exception %d raised\n", index);
-    binrec_rt_exit(-1);
+void __attribute__((noinline)) helper_raise_exception(uint32_t index)
+{
+    printf("exception %d raised\n", index);
+    exit(-1);
 }
 
 static char segmem[1024];
 
-static uint16_t get_gs() {
+static uint16_t get_gs()
+{
     uint16_t gs;
     asm volatile("mov %%gs, %0" : "=g"(gs)::);
     return gs;
 }
 
-static void init_gs(SegmentCache *ds) {
+static void init_gs(SegmentCache *ds)
+{
     // ds->selector = get_gs();
     // SYSCALL1(SYS_get_thread_area, (struct user_desc*)ds);
     // struct user_desc info = {.entry_number = get_gs()};
@@ -66,10 +61,10 @@ static void init_gs(SegmentCache *ds) {
 
     // ssize_t ret = SYSCALL_RET;  // FIXME: THIS KEEPS FAILING!!!???
     // if (ret) {
-    //    binrec_rt_fdprintf(STDERR_FILENO, "get_thread_area returned ");
-    //    binrec_rt_write_dec(DEBUG_FD, ret);
-    //    binrec_rt_write_char(DEBUG_FD, '\n');
-    //    binrec_rt_exit(-2);
+    //    binrecrt_fdprintf(STDERR_FILENO, "get_thread_area returned ");
+    //    binrecrt_write_dec(DEBUG_FD, ret);
+    //    binrecrt_write_char(DEBUG_FD, '\n');
+    //    binrecrt_exit(-2);
     //}
 
     // ds->base = info.base_addr;
@@ -80,7 +75,8 @@ static void init_gs(SegmentCache *ds) {
     ds->base = (target_ulong)segmem;
 }
 
-static void init_env() {
+static void init_env()
+{
     reg_t eflags;
     asm("pushf\n\t"
         "popl %0"
@@ -90,7 +86,8 @@ static void init_env() {
     df = eflags & DF_MASK ? -1 : 1;
 }
 
-void __attribute__((always_inline)) nonlib_setjmp() {
+void __attribute__((always_inline)) nonlib_setjmp()
+{
 
     addr_t retaddr = __ldl_mmu(R_ESP, 0);
     R_ESP += sizeof(stackword_t);
@@ -107,7 +104,8 @@ void __attribute__((always_inline)) nonlib_setjmp() {
     PC = retaddr;
 }
 
-void __attribute__((always_inline)) nonlib_longjmp() {
+void __attribute__((always_inline)) nonlib_longjmp()
+{
 
     // pop ret address, we don't need it
     // addr_t retaddr = __ldl_mmu(R_ESP, 0);
@@ -131,9 +129,10 @@ void __attribute__((always_inline)) nonlib_longjmp() {
 }
 
 uint64_t __attribute__((noinline, fastcall))
-helper_stub_trampoline(const reg_t ecx, const reg_t edx, const reg_t esp, const addr_t targetpc) {
-    // Note(FPar): We can probably remove edx and ecx here, because they are not preserved and should not be arguments
-    // to any standard library function (unless they use fastcall, too?)
+helper_stub_trampoline(const reg_t ecx, const reg_t edx, const reg_t esp, const addr_t targetpc)
+{
+    // Note(FPar): We can probably remove edx and ecx here, because they are not preserved and
+    // should not be arguments to any standard library function (unless they use fastcall, too?)
 
     // see
     // https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/LowLevelABI/130-IA-32_Function_Calling_Conventions/IA32.html
@@ -173,7 +172,8 @@ helper_stub_trampoline(const reg_t ecx, const reg_t edx, const reg_t esp, const 
     return ((uint64_t)ret.edx << 32) | ret.eax;
 }
 
-void __attribute__((always_inline)) helper_extern_stub() {
+void __attribute__((always_inline)) helper_extern_stub()
+{
     // return address should be on top of virtual stack, pop it
     addr_t retaddr = __ldl_mmu(R_ESP, 0);
     R_ESP += sizeof(stackword_t);
@@ -190,41 +190,63 @@ void __attribute__((always_inline)) helper_extern_stub() {
 }
 
 // FIXME: pass float in argument
-void __attribute__((always_inline)) virtualize_return_float() {
+void __attribute__((always_inline)) virtualize_return_float()
+{
     asm("fstpt %0" : "=m"(fpregs[fpstt].d)::);
     fptags[fpstt] = 0;
 }
 
-void __attribute__((always_inline)) virtualize_return_i32(uint32_t ret) { R_EAX = ret; }
+void __attribute__((always_inline)) virtualize_return_i32(uint32_t ret)
+{
+    R_EAX = ret;
+}
 
-void __attribute__((always_inline)) virtualize_return_i64(uint64_t ret) {
+void __attribute__((always_inline)) virtualize_return_i64(uint64_t ret)
+{
     R_EAX = ret & 0xffffffff;
     R_EDX = ret >> 32;
 }
 
-void helper_break() { asm("int $0x3"); }
+void helper_break()
+{
+    asm("int $0x3");
+}
 
 // redefine the following functions to avoid cases that handle symbolic memory
 // in the default implementations
 
-uint64_t __attribute__((always_inline)) ldq_data(uint32_t ptr) { return __ldq_mmu(ptr, 0); }
+uint64_t __attribute__((always_inline)) ldq_data(uint32_t ptr)
+{
+    return __ldq_mmu(ptr, 0);
+}
 
-uint32_t __attribute__((always_inline)) lduw_data(uint32_t ptr) { return __ldw_mmu(ptr, 0); }
+uint32_t __attribute__((always_inline)) lduw_data(uint32_t ptr)
+{
+    return __ldw_mmu(ptr, 0);
+}
 
-void __attribute__((always_inline)) stq_data(uint32_t ptr, uint64_t value) { __stq_mmu(ptr, value, 0); }
+void __attribute__((always_inline)) stq_data(uint32_t ptr, uint64_t value)
+{
+    __stq_mmu(ptr, value, 0);
+}
 
-void __attribute__((always_inline)) stw_data(uint32_t ptr, uint32_t value) { __stw_mmu(ptr, value, 0); }
+void __attribute__((always_inline)) stw_data(uint32_t ptr, uint32_t value)
+{
+    __stw_mmu(ptr, value, 0);
+}
 
-void helper_s2e_tcg_custom_instruction_handler(uint32_t opcode) {
-    binrec_rt_fdprintf(STDERR_FILENO, "custom s2e instruction with opcode %x called\n", opcode);
+void helper_s2e_tcg_custom_instruction_handler(uint32_t opcode)
+{
+    printf("custom s2e instruction with opcode %x called\n", opcode);
 }
 }
 
-int main(int argc, char **argv, char **envp) {
+int main(int argc, char **argv, char **envp)
+{
     assert(sizeof(stackword_t) == sizeof(void *));
 
     if (debug_verbosity >= 1) {
-        binrec_rt_fdprintf(STDERR_FILENO, "stack-begins at = %p\n", &stack[STACK_SIZE - 1]);
+        printf("stack-begins at = %p\n", &stack[STACK_SIZE - 1]);
     }
 
     init_env();
@@ -241,10 +263,8 @@ int main(int argc, char **argv, char **envp) {
     Func_wrapper();
 
     if (debug_verbosity >= 1) {
-        binrec_rt_fdprintf(STDERR_FILENO, "end of custom main\n");
+        puts("end of custom main");
     }
-
-    binrec_rt_stacksize_save();
 
     return (int)R_EAX;
 }

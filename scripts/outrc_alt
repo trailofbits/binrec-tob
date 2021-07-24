@@ -26,7 +26,7 @@ plot() {
 
 gdbopt() {
     gdb -q --args $S2EDIR/build/llvm-debug/Debug+Asserts/bin/opt -load \
-        $S2EDIR/build/lib/libbinrec-translator.so "$@"
+        $S2EDIR/build/lib/libbinrec_translator.so "$@"
 }
 
 alias debug="gdb -q $S2EDIR/build/llvm-debug/Debug+Asserts/bin/opt core"

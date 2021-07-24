@@ -1,6 +1,21 @@
 AccessModifierOffset: -4
-BasedOnStyle: LLVM
-ColumnLimit: 120
+AlignAfterOpenBracket: AlwaysBreak
+AlignOperands: DontAlign
+AllowAllArgumentsOnNextLine: false
+AllowAllConstructorInitializersOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortFunctionsOnASingleLine: Empty
+BinPackArguments: false
+BinPackParameters: false
+BraceWrapping:
+  AfterControlStatement: MultiLine
+  AfterFunction: true
+BreakBeforeBraces: Custom
+BreakConstructorInitializers: AfterColon
+BreakStringLiterals: false
+ColumnLimit: 100
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+ConstructorInitializerIndentWidth: 8
 IncludeBlocks: Merge
 IncludeCategories:
   - Regex: '^"binrec/'
@@ -10,3 +25,6 @@ IncludeCategories:
   - Regex: '.*'
     Priority: 1
 IndentWidth: 4
+MaxEmptyLinesToKeep: 2
+NamespaceIndentation: All
+SpacesInContainerLiterals: false

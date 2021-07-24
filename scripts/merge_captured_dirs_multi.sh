@@ -25,7 +25,7 @@ for file in $capdir_regex ; do
         echo $file
         #infile=$file/captured.bc
         #outfile=$file/captured-link-ready.bc
-        command="cd $file && $S2EDIR/scripts/prep_for_linkage.sh -f error captured.bc captured-link-ready.bc"
+        command="cd $file && $S2EDIR/scripts/prep_for_linkage.sh captured.bc captured-link-ready.bc"
         eval $command
         #(eval $ommand) & #theoretically this should parallelize, but it makes malfomred files for some reason
     fi
@@ -74,7 +74,7 @@ done
 
 [ $found -ne 1 ] && echo "Did not find frontend data, " && exit 1
 
-$S2EDIR/build/bin/binrec-tracemerge $traceInfoFiles $outdir/traceInfo.json
+$S2EDIR/build/bin/binrec_tracemerge $traceInfoFiles $outdir/traceInfo.json
 echo "finished all traceInfo.json"
 
 echo "done mi"

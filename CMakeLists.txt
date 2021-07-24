@@ -2,20 +2,27 @@ cmake_minimum_required(VERSION 3.12)
 project(BinRec)
 set(CMAKE_CXX_STANDARD 17)
 
+include(FetchContent)
+
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 find_package(LLVM 12.0 REQUIRED CONFIG)
 
+FetchContent_Declare(robin_hood_hashing
+    GIT_REPOSITORY https://github.com/martinus/robin-hood-hashing.git
+    GIT_TAG 3.11.2
+)
+FetchContent_MakeAvailable(robin_hood_hashing)
+
 add_compile_options(-Wall -pedantic -Wno-comment)
 
-add_subdirectory(binrec-lift)
-add_subdirectory(binrec-link)
-add_subdirectory(binrec-rt)
-add_subdirectory(binrec-traceinfo)
-add_subdirectory(binrec-tracemerge)
-add_subdirectory(binrec-translator)
+add_subdirectory(binrec_lift)
+add_subdirectory(binrec_link)
+add_subdirectory(binrec_rt)
+add_subdirectory(binrec_traceinfo)
+add_subdirectory(binrec_tracemerge)
 add_subdirectory(s2e)
 
 unset(CMAKE_RUNTIME_OUTPUT_DIRECTORY)

@@ -58,7 +58,7 @@ header "compile llvm to machine code"
 mymake -sr ${outfile%.bc}.o
 
 header "patch compiled llvm into binary"
-if ! $S2EDIR/build/bin/binrec-link binary ${outfile%.bc}.o "$S2EDIR/build/lib/libbinrec-rt.a" ${outfile%.bc} $S2EDIR/binrec-link/ld/i386.ld; then
+if ! $S2EDIR/build/bin/binrec_link binary ${outfile%.bc}.o "$S2EDIR/build/lib/libbinrec_rt.a" ${outfile%.bc} $S2EDIR/binrec_link/ld/i386.ld; then
     echo "compilation failed"
     exit 1
 fi

@@ -50,7 +50,6 @@ pluginsConfig.HostFiles = {
     baseDirs = {
         'qemu',
         'build/test',
-        '/opt/cpu2017/benchspec/CPU/505.mcf_r/run/run_base_test_binrec-m32.0000',
         -- 'test/dhrystone-2.1',
         -- 'test/coreutils-8.23',
         -- 'test/spec2006/benchspec/CPU2006/401.bzip2/exe',
@@ -81,7 +80,6 @@ pluginsConfig.HostFiles = {
 pluginsConfig.ExportELF = {
     baseDirs = {
         'build/test',
-        '/opt/cpu2017/benchspec/CPU/505.mcf_r/run/run_base_test_binrec-m32.0000',
         -- 'test/dhrystone-2.1',
         -- 'test/coreutils-8.23',
         -- 'test/spec2006/benchspec/CPU2006/401.bzip2/exe',

@@ -138,7 +138,7 @@ In the current implementation we reuse the entrypoint of the original binary. Di
 combinations generate slightly different variants of this. Before `__libc_start_main` is called, the address of `main`
 needs to be patched to the new entrypoint. We cannot do that automatically yet, so open up your binary in your favorite
 disassembler, go to `_start` and count the bytes until you get to the address of `main`. Use this value
-in `binrec-link/src/Stitch.cpp:getStartPatch`.
+in `binrec_link/src/Stitch.cpp:getStartPatch`.
 
 ### Ubuntu 21.04 apt packages
 

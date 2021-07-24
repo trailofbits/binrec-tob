@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #LLVMBIN=$S2EDIR/build/llvm-debug/Debug+Asserts/bin
 LLVMBIN=$S2EDIR/build/llvm-release/Release+Asserts/bin
-TRANSLATOR=$S2EDIR/build/lib/libbinrec-translator.so
+TRANSLATOR=$S2EDIR/build/lib/libbinrec_translator.so
 
 if [ $# -lt 3 ]
 then

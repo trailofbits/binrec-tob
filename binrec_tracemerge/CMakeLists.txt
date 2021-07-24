@@ -1,0 +1,2 @@
+add_executable(binrec_tracemerge src/main.cpp)
+target_link_libraries(binrec_tracemerge PRIVATE binrec_traceinfo)

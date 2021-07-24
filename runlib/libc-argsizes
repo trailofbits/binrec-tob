@@ -224,6 +224,7 @@ futimens 0 4 4 4
 futimes 0 4 4 4
 fwide 0 4 4 4
 __fwritable 0 4 4
+fwrite 0 4 4 4 4 4
 __fwriting 0 4 4
 gai_strerror 0 4 4
 gcvt 0 4 8 4 4

@@ -7,7 +7,7 @@ SRC := softfloat.ll op_helper.ll custom-helpers.ll
 QEMU_BUILD=../build/s2e/qemu
 
 INCLUDE_DIRS := \
-		-I../binrec-rt/include \
+		-I../binrec_rt/include \
 		-I$(QEMU_BUILD) \
 		-I$(QEMU_BUILD)/i386-s2e-softmmu \
 		-I../s2e/qemu \
@@ -66,7 +66,7 @@ clean:
 	rm -f $(BIN) $(SRC) dyninst_mutator/*.o *.o *.s
 
 custom-helpers.bc: custom-helpers.cpp
-	$(CLANGXX) -fno-rtti -fno-exceptions -c -emit-llvm -m32 $(INCLUDE_DIRS) -O3 -fno-builtin -o $@ $<
+	$(CLANGXX) -std=c++17 -fno-rtti -fno-exceptions -c -emit-llvm -m32 $(INCLUDE_DIRS) -O3 -fno-builtin -o $@ $<
 
 #replacemain.so: LDFLAGS=-ldl
 replaceFuncs.o: CFLAGS=-m32 -fomit-frame-pointer

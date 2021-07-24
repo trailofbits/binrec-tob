@@ -33,7 +33,7 @@ for file in $captured_dirs ; do
         #echo $file
         #infile=$file/captured.bc
         #outfile=$file/captured-link-ready.bc
-        command="cd $file/0 && $S2EDIR/scripts/prep_for_linkage.sh -f error captured.bc captured-link-ready.bc"
+        command="cd $file/0 && $S2EDIR/scripts/prep_for_linkage.sh captured.bc captured-link-ready.bc"
         bash ./docker/run $command
     fi
 done
@@ -85,7 +85,7 @@ done
 
 [ $found -ne 1 ] && exit 1
 
-$S2EDIR/build/bin/binrec-tracemerge $traceInfoFiles $outdir/traceInfo.json
+$S2EDIR/build/bin/binrec_tracemerge $traceInfoFiles $outdir/traceInfo.json
 
 if [ "$func_data" -eq "1" ] ; then
 for file in $captured_dirs ; do

@@ -58,4 +58,4 @@ ExternalProject_Add(qemu
         BUILD_COMMAND $(MAKE)
         BUILD_ALWAYS ON
         INSTALL_COMMAND ""
-        DEPENDS llvm-3.2 stp klee binrec-traceinfo)
+        DEPENDS llvm-3.2 stp klee binrec_traceinfo)

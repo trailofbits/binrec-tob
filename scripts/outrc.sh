@@ -1,6 +1,6 @@
 export LLVMBIN=$S2EDIR/build/llvm/bin
 #LLVMBIN=$S2EDIR/build/llvm-release/Release+Asserts/bin
-TRANSLATOR=$S2EDIR/build/lib/libbinrec-translator.so
+TRANSLATOR=$S2EDIR/build/lib/libbinrec_translator.so
 
 myopt() {
     opt \

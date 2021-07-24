@@ -1,7 +1,7 @@
 #ifndef __PLUGIN_FUNCTIONLOG_H__
 #define __PLUGIN_FUNCTIONLOG_H__
 
-#include "binrec/tracing/TraceInfo.h"
+#include "binrec/tracing/trace_info.hpp"
 #include <s2e/ConfigFile.h>
 #include <s2e/Plugin.h>
 #include <s2e/Plugins/CorePlugin.h>

@@ -4104,7 +4104,7 @@ if test "$target_s2e" = "yes" ; then
   fi
   if test "$binrec" = "yes"; then
       echo "CONFIG_BINREC=y" >> $config_target_mak
-      echo "S2E_CXXFLAGS+=-I$binrecsource/binrec-traceinfo/include" >> $config_target_mak
+      echo "S2E_CXXFLAGS+=-I$binrecsource/binrec_traceinfo/include" >> $config_target_mak
       echo "S2E_CXXFLAGS+=-I$binrecsource/third_party/nlohmann_json/include" >> $config_target_mak
   fi
   if test "$llvmdir" != ""; then
@@ -4274,8 +4274,8 @@ if test "$target_s2e" = "yes" ; then
   echo "LIBS+=\$(filter-out $llvm_ldflags, $klee_ldflags) $llvm_ldflags" >> $config_target_mak
   echo "KLEE_LIBFILES=$klee_libfiles" >> $config_target_mak
   if test "$binrec" = "yes"; then
-      echo "LIBS+=$binrecbuild/lib/libbinrec-traceinfo.a" >> $config_target_mak
-      echo "CONFIG_LIBBINRECTRACEINFO=$binrecbuild/lib/libbinrec-traceinfo.a" >> $config_target_mak
+      echo "LIBS+=$binrecbuild/lib/libbinrec_traceinfo.a" >> $config_target_mak
+      echo "CONFIG_LIBBINRECTRACEINFO=$binrecbuild/lib/libbinrec_traceinfo.a" >> $config_target_mak
   fi
 fi
 
