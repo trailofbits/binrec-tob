@@ -34,7 +34,9 @@ Building BinRec
        $ make
 
 3. You can use the network to put stuff into your qemu vm. Lifting binaries that actually use the network is untested.
-   Run the following script. Read the contents and do that if need be
+   Run the following script. Read the contents and do that if need be. FIXME: This script is hardcoded for your network 
+   interface as 'eth0'. If this isn't your interface name, you must do global find and replace with your interface name
+   (e.g., 'eth0'->ens33').
 
        $ ./scripts/netconfig.sh (enter sudo password)
 
@@ -68,10 +70,11 @@ directory being recovered using our pre-built VM image in combination with S2E's
 
        $ ./qemu/debian.sh -net -vnc :0   # boot the VM
 
-2. In a different shell, use a VNC client to connect to the VM at the port reported by your environment configuration
-   step:
+2. Open RealVNC Viewer client to connect to the VM. You can also launch the GUI directly to do this. FIXME: The port reported by your environment configuration
+   step is not correct.
 
-       $ xvncviewer localhost::$VNCPORT
+       $ vncviewer 127.0.0.1:5900
+       
 
    Log in (user "user" and password "password" for the prebuilt image) and run the command `getrun-cmd`:
 
@@ -163,8 +166,10 @@ in `binrec_link/src/Stitch.cpp:getStartPatch`.
         pkg-config \
         python2 \
         subversion \ 
-        net-tools \ 
-        tigervnc-viewer
+        net-tools
+
+### VNCViewer Dependencies
+Accessing the QEMU VM via VNC seems to be finicky, but RealVNC's VNC viewer works. It is not in the Ubuntu's apt repositories, but it can be dowloaded at [10] and can be installed with `sudo apt install <path to RealVNC Viewer package>`.
 
 [1]: https://github.com/dslab-epfl/s2e/blob/master/docs/index.rst
 "S²E documentation"
@@ -192,3 +197,6 @@ in `binrec_link/src/Stitch.cpp:getStartPatch`.
 
 [9]: https://dl.acm.org/doi/10.1145/3342195.3387550
 "BinRec: dynamic binary lifting and recompilation"
+
+[10]: https://www.realvnc.com/en/connect/download/viewer/linux/
+"Download VNC Viewer for Linux"
