@@ -162,7 +162,9 @@ in `binrec_link/src/Stitch.cpp:getStartPatch`.
         nlohmann-json3-dev \
         pkg-config \
         python2 \
-        subversion
+        subversion \ 
+        net-tools \ 
+        tigervnc-viewer
 
 [1]: https://github.com/dslab-epfl/s2e/blob/master/docs/index.rst
 "S²E documentation"
