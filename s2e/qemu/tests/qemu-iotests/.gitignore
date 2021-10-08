@@ -1,7 +1,0 @@
-check.log
-check.time
-*.out.bad
-*.notrun
-
-# ignore everything in the scratch directory
-scratch/
