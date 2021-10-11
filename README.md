@@ -1,16 +1,6 @@
 BinRec: Off-the-shelf Program Recompilation Through Binary Recovery
 ===================================================================
 
-Change Notes
---------
-
-Trace merging scripts deduplicated. Assumes you pass the s2e-max-processes flag for directory structure. See the
-Deinstrumenting and lowering bitcode section.
-
-Support for callbacks is currently work in progress. To enable it, set the lift and lower option `-f unfallback`. Note
-this does not actually enable the fallback, it will use whatever fallback option you have hardcoded. Later the option
-can be made more clear.
-
 Overview
 --------
 
@@ -19,19 +9,17 @@ BinRec dynamically lifts binary executables to LLVM IR. It is based on
 
 
 Building BinRec
----------------
+-------------
+BinRec uses [just](https://github.com/casey/just#installation) to automate various tasks including building BinRec. The 
+first step in building BinRec is to install this tool (and curl if not already installed):
 
-1. Set environment variables.
+	  $ sudo apt-get install -y curl
+      $ curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | sudo bash -s -- --to /usr/local/bin
 
-       $ cd binrec
-       $ . scripts/env.sh
+Then, BinRec can be built from the root of this repository with:
 
-2. Build BinRec using CMake.
-
-       $ mkdir build
-       $ cd build
-       $ cmake ..
-       $ make
+       $ just install-dependencies
+       $ just build-all
 
 3. You can use the network to put stuff into your qemu vm. Lifting binaries that actually use the network is untested.
    Run the following script. Read the contents and do that if need be. FIXME: This script is hardcoded for your network 
@@ -143,33 +131,18 @@ needs to be patched to the new entrypoint. We cannot do that automatically yet, 
 disassembler, go to `_start` and count the bytes until you get to the address of `main`. Use this value
 in `binrec_link/src/Stitch.cpp:getStartPatch`.
 
-### Ubuntu 21.04 apt packages
 
-    $ apt-get install -y \
-        bison \
-        clang \
-        cmake \
-        flex \
-        g++ \
-        g++-multilib \
-        gcc \
-        gcc-multilib \
-        git \
-        libglib2.0-dev \
-        liblua5.1-dev \
-        libsigc++-2.0-dev \
-        lld \
-        llvm-dev \
-        lua5.3 \
-        nasm \
-        nlohmann-json3-dev \
-        pkg-config \
-        python2 \
-        subversion \ 
-        net-tools
+Change Log
+--------
 
-### VNCViewer Dependencies
-Accessing the QEMU VM via VNC seems to be finicky, but RealVNC's VNC viewer works. It is not in the Ubuntu's apt repositories, but it can be dowloaded at [10] and can be installed with `sudo apt install <path to RealVNC Viewer package>`.
+Trace merging scripts deduplicated. Assumes you pass the s2e-max-processes flag for directory structure. See the
+Deinstrumenting and lowering bitcode section.
+
+Support for callbacks is currently work in progress. To enable it, set the lift and lower option `-f unfallback`. Note
+this does not actually enable the fallback, it will use whatever fallback option you have hardcoded. Later the option
+can be made more clear.
+
+--------
 
 [1]: https://github.com/dslab-epfl/s2e/blob/master/docs/index.rst
 "S²E documentation"
