@@ -3,6 +3,11 @@ export S2EDIR := `pwd`
 export user := `echo $USER`
 export COMPOSE_PROJECT_NAME := user + "_" + S2EDIR
 
+# Recipe Variables
+net_iface := `ip route get 8.8.8.8 | head -n1 | cut -d' ' -f 5`
+net_ipaddr := `ip route get 8.8.8.8 | head -n1 | cut -d' ' -f 7`
+net_gateway := `ip route get 8.8.8.8 | head -n1 | cut -d' ' -f 3`
+
 # Binrec Build commands
 # Install apt packages, RealVNCviewer. Required once before build. Requires super user privileges.
 install-dependencies:
@@ -29,7 +34,7 @@ clean-all:
 
 # Builds BinRec from scratch, default number of jobs is 4.
 build-all jobs="4":
-    mkdir build
+    mkdir -p build
     cd build && cmake .. && make -j{{jobs}}
 
 # Cleans and re-builds BinRec from scratch. This takes a long time (for now).
@@ -65,6 +70,24 @@ full-reset: clear
 
 update:
   pipenv update
+
+# Setup the initial network configuration
+configure-network:
+  # create the bridge
+  sudo ip link add br0 type bridge
+  # reset the interface
+  sudo ip addr flush dev {{net_iface}}
+  # setup the bridge / tap
+  sudo ip link set {{net_iface}} master br0
+  sudo ip tuntap add dev tap0 mode tap user {{user}}
+  sudo ip link set tap0 master br0
+  sudo ip link set dev br0 up
+  sudo ip link set dev tap0 up
+  sudo ifconfig br0 {{net_ipaddr}}
+  sudo ifconfig {{net_iface}} 0.0.0.0 promisc
+  sudo route add default gw {{net_gateway}}
+  # copy the dns config from the original adapter to the bridge
+  sudo resolvectl dns br0 `resolvectl dns {{net_iface}} | cut -d':' -f 2`
 
 # BinRec Python API Commands
 # TODO

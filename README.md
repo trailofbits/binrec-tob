@@ -22,11 +22,11 @@ Then, BinRec can be built from the root of this repository with:
        $ just build-all
 
 3. You can use the network to put stuff into your qemu vm. Lifting binaries that actually use the network is untested.
-   Run the following script. Read the contents and do that if need be. FIXME: This script is hardcoded for your network 
-   interface as 'eth0'. If this isn't your interface name, you must do global find and replace with your interface name
-   (e.g., 'eth0'->ens33').
+   Run the `configure-network` just recipe to configure the network. The recipe detects the active adapter and creates a a bride and tap interface.
 
-       $ ./scripts/netconfig.sh (enter sudo password)
+       $ just configure-network  # enter sudo password when prompted
+   
+   **Note:** When running as a VM on VMWare Fusion, you may be prompted in the Mac host OS to allow the VM to monitor network traffic.
 
 Running a binary in the BinRec front-end
 ----------------------------------------
@@ -84,7 +84,7 @@ directory being recovered using our pre-built VM image in combination with S2E's
 
        $ ./qemu/cmd-debian.sh --vnc 0 hello
 
-   This loads the "cmd" snapshot and copies the "eq" binary into the VM as requested by the `getrun-cmd`
+   This loads the "cmd" snapshot and copies the "hello" binary into the VM as requested by the `getrun-cmd`
    command. `--vnc` makes the script pass `-vnc
    :0` to the qemu command, making it start a VNC server since we are running in a docker instance where there is no X
    server. Run `./qemu/cmd-debian.sh -h` to see options on how to pass input to the target binary. Note that the target
@@ -97,24 +97,26 @@ directory being recovered using our pre-built VM image in combination with S2E's
         $ ./qemu/cmd-debian-mt.sh configFile
 
     The VM is killed automatically after the target binary has been run. Directories
-    called `s2e-out-eq-1` `s2e-out-eq-2` are created, containing the captured 
+    called `s2e-out-hello-1` `s2e-out-hello-2` are created, containing the captured 
     LLVM bitcode in `captured.bc`.
 
 Deinstrumentation and lowering of captured bitcode
 --------------------------------------------------
 
-Before we run the lifting script, we need to merge these multiple directories into 1 directory called `s2e-out-eq`. To
-do that run following in `$S2EDIR` if you want to merge all directories \**-eq-*\*
+Before we run the lifting script, we need to merge these multiple directories into 1 directory called `s2e-out-hello`. To
+do that run following in `$S2EDIR` if you want to merge all directories \**-hello-*\*
 
-    $ ./scripts/double_merge.sh eq
+    $ ./scripts/double_merge.sh hello
 
-or run the following if you want to merge the numbered subdirectories of s2e-out-eq-1
+or run the following if you want to merge the numbered subdirectories of s2e-out-hello-1
 
-    $ ./scripts/merge_traces.sh eq-1
+    $ ./scripts/merge_traces.sh hello-1
 
-Now go into the `s2e-out-eq` directory and run the lifting script to obtain deinstrumented code.
+**Note:** the scripts assume that multiple traces have been run and they will not work against a single trace.
 
-    $ cd s2e-out-eq
+Now go into the `s2e-out-hello` directory and run the lifting script to obtain deinstrumented code.
+
+    $ cd s2e-out-hello
     $ ../scripts/lift2.sh
 
 This created a recovered binary called `recovered` that contains the compiled code from `recovered.bc` (LLVM source code
