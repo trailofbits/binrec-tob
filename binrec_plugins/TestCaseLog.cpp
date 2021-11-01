@@ -6,7 +6,7 @@
 #include <s2e/S2EExecutor.h>
 #include <s2e/Utils.h>
 #include <s2e/ConfigFile.h>
-#include <s2e/Plugins/CorePlugin.h>
+#include <s2e/CorePlugin.h>
 
 #include "TestCaseLog.h"
 

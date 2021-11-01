@@ -5,7 +5,7 @@
 #include "util.h"
 #include <s2e/ConfigFile.h>
 #include <s2e/Plugin.h>
-#include <s2e/Plugins/CorePlugin.h>
+#include <s2e/CorePlugin.h>
 #include <s2e/S2EExecutionState.h>
 #include <fstream>
 #include <iostream>
@@ -30,8 +30,8 @@ public:
                                bool staticTargetValid, uint64_t staticTarget);
     void slotModuleExecuteFirst(S2EExecutionState *state, uint64_t pc);
     void slotModuleExecuteBlock(S2EExecutionState *state, uint64_t pc);
-    void saveLLVMModule(Function &F);
-    uint64_t extractSuccEdge(Function &F);
+    void saveLLVMModule(llvm::Function &F);
+    uint64_t extractSuccEdge(llvm::Function &F);
     void slotModuleExecute(S2EExecutionState *state, uint64_t pc);
     void addEdge(uint64_t predPc, uint64_t succ);
     void saveLLVMModule();

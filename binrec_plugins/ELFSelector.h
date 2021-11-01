@@ -3,7 +3,7 @@
 
 #include <s2e/Plugin.h>
 #include <s2e/S2EExecutionState.h>
-#include <s2e/Plugins/ModuleExecutionDetector.h>
+#include <s2e/Plugins/OSMonitors/Support/ModuleExecutionDetector.h>
 
 #include "ModuleSelector.h"
 #include "util.h"

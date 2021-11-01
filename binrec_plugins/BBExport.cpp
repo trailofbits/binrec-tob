@@ -1,15 +1,16 @@
 #include "BBExport.h"
 #include "ModuleSelector.h"
 #include "util.h"
-#include <s2e/Plugins/ModuleExecutionDetector.h>
+#include <s2e/Plugins/OSMonitors/Support/ModuleExecutionDetector.h>
 #include <s2e/S2E.h>
 #include <s2e/S2EExecutor.h>
 #include <cassert>
-#include <llvm/Bitcode/ReaderWriter.h>
-#include <llvm/Constants.h>
-#include <llvm/Function.h>
-#include <llvm/LLVMContext.h>
-#include <llvm/Metadata.h>
+#include <llvm/Bitcode/BitcodeWriter.h>
+#include <llvm/IR/Constants.h>
+#include <llvm/IR/Function.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Metadata.h>
+#include <tcg/tcg-llvm.h>
 
 namespace s2e {
 namespace plugins {
@@ -61,13 +62,13 @@ void BBExport::initialize() {
 }
 
 void BBExport::readSymbols(std::string &path) {
-    s2e()->getMessagesStream() << "symbols path: " << path << "\n";
+    s2e()->getInfoStream() << "symbols path: " << path << "\n";
 
     std::ifstream f;
     f.open(path.c_str());
 
     if (!f.is_open()) {
-        s2e()->getMessagesStream() << "Cannot open symbols file: " << path << "\n";
+        s2e()->getInfoStream() << "Cannot open symbols file: " << path << "\n";
         m_earlyTerminate = false;
     }
 
@@ -78,13 +79,13 @@ void BBExport::readSymbols(std::string &path) {
     }
 }
 void BBExport::readPrevSuccs(std::string &path) {
-    s2e()->getMessagesStream() << "prevSuccs path: " << path << "\n";
+    s2e()->getInfoStream() << "prevSuccs path: " << path << "\n";
 
     std::ifstream f;
     f.open(path.c_str());
 
     if (!f.is_open()) {
-        s2e()->getMessagesStream() << "Cannot open prevSuccs file: " << path << "\n";
+        s2e()->getInfoStream() << "Cannot open prevSuccs file: " << path << "\n";
         m_earlyTerminate = false;
     }
 
@@ -98,48 +99,48 @@ BBExport::~BBExport() { saveLLVMModule(); }
 
 void BBExport::saveLLVMModule() {
     std::string dir = s2e()->getOutputFilename("/");
-    std::string error;
+    std::error_code error;
 
-    s2e()->getMessagesStream() << "Saving LLVM module... ";
+    s2e()->getInfoStream() << "Saving LLVM module... ";
 
     if (!m_llvmModule) {
         s2e()->getWarningsStream() << "error: module is uninitialized\n";
         return;
     }
 
-    raw_fd_ostream bitcodeOstream((dir + "captured" + ".bc").c_str(), error, 0);
-    WriteBitcodeToFile(m_llvmModule, bitcodeOstream);
+    raw_fd_ostream bitcodeOstream((dir + "captured" + ".bc").c_str(), error, sys::fs::CreationDisposition::CD_CreateAlways);
+    WriteBitcodeToFile(*m_llvmModule, bitcodeOstream);
     bitcodeOstream.close();
 
     //#if WRITE_LLVM_SRC
     //    if (!intermediate) {
-    raw_fd_ostream llvmOstream((dir + "captured" + ".ll").c_str(), error, 0);
+    raw_fd_ostream llvmOstream((dir + "captured" + ".ll").c_str(), error, sys::fs::CreationDisposition::CD_CreateAlways);
     llvmOstream << *m_llvmModule;
     llvmOstream.close();
     //    }
     //#endif
 
-    s2e()->getMessagesStream() << "saving successor lists... ";
+    s2e()->getInfoStream() << "saving successor lists... ";
 
-    raw_fd_ostream succsOstream(s2e()->getOutputFilename("succs.dat").c_str(), error, 0);
+    raw_fd_ostream succsOstream(s2e()->getOutputFilename("succs.dat").c_str(), error, sys::fs::CreationDisposition::CD_CreateAlways);
     foreach2(it, m_succs.begin(), m_succs.end()) {
         const uint64_t key = *it;
         succsOstream.write((const char *)&key, sizeof(uint64_t));
     }
     succsOstream.close();
 
-    s2e()->getMessagesStream() << "done\n";
+    s2e()->getInfoStream() << "done\n";
 }
 
 void BBExport::slotModuleExecute(S2EExecutionState *state, uint64_t pc) {
-    s2e()->getMessagesStream(state) << "execute " << hexval(pc) << "\n";
+    s2e()->getInfoStream(state) << "execute " << hexval(pc) << "\n";
 
     if (m_currentBlock) {
-        s2e()->getMessagesStream() << "execute: collecting llvm\n";
+        s2e()->getInfoStream() << "execute: collecting llvm\n";
         // slotModuleExecuteBlock(state, pc);
         addEdge(m_pred, pc);
         if (!m_llvmModule) {
-            Function *f = state->getTb()->llvm_function;
+            Function *f = static_cast<Function *>(state->getTb()->llvm_function);
             assert(f && "no llvm function in tb");
             m_llvmModule = f->getParent();
         }
@@ -148,7 +149,7 @@ void BBExport::slotModuleExecute(S2EExecutionState *state, uint64_t pc) {
         if (m_earlyTerminate) {
             if (prevSuccsKeys.find(pc) != prevSuccsKeys.end() && symbolsSet.find(pc) == symbolsSet.end() &&
                 pc - m_pred != 6) {
-                s2e()->getMessagesStream(state) << "Hit previously lifted tb. Lifting is stoping..\n";
+                s2e()->getInfoStream(state) << "Hit previously lifted tb. Lifting is stoping..\n";
                 if (m_suspend)
                     return;
                 m_suspend = true;
@@ -171,7 +172,7 @@ void BBExport::slotModuleExecute(S2EExecutionState *state, uint64_t pc) {
 
 void BBExport::addEdge(uint64_t predPc, uint64_t succ) {
 
-    s2e()->getMessagesStream() << "pred: " << hexval(predPc) << "succ: " << hexval(succ) << '\n';
+    s2e()->getInfoStream() << "pred: " << hexval(predPc) << "succ: " << hexval(succ) << '\n';
     m_succs.insert((predPc << 32) | (succ & 0xffffffff));
 }
 
@@ -193,17 +194,17 @@ void BBExport::slotModuleLoad(S2EExecutionState *state, const ModuleDescriptor &
 }
 
 void BBExport::suspend(ExecutionSignal *signal, S2EExecutionState *state, TranslationBlock *tb, uint64_t pc) {
-    s2e()->getMessagesStream() << "suspending..\n";
+    s2e()->getInfoStream() << "suspending..\n";
     g_s2e->getExecutor()->suspendState(state);
 }
 
 void BBExport::slotTranslateBlockStart(ExecutionSignal *signal, S2EExecutionState *state, TranslationBlock *tb,
                                        uint64_t pc) {
-    s2e()->getMessagesStream() << "blockstart\n";
+    s2e()->getInfoStream() << "blockstart\n";
     // if(m_suspend){
     //    m_startSignal->connect(sigc::mem_fun(*this, &BBExport::slotModuleExecuteBlock));
     if (m_moduleLoaded && pc == m_address) {
-        s2e()->getMessagesStream() << "blockstart: set start signal\n";
+        s2e()->getInfoStream() << "blockstart: set start signal\n";
         m_currentBlock = pc;
         // m_startSignal = signal;
         m_tbStartConnection.disconnect();
@@ -219,21 +220,21 @@ void BBExport::slotTranslateBlockStart(ExecutionSignal *signal, S2EExecutionStat
 
 void BBExport::slotTranslateBlockEnd(ExecutionSignal *signal, S2EExecutionState *state, TranslationBlock *tb,
                                      uint64_t pc, bool staticTargetValid, uint64_t staticTarget) {
-    s2e()->getMessagesStream() << "blockend\n";
+    s2e()->getInfoStream() << "blockend\n";
     if (!m_currentBlock) {
         if (m_moduleLoaded && !m_executionDiverted && m_module.Contains(pc)) {
-            s2e()->getMessagesStream() << "blockend: connect executefirst\n";
+            s2e()->getInfoStream() << "blockend: connect executefirst\n";
             signal->connect(sigc::mem_fun(*this, &BBExport::slotModuleExecuteFirst));
             // m_tbEndConnection.disconnect();
         }
     }
     /*else {
-        s2e()->getMessagesStream(state) <<
+        s2e()->getInfoStream(state) <<
             "translateblockstart: pc=" << hexval(pc) <<
             ", cur=" << hexval(m_currentBlock) << "\n";
 
         if (pc == m_currentBlock) {
-            s2e()->getMessagesStream(state) << "ignoring empty block\n";
+            s2e()->getInfoStream(state) << "ignoring empty block\n";
         } else {
             //m_startSignal->connect(sigc::mem_fun(*this,
             //            &BBExport::slotModuleExecuteBlock));
@@ -245,14 +246,14 @@ void BBExport::slotTranslateBlockEnd(ExecutionSignal *signal, S2EExecutionState 
 
 void BBExport::slotModuleExecuteFirst(S2EExecutionState *state, uint64_t pc) {
     if (!m_executionDiverted) {
-        s2e()->getMessagesStream(state) << "executed first block, divert execution\n";
-        state->setPc(m_address);
+        s2e()->getInfoStream(state) << "executed first block, divert execution\n";
+        state->regs()->setPc(m_address);
         m_executionDiverted = true;
     }
 }
 
 void BBExport::slotModuleExecuteBlock(S2EExecutionState *state, uint64_t pc) {
-    Function *f = state->getTb()->llvm_function;
+    Function *f = static_cast<Function *>(state->getTb()->llvm_function);
     assert(f && "no llvm function in tb");
 
     /*std::string succsFilename = s2e()->getOutputFilename("succs.dat"), succsError;
@@ -273,8 +274,9 @@ void BBExport::slotModuleExecuteBlock(S2EExecutionState *state, uint64_t pc) {
 
     std::stringstream ss;
     ss << "BB_" << hexval(m_address) << ".ll";
-    std::string filename = s2e()->getOutputFilename(ss.str()), error;
-    raw_fd_ostream ostream(filename.c_str(), error, 0);
+    std::string filename = s2e()->getOutputFilename(ss.str());
+    std::error_code error;
+    raw_fd_ostream ostream(filename.c_str(), error, sys::fs::CreationDisposition::CD_CreateAlways);
 
     if (ostream.has_error()) {
         s2e()->getWarningsStream(state) << "failed to open outfile " << filename << "\n";
@@ -284,7 +286,7 @@ void BBExport::slotModuleExecuteBlock(S2EExecutionState *state, uint64_t pc) {
     // f->setName("Func_" + f->getName().substr(f->getName().rfind('-') + 1));
     ostream << *(f->getParent());
 
-    s2e()->getMessagesStream(state) << "exported BB at PC " << hexval(m_address) << "\n";
+    s2e()->getInfoStream(state) << "exported BB at PC " << hexval(m_address) << "\n";
     saveLLVMModule(*f);
 
     // g_s2e->getExecutor()->suspendState(state);
@@ -292,15 +294,15 @@ void BBExport::slotModuleExecuteBlock(S2EExecutionState *state, uint64_t pc) {
 
 void BBExport::saveLLVMModule(Function &F) {
     std::string dir = s2e()->getOutputFilename("/");
-    std::string error;
+    std::error_code error;
 
-    s2e()->getMessagesStream() << "Saving LLVM module... ";
+    s2e()->getInfoStream() << "Saving LLVM module... ";
 
-    raw_fd_ostream bitcodeOstream((dir + "captured" + ".bc").c_str(), error, 0);
-    WriteBitcodeToFile(F.getParent(), bitcodeOstream);
+    raw_fd_ostream bitcodeOstream((dir + "captured" + ".bc").c_str(), error, sys::fs::CreationDisposition::CD_CreateAlways);
+    WriteBitcodeToFile(*F.getParent(), bitcodeOstream);
     bitcodeOstream.close();
 
-    s2e()->getMessagesStream() << "done\n";
+    s2e()->getInfoStream() << "done\n";
 }
 
 uint64_t BBExport::extractSuccEdge(Function &F) {

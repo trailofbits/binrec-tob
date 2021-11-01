@@ -70,7 +70,7 @@ void SymbolizeArgsPE::makeSymbolic(S2EExecutionState *state, uint32_t addr,
     if (!state->isSymbolicExecutionEnabled())
         state->enableSymbolicExecution();
 
-    s2e()->getMessagesStream(state)
+    s2e()->getInfoStream(state)
         << "inserting symbolic data at " << hexval(addr)
         << " of size " << size << " with label \"" << label << "\"\n";
 

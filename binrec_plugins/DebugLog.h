@@ -3,7 +3,7 @@
 
 #include <s2e/Plugin.h>
 #include <s2e/S2EExecutionState.h>
-#include <s2e/Plugins/ModuleDescriptor.h>
+#include <s2e/Plugins/OSMonitors/ModuleDescriptor.h>
 
 #include <llvm/Support/raw_ostream.h>
 

@@ -5,7 +5,7 @@
 
 #include <s2e/Plugin.h>
 #include <s2e/S2EExecutionState.h>
-#include <s2e/Plugins/ModuleDescriptor.h>
+#include <s2e/Plugins/OSMonitors/ModuleDescriptor.h>
 
 namespace s2e {
 namespace plugins {

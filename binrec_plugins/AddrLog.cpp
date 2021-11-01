@@ -2,7 +2,8 @@
 #include <s2e/S2E.h>
 #include <s2e/S2EExecutor.h>
 #include <s2e/ConfigFile.h>
-#include <s2e/Plugins/CorePlugin.h>
+#include <s2e/CorePlugin.h>
+#include <tcg/tb.h>
 #include "ModuleSelector.h"
 #include "AddrLog.h"
 
@@ -43,7 +44,7 @@ void AddrLog::initialize()
                 sigc::mem_fun(*this, &AddrLog::slotExecuteBlock));
     }
 
-    s2e()->getMessagesStream() << "[AddrLog] plugin initialized\n";
+    s2e()->getInfoStream() << "[AddrLog] plugin initialized\n";
 }
 
 AddrLog::~AddrLog() {

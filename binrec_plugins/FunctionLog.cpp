@@ -2,22 +2,23 @@
 #include "ModuleSelector.h"
 #include "util.h"
 #include <s2e/ConfigFile.h>
-#include <s2e/Plugins/CorePlugin.h>
-#include <s2e/Plugins/ModuleExecutionDetector.h>
+#include <s2e/CorePlugin.h>
+#include <s2e/Plugins/OSMonitors/Support/ModuleExecutionDetector.h>
 #include <s2e/S2E.h>
 #include <s2e/Utils.h>
 #include <cassert>
 #include <iostream>
-#include <llvm/Constants.h>
-#include <llvm/Function.h>
-#include <llvm/LLVMContext.h>
-#include <llvm/Metadata.h>
+#include <llvm/IR/Constants.h>
+#include <llvm/IR/Function.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Metadata.h>
+#include <tcg/tcg-llvm.h>
 
 using namespace binrec;
 
 namespace s2e::plugins {
 S2E_DEFINE_PLUGIN(FunctionLog, "Log register values at basic block start (don't use with symbolic execution)",
-                  "FunctionLog", "ModuleSelector");
+                  "FunctionLog", S2E_NOOP("ModuleSelector", "FunctionMonitor"));
 
 void FunctionLog::initialize() {
     ti = TraceInfo::get();
@@ -25,8 +26,7 @@ void FunctionLog::initialize() {
     ModuleSelector *selector = (ModuleSelector *)(s2e()->getPlugin("ModuleSelector"));
     selector->onModuleLoad.connect(sigc::mem_fun(*this, &FunctionLog::slotModuleLoad));
     selector->onModuleExecute.connect(sigc::mem_fun(*this, &FunctionLog::slotModuleExecute));
-
-    m_functionMonitor = static_cast<FunctionMonitor *>(s2e()->getPlugin("FunctionMonitor"));
+    m_functionMonitor = s2e()->getPlugin<FunctionMonitor>();
 
     s2e()->getDebugStream() << "FunctionLog: Plugin initialized\n";
     m_callerPc = 0;
@@ -47,9 +47,7 @@ FunctionLog::~FunctionLog() {
 
 void FunctionLog::slotModuleLoad(S2EExecutionState *state, const ModuleDescriptor &module) {
     s2e()->getDebugStream(state) << "FunctionLog: ==> ModulePid: " << module.Pid << '\n';
-
-    FunctionMonitor::CallSignal *cs = m_functionMonitor->getCallSignal(state, -1, module.Pid);
-    cs->connect(sigc::mem_fun(*this, &FunctionLog::onFunctionCall));
+    m_functionMonitor->onCall.connect(sigc::mem_fun(*this, &FunctionLog::onFunctionCall));
 }
 
 void FunctionLog::slotModuleExecute(S2EExecutionState *state, uint64_t pc) {
@@ -73,15 +71,19 @@ void FunctionLog::slotModuleExecute(S2EExecutionState *state, uint64_t pc) {
     }
 }
 
-void FunctionLog::onFunctionCall(S2EExecutionState *state, FunctionMonitorState *fns) {
-    uint64_t caller = state->getTb()->pcOfLastInstr;
-    uint64_t pc = state->getPc();
+void FunctionLog::onFunctionCall(S2EExecutionState *state, const ModuleDescriptorConstPtr &source,
+                         const ModuleDescriptorConstPtr &dest, uint64_t callerPc, uint64_t calleePc,
+                         const FunctionMonitor::ReturnSignalPtr &returnSignal) {
+    // TODO (hbrodin): Should there be any filtering done here? Only relevant modules.
+    // Consider adding the pid from slotModuleLoad and check it here. If ELFSelector have choosen only
+    // a specific binary there might not be a need to do such filtering.
 
-    m_callStack.push(pc);
-    FUNCMON_REGISTER_RETURN_A(state, fns, FunctionLog::onFunctionReturn, caller, pc);
+    m_callStack.push(calleePc);
+    returnSignal->connect(sigc::bind(sigc::mem_fun(*this, &FunctionLog::onFunctionReturn), callerPc, calleePc));
 }
 
-void FunctionLog::onFunctionReturn(S2EExecutionState *state, uint64_t func_caller, uint64_t func_begin) {
+void FunctionLog::onFunctionReturn(S2EExecutionState *state, const ModuleDescriptorConstPtr &source,
+                        const ModuleDescriptorConstPtr &dest, uint64_t returnSite, uint64_t func_caller, uint64_t func_begin) {
     if (m_callStack.empty()) {
         s2e()->getWarningsStream() << "FunctionLog: Returning from func: " << func_begin
                                    << ", but call stack is empty.\n";
@@ -117,12 +119,12 @@ void FunctionLog::onFunctionReturn(S2EExecutionState *state, uint64_t func_calle
         // return from the first entry pc, reset this so we can record the next "entry", too.
         ti->functionLog.entries.push_back(0);
         s2e()->getDebugStream(state) << "FunctionLog: return from entry " << hexval(func_begin) << " at "
-                                     << hexval(state->getPc()) << '\n';
+                                     << hexval(state->regs()->getPc()) << '\n';
     }
 
     m_callerPc = func_caller;
-    std::pair<uint32_t, uint32> entryToCaller(func_begin, func_caller);
-    std::pair<uint32_t, uint32> entryToReturn(func_begin, m_executedBBPc);
+    std::pair<uint32_t, uint32_t> entryToCaller(func_begin, func_caller);
+    std::pair<uint32_t, uint32_t> entryToReturn(func_begin, m_executedBBPc);
     ti->functionLog.entryToCaller.insert(entryToCaller);
     ti->functionLog.entryToReturn.insert(entryToReturn);
 }

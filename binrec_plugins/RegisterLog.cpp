@@ -1,9 +1,10 @@
 #include <cassert>
 
+#include <s2e/cpu.h>
 #include <s2e/S2E.h>
 #include <s2e/Utils.h>
 #include <s2e/ConfigFile.h>
-#include <s2e/Plugins/CorePlugin.h>
+#include <s2e/CorePlugin.h>
 
 #include "RegisterLog.h"
 #include "ModuleSelector.h"
@@ -35,39 +36,31 @@ RegisterLog::~RegisterLog()
     m_logFile.close();
 }
 
-#ifdef TARGET_I386
-static uint32_t cpuVal(S2EExecutionState *state, unsigned offset)
-{
-    uint32_t value;
-    state->readRegisterConcrete(state->getConcreteCpuState(),
-            offset, (uint8_t*)&value, sizeof(value));
-    return value;
-}
-#endif
 
 void RegisterLog::writeLogLine(S2EExecutionState *state, uint64_t pc)
 {
-    assert(state->getPc() == pc);
+    assert(state->regs()->getPc() == pc);
 
 #define PRT_VAL(prefix, value) \
     m_logFile << prefix "=" << std::setw(8) << hexval(value);
 
+    auto cpuState = state->regs()->getCpuState();
 #ifdef TARGET_I386
     m_logFile << std::left;
     PRT_VAL("pc",      pc);
-    PRT_VAL(" eax",    cpuVal(state, CPU_REG_OFFSET(R_EAX)));
-    PRT_VAL(" ebx",    cpuVal(state, CPU_REG_OFFSET(R_EBX)));
-    PRT_VAL(" ecx",    cpuVal(state, CPU_REG_OFFSET(R_ECX)));
-    PRT_VAL(" edx",    cpuVal(state, CPU_REG_OFFSET(R_EDX)));
-    PRT_VAL(" ebp",    cpuVal(state, CPU_REG_OFFSET(R_EBP)));
-    PRT_VAL(" esp",    cpuVal(state, CPU_REG_OFFSET(R_ESP)));
-    PRT_VAL(" esi",    cpuVal(state, CPU_REG_OFFSET(R_ESI)));
-    PRT_VAL(" edi",    cpuVal(state, CPU_REG_OFFSET(R_EDI)));
-    PRT_VAL(" cc_src", cpuVal(state, CPU_OFFSET(cc_src)));
-    PRT_VAL(" cc_dst", cpuVal(state, CPU_OFFSET(cc_dst)));
-    PRT_VAL(" cc_op",  cpuVal(state, CPU_OFFSET(cc_op)));
-    PRT_VAL(" df",     state->readCpuState(CPU_OFFSET(df), 32));
-    PRT_VAL(" mflags", state->readCpuState(CPU_OFFSET(mflags), 32));
+    PRT_VAL(" eax",    cpuState->regs[R_EAX]);
+    PRT_VAL(" ebx",    cpuState->regs[R_EBX]);
+    PRT_VAL(" ecx",    cpuState->regs[R_ECX]);
+    PRT_VAL(" edx",    cpuState->regs[R_EDX]);
+    PRT_VAL(" ebp",    cpuState->regs[R_EBP]);
+    PRT_VAL(" esp",    cpuState->regs[R_ESP]);
+    PRT_VAL(" esi",    cpuState->regs[R_ESI]);
+    PRT_VAL(" edi",    cpuState->regs[R_EDI]);
+    PRT_VAL(" cc_src", cpuState->cc_src);
+    PRT_VAL(" cc_dst", cpuState->cc_dst);
+    PRT_VAL(" cc_op",  cpuState->cc_op);
+    PRT_VAL(" df",     cpuState->df);
+    PRT_VAL(" mflags", cpuState->mflags);
     m_logFile << '\n';
 #endif
 

@@ -1,6 +1,6 @@
 #include <s2e/S2E.h>
 #include <s2e/S2EExecutor.h>
-#include <s2e/Plugins/ModuleExecutionDetector.h>
+#include <s2e/Plugins/OSMonitors/Support/ModuleExecutionDetector.h>
 #include <s2e/Plugins/WindowsInterceptor/WindowsImage.h>
 
 #include "PELibCallMonitor.h"
@@ -36,7 +36,7 @@ void PELibCallMonitor::initialize()
     m_selector->onModuleReturn.connect(
             sigc::mem_fun(*this, &PELibCallMonitor::slotModuleReturn));
 
-    s2e()->getMessagesStream() << "[PELibCallMonitor] Plugin initialized\n";
+    s2e()->getInfoStream() << "[PELibCallMonitor] Plugin initialized\n";
 }
 
 void PELibCallMonitor::slotModuleLoad(S2EExecutionState *state,
@@ -150,7 +150,7 @@ bool PELibCallMonitor::reloadImports(S2EExecutionState *state)
 
 void PELibCallMonitor::initialize()
 {
-    s2e()->getMessagesStream() << "[PELibCallMonitor] This plugin is only suited for i386\n";
+    s2e()->getInfoStream() << "[PELibCallMonitor] This plugin is only suited for i386\n";
 }
 
 #endif

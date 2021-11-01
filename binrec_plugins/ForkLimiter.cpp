@@ -129,15 +129,15 @@ void ForkLimiter::onSlotTranslateBlockStart(
 
 void ForkLimiter::onTermination1(S2EExecutionState* state, uint64_t sourcePc)
 {
-    s2e()->getExecutor()->terminateStateEarly(*state, "libFork is terminated");
+    s2e()->getExecutor()->terminateState(*state, "libFork is terminated");
 }
 void ForkLimiter::onTermination2(S2EExecutionState* state, uint64_t sourcePc)
 {
-    s2e()->getExecutor()->terminateStateEarly(*state, "forkLimit is reached");
+    s2e()->getExecutor()->terminateState(*state, "forkLimit is reached");
 }
 void ForkLimiter::onTermination3(S2EExecutionState* state, uint64_t sourcePc)
 {
-    s2e()->getExecutor()->terminateStateEarly(*state, "maxRunningTime is reached");
+    s2e()->getExecutor()->terminateState(*state, "maxRunningTime is reached");
 }
 
 
@@ -165,7 +165,7 @@ void ForkLimiter::onFork(S2EExecutionState *state, const std::vector<S2EExecutio
     //DECLARE_PLUGINSTATE(ForkLimiterState, state);
     //s2e()->getWarningsStream() << "[onFork] state:" << state->getID() << 
     //                                  " forkEnabled: " << state->isForkingEnabled() << "\n"; 
-    if(!m_binModule.Contains(state->getPc())){
+    if(!m_binModule.Contains(state->regs()->getPc())){
         for(size_t i = 0, e = newStates.size(); i < e; ++i){
             //DECLARE_PLUGINSTATE(ForkLimiterState, newStates[i]);
            
@@ -209,7 +209,7 @@ void ForkLimiter::onFork(S2EExecutionState *state, const std::vector<S2EExecutio
         return;
     }
 */
-    uint64_t curPc = state->getPc();
+    uint64_t curPc = state->regs()->getPc();
     //s2e()->getDebugStream() << "3\n";
     ++m_forkCount["module"][curPc];
     //s2e()->getDebugStream() << "4\n";

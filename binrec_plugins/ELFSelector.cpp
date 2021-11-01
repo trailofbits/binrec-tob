@@ -21,10 +21,13 @@ void ELFSelector::initialize() {
     modEx->onModuleTranslateBlockStart.connect(sigc::mem_fun(*this, &ELFSelector::slotModuleTranslateBlockStart));
     s2e()->getCorePlugin()->onTranslateBlockStart.connect(sigc::mem_fun(*this, &ELFSelector::slotTranslateBlockStart));
 
-    s2e()->getMessagesStream() << "[ELFSelector] Plugin initialized\n";
+    s2e()->getInfoStream() << "[ELFSelector] Plugin initialized\n";
 }
 
 void ELFSelector::slotModuleLoad(S2EExecutionState *state, const ModuleDescriptor &module) {
+    s2e()->getWarningsStream() << "[ELFSelector] slotModuleLoad: " << module.Name << "\n";
+    // TODO (hbrodin): Is this the correct filename?
+    // TODO (hbrodin): Updated s2e 'new_project' command automatically creates a filter for the binary. Is this correct?
     if (module.Name == "init_env.so") {
         m_modInitEnv = module;
     } else {

@@ -8,8 +8,8 @@
 #include <s2e/Utils.h>
 #include <s2e/Plugins/WindowsInterceptor/WindowsImage.h>
 
-#include <llvm/Function.h>
-#include <llvm/Metadata.h>
+#include <llvm/IR/Function.h>
+#include <llvm/IR/Metadata.h>
 
 #include "ExportPE.h"
 #include "ModuleSelector.h"
@@ -136,7 +136,7 @@ void ExportPE::slotStateFork(S2EExecutionState *state,
 
 void ExportPE::initialize()
 {
-    s2e()->getMessagesStream() << "[ExportPE] This plugin is only suited for i386\n";
+    s2e()->getInfoStream() << "[ExportPE] This plugin is only suited for i386\n";
 }
 
 #endif

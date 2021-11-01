@@ -3,10 +3,10 @@
 #include "util.h"
 #include <s2e/S2E.h>
 #include <cassert>
-#include <llvm/Constants.h>
-#include <llvm/Function.h>
-#include <llvm/LLVMContext.h>
-#include <llvm/Metadata.h>
+#include <llvm/IR/Constants.h>
+#include <llvm/IR/Function.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Metadata.h>
 
 using namespace llvm;
 

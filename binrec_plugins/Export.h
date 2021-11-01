@@ -4,10 +4,10 @@
 #include "binrec/tracing/trace_info.hpp"
 #include <s2e/ConfigFile.h>
 #include <s2e/Plugin.h>
-#include <s2e/Plugins/ModuleDescriptor.h>
+#include <s2e/Plugins/OSMonitors/ModuleDescriptor.h>
 #include <s2e/S2EExecutionState.h>
-#include <llvm/Function.h>
-#include <llvm/Module.h>
+#include <llvm/IR/Function.h>
+#include <llvm/IR/Module.h>
 #include <map>
 #include <set>
 #include <string>
@@ -52,8 +52,8 @@ private:
     void evaluateFunctions(llvm::Function *newFunc, llvm::Function *oldFunc, bool *aIsValid, bool *bIsValid);
     auto getExportFilename(bool intermediate) -> std::string;
     auto forceCodeGen(S2EExecutionState *state) -> llvm::Function *;
-    auto regenCode(S2EExecutionState *state, Function *old) -> llvm::Function *;
-
+    auto regenCode(S2EExecutionState *state, llvm::Function *old) -> llvm::Function *;
+    auto getFirstStoredPc(llvm::Function *f) -> uint64_t;
     bool m_regenerateBlocks;
 
 protected:

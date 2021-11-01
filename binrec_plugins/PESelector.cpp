@@ -1,6 +1,6 @@
 #include <s2e/S2E.h>
 #include <s2e/S2EExecutor.h>
-#include <s2e/Plugins/ModuleExecutionDetector.h>
+#include <s2e/Plugins/OSMonitors/Support/ModuleExecutionDetector.h>
 #include <s2e/Plugins/WindowsInterceptor/WindowsMonitor.h>
 
 #include "PESelector.h"
@@ -31,7 +31,7 @@ void PESelector::initialize()
     windowsMonitor->onProcessUnload.connect(
             sigc::mem_fun(*this, &PESelector::slotProcessUnload));
 
-    s2e()->getMessagesStream() << "[PESelector] Plugin initialized\n";
+    s2e()->getInfoStream() << "[PESelector] Plugin initialized\n";
 }
 
 void PESelector::slotModuleLoad(S2EExecutionState *state,
@@ -108,7 +108,7 @@ void PESelector::slotExecuteBlock(S2EExecutionState *state, uint64_t pc)
 
 void PESelector::slotProcessUnload(S2EExecutionState *state, uint64_t pid) {
     if (m_moduleLoaded && pid == m_moduleDesc.Pid) {
-        s2e()->getMessagesStream(state) << "process terminated, killing state\n";
+        s2e()->getInfoStream(state) << "process terminated, killing state\n";
         s2e()->getExecutor()->suspendState(state);
     }
 }

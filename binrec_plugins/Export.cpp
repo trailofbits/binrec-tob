@@ -1,10 +1,7 @@
 // This needs to be at the top. The order of includes is also important. This is fine.
 #include <glib.h>
-extern "C" {
-#include <cpu.h>
+#include <s2e/cpu.h>
 #include <tcg/tcg-llvm.h>
-extern CPUArchState *env;
-}
 
 #include "Export.h"
 #include "ModuleSelector.h"
@@ -14,15 +11,17 @@ extern CPUArchState *env;
 #include <cassert>
 #include <climits>
 #include <cstdlib>
-#include <llvm/Bitcode/ReaderWriter.h>
-#include <llvm/Constants.h>
-#include <llvm/Instructions.h>
-#include <llvm/LLVMContext.h>
-#include <llvm/Metadata.h>
+#include <llvm/Bitcode/BitcodeWriter.h>
+#include <llvm/IR/Constants.h>
+#include <llvm/IR/Instructions.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Metadata.h>
+#include <llvm/Support/FileSystem.h>
 #include <llvm/Transforms/Utils/Cloning.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <system_error>
 
 #define WRITE_LLVM_SRC true
 #define BINARY_SYMLINK_NAME "binary"
@@ -80,6 +79,15 @@ void Export::initializeModule(const ModuleDescriptor &module, const ConfigFile::
     symlink(fullProgramPath.data(), s2e()->getOutputFilename(BINARY_SYMLINK_NAME).c_str());
 }
 
+extern "C" __thread TCGContext *tcg_ctx;
+int cpu_gen_llvm(CPUArchState *env, TranslationBlock *tb) {
+    TCGContext *s = tcg_ctx;
+
+    tb->llvm_function = tcg_llvm_gen_code(tcg_llvm_translator, s, tb);
+    g_sqi.tb.set_tb_function(tb->se_tb, tb->llvm_function);
+    return 0;
+}
+
 auto Export::exportBB(S2EExecutionState *state, uint64_t pc) -> bool {
     auto it = m_bbCounts.find(pc);
     unsigned npassed = it == m_bbCounts.end() ? 0 : it->second;
@@ -122,9 +130,9 @@ auto Export::getExportFilename(bool intermediate) -> string { return "captured";
 
 void Export::saveLLVMModule(bool intermediate) {
     string dir = s2e()->getOutputFilename("/");
-    string error;
+    std::error_code error;
 
-    s2e()->getMessagesStream() << "Saving LLVM module... ";
+    s2e()->getInfoStream() << "Saving LLVM module... ";
 
     if (!m_module) {
         s2e()->getWarningsStream() << "error: module is uninitialized. Many errors may occur here";
@@ -133,8 +141,8 @@ void Export::saveLLVMModule(bool intermediate) {
 
     string basename = getExportFilename(intermediate);
 
-    raw_fd_ostream bitcodeOstream((dir + basename + ".bc").c_str(), error, 0);
-    WriteBitcodeToFile(m_module, bitcodeOstream);
+    raw_fd_ostream bitcodeOstream((dir + basename + ".bc").c_str(), error, sys::fs::CreationDisposition::CD_CreateAlways);
+    WriteBitcodeToFile(*m_module, bitcodeOstream);
     bitcodeOstream.close();
 
     ofstream traceInfoOut(s2e()->getOutputFilename(TraceInfo::defaultFilename).c_str(), ios::out | ios::trunc);
@@ -142,42 +150,31 @@ void Export::saveLLVMModule(bool intermediate) {
 
 #if WRITE_LLVM_SRC
     if (!intermediate) {
-        raw_fd_ostream llvmOstream((dir + basename + ".ll").c_str(), error, 0);
+        raw_fd_ostream llvmOstream((dir + basename + ".ll").c_str(), error, sys::fs::CreationDisposition::CD_CreateAlways);
         llvmOstream << *m_module;
         llvmOstream.close();
     }
 #endif
 }
 
-namespace {
-auto getFirstStoredPc(Function *f) -> uint64_t {
-    assert(!f->empty());
-    BasicBlock &bb = f->getEntryBlock();
+auto Export::getFirstStoredPc(Function *f) -> uint64_t {
 
-    foreach2(inst, bb.begin(), bb.end()) {
-        auto *store = dyn_cast<StoreInst>(inst);
-        if (!store)
-            continue;
+    assert(!f->empty() && "Function is empty (getFirstStoredPc)");
 
-        auto *pcVal = dyn_cast<ConstantInt>(store->getValueOperand());
-        if (!pcVal || !pcVal->getType()->isIntegerTy(32))
-            continue;
-
-        auto *envCast = cast<IntToPtrInst>(store->getPointerOperand());
-        assert(envCast->getSrcTy()->isIntegerTy(64));
-        assert(cast<PointerType>(envCast->getDestTy())->getElementType()->isIntegerTy(32));
-
-        auto *add = cast<BinaryOperator>(envCast->getOperand(0));
-        assert(add->getOpcode() == Instruction::Add);
-        assert(add->getOperand(0)->getName().startswith("env_v"));
-        assert(cast<ConstantInt>(add->getOperand(1))->getZExtValue() == 48);
-
-        return pcVal->getZExtValue();
-    }
-
-    return 0;
+    // NOTE (hbrodin): the model for generated functions seems to have changed since
+    // this code was written. Rely on function name instead. Format from:
+    // std::string TCGLLVMTranslator::generateName()
+    assert(f->hasName() && "Function have no name (getFirstStoredPc)");
+    auto fname = f->getName();
+    assert(fname.startswith("tcg-llvm-") && "Function does not start with tcg-llvm- (getFirstStoredPc");
+    auto [first, pcstr] = fname.rsplit('-');
+    outs() << "PCStr " << pcstr << " first " << first << "\n";
+    outs() << "PCStr len" << pcstr.size() << "\n";
+    uint64_t pc;
+    auto fail = pcstr.getAsInteger(16, pc);
+    assert(!fail && "Failed to convert pc to integer (getFirstStoredPc)");
+    return pc;
 }
-} // namespace
 
 auto Export::forceCodeGen(S2EExecutionState *state) -> Function * {
     TranslationBlock *tb = state->getTb();
@@ -188,13 +185,14 @@ auto Export::forceCodeGen(S2EExecutionState *state) -> Function * {
 
         // check to make sure that the generated code is that emulates the
         // correct PC
-        uint64_t pcExpected = state->getPc();
-        uint64_t pcFound = getFirstStoredPc(tb->llvm_function);
+        uint64_t pcExpected = state->regs()->getPc();
+        uint64_t pcFound = getFirstStoredPc(static_cast<llvm::Function*>(tb->llvm_function));
 
         if (pcFound != pcExpected) {
             s2e()->getWarningsStream() << "LLVM block for pc " << hexval(pcExpected) << " stores pc " << hexval(pcFound)
                                        << ":\n";
-            tb->llvm_function->dump();
+
+            static_cast<Function *>(tb->llvm_function)->print(s2e()->getWarningsStream());
             assert(false);
         }
 
@@ -203,7 +201,7 @@ auto Export::forceCodeGen(S2EExecutionState *state) -> Function * {
         // clearLLVMFunction(tb);
     }
 
-    Function *f = tb->llvm_function;
+    Function *f = static_cast<Function *>(tb->llvm_function);
     // clearLLVMFunction(tb);
 
     return f;
@@ -335,7 +333,7 @@ auto Export::areBBsEqual(Function *a, Function *b /*old Func*/, bool *aIsValid, 
         BasicBlock::iterator instb = skipAllocas(blockb->begin());
         int dist = distance(instb, blockb->end());
         bSumInst += dist;
-        // s2e()->getMessagesStream() << "aSumInst:" << aSumInst << " bSumInst:" << bSumInst << "\n";
+        // s2e()->getInfoStream() << "aSumInst:" << aSumInst << " bSumInst:" << bSumInst << "\n";
 
         // exception call is always the second inst from at the end of basic block
         for (instb = skipInst(instb, dist - 3); instb != blockb->end(); instb++) {
@@ -357,7 +355,7 @@ auto Export::areBBsEqual(Function *a, Function *b /*old Func*/, bool *aIsValid, 
         BasicBlock::iterator instb = skipAllocas(blockb->begin());
         int dist = distance(instb, blockb->end());
         bSumInst += dist;
-        // s2e()->getMessagesStream() << "aSumInst:" << aSumInst << " bSumInst:" << bSumInst << "\n";
+        // s2e()->getInfoStream() << "aSumInst:" << aSumInst << " bSumInst:" << bSumInst << "\n";
 
         // exception call is always the second inst from at the end of basic block
         for (instb = skipInst(instb, dist - 3); instb != blockb->end(); instb++) {
@@ -373,7 +371,10 @@ auto Export::areBBsEqual(Function *a, Function *b /*old Func*/, bool *aIsValid, 
 }
 
 void Export::clearLLVMFunction(TranslationBlock *tb) {
-    tcg_llvm_tb_alloc((struct TranslationBlock *)tb);
+    //tcg_llvm_tb_alloc((struct TranslationBlock *)tb);
+    // TODO (hbrodin): Not sure this is correct.
+    tb->llvm_function = nullptr;
+
     s2e_set_tb_function(s2e(), tb);
 }
 
@@ -382,10 +383,9 @@ auto Export::regenCode(S2EExecutionState *state, Function *old) -> Function * {
 
     if (tb->llvm_function)
         clearLLVMFunction(tb);
-
     cpu_gen_llvm(env, (struct TranslationBlock *)tb);
 
-    Function *newF = tb->llvm_function;
+    Function *newF = static_cast<Function *>(tb->llvm_function);
 
     bool oldIsValid = true;
     bool newIsValid = true;
@@ -394,7 +394,7 @@ auto Export::regenCode(S2EExecutionState *state, Function *old) -> Function * {
     if (oldIsValid && newIsValid && equal) {
         // s2e()->getDebugStream() << "Finalized Function: " << "PC= " << hexval(state->getPc()) << " #ofBB= " <<
         // m_bbCounts[state->getPc()] << "\n";
-        m_bbFinalized[state->getPc()] = true;
+        m_bbFinalized[state->regs()->getPc()] = true;
         clearLLVMFunction(tb);
         return nullptr;
     }
@@ -417,13 +417,13 @@ auto Export::regenCode(S2EExecutionState *state, Function *old) -> Function * {
                             << "new: " << newF->size() << " vs "
                             << "old: " << old->size() << "\n";
 
-    s2e()->getMessagesStream() << "[Export] regenerated BB for pc " << hexval(state->getPc()) << "\n";
+    s2e()->getInfoStream() << "[Export] regenerated BB for pc " << hexval(state->regs()->getPc()) << "\n";
 
     s2e()->getDebugStream() << *newF << *old;
 
     old->eraseFromParent();
 
-    return tb->llvm_function;
+    return static_cast<Function *>(tb->llvm_function);
 
     // FIXME: enable this?
     // Function *f = tb->llvm_function;
@@ -456,7 +456,7 @@ auto Export::getMetadataInst(uint64_t pc) -> Instruction * {
 
 void Export::stopRegeneratingBlocks() {
     m_regenerateBlocks = false;
-    s2e()->getMessagesStream() << "stopped regenerating exported blocks\n";
+    s2e()->getInfoStream() << "stopped regenerating exported blocks\n";
 }
 
 } // namespace s2e::plugins
