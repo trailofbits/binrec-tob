@@ -371,11 +371,7 @@ auto Export::areBBsEqual(Function *a, Function *b /*old Func*/, bool *aIsValid, 
 }
 
 void Export::clearLLVMFunction(TranslationBlock *tb) {
-    //tcg_llvm_tb_alloc((struct TranslationBlock *)tb);
-    // TODO (hbrodin): Not sure this is correct.
     tb->llvm_function = nullptr;
-
-    s2e_set_tb_function(s2e(), tb);
 }
 
 auto Export::regenCode(S2EExecutionState *state, Function *old) -> Function * {
