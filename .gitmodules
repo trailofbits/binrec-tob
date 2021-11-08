@@ -1,0 +1,4 @@
+[submodule "test/benchmark"]
+	path = test/benchmark
+	url = ../binrec-benchmark
+	branch = main

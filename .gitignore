@@ -28,3 +28,4 @@ qemu/cmd-config
 README.html
 s2e-last
 s2e-out-*
+venv/

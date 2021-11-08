@@ -49,7 +49,7 @@ pluginsConfig.ModuleExecutionDetector = {
 pluginsConfig.HostFiles = {
     baseDirs = {
         'qemu',
-        'build/test',
+        'test/benchmark/samples/bin/x86/binrec',
         -- 'test/dhrystone-2.1',
         -- 'test/coreutils-8.23',
         -- 'test/spec2006/benchspec/CPU2006/401.bzip2/exe',
@@ -79,7 +79,7 @@ pluginsConfig.HostFiles = {
 
 pluginsConfig.ExportELF = {
     baseDirs = {
-        'build/test',
+        'test/benchmark/samples/bin/x86/binrec',
         -- 'test/dhrystone-2.1',
         -- 'test/coreutils-8.23',
         -- 'test/spec2006/benchspec/CPU2006/401.bzip2/exe',

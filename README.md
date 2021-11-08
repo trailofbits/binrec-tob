@@ -10,7 +10,7 @@ BinRec dynamically lifts binary executables to LLVM IR. It is based on
 
 Building BinRec
 -------------
-BinRec uses [just](https://github.com/casey/just#installation) to automate various tasks including building BinRec. The 
+BinRec uses [just](https://github.com/casey/just#installation) to automate various tasks including building BinRec. The
 first step in building BinRec is to install this tool (and curl if not already installed):
 
 	  $ sudo apt-get install -y curl
@@ -25,7 +25,7 @@ Then, BinRec can be built from the root of this repository with:
    Run the `configure-network` just recipe to configure the network. The recipe detects the active adapter and creates a a bride and tap interface.
 
        $ just configure-network  # enter sudo password when prompted
-   
+
    **Note:** When running as a VM on VMWare Fusion, you may be prompted in the Mac host OS to allow the VM to monitor network traffic.
 
 Running a binary in the BinRec front-end
@@ -51,7 +51,7 @@ directory being recovered using our pre-built VM image in combination with S2E's
 
 1. Boot the VM:
 
-       $ export MEM_AMOUNT=1024    # if you want to modify VM ram, default is 1G 
+       $ export MEM_AMOUNT=1024    # if you want to modify VM ram, default is 1G
        $ ./qemu/debian.sh -vnc :0  # boot the VM
 
    Pass `-net` if you want the qemu to access the network. Put it before vnc arg
@@ -62,7 +62,7 @@ directory being recovered using our pre-built VM image in combination with S2E's
    step is not correct.
 
        $ vncviewer 127.0.0.1:5900
-       
+
 
    Log in (user "user" and password "password" for the prebuilt image) and run the command `getrun-cmd`:
 
@@ -97,7 +97,7 @@ directory being recovered using our pre-built VM image in combination with S2E's
         $ ./qemu/cmd-debian-mt.sh configFile
 
     The VM is killed automatically after the target binary has been run. Directories
-    called `s2e-out-hello-1` `s2e-out-hello-2` are created, containing the captured 
+    called `s2e-out-hello-1` `s2e-out-hello-2` are created, containing the captured
     LLVM bitcode in `captured.bc`.
 
 Deinstrumentation and lowering of captured bitcode
@@ -121,6 +121,29 @@ Now go into the `s2e-out-hello` directory and run the lifting script to obtain d
 
 This created a recovered binary called `recovered` that contains the compiled code from `recovered.bc` (LLVM source code
 is generated in `recovered.ll`).
+
+Running Tests
+-------------
+
+Unit and integration tests are run with the `run-tests` just recipe. The tests require a working Debian qemu image with a
+`cmd` snapshot already saved. Follow the instructions in this README through the `savevm` command.
+
+With a qemu image and `cmd` snapshot ready, verify that the submodules are up to date and then run the tests with the
+`run-tests` just recipe.
+
+```
+git submodule update --recursive --init
+just run-tests
+```
+
+Tests are written in Python (`pytest`). Integration tests use sample code and binaries provided by the
+[binrec-benchmark](https://github.com/trailofbits/binrec-benchmark) repository, which is a submodule of the binrec repo.
+Each integration test sample is run multiple times, depending on the test inputs, the runtime traces are merged, the
+merged trace is lifted, and then the recovered binary is compared against the original binary with the same test inputs
+used during the trace operations. The process exit code, stdout, and stderr are compared for each test input.
+
+For more information, refer to the binrec-benchmark README.
+
 
 Other Notes
 -----------

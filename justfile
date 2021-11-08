@@ -49,6 +49,7 @@ rebuild-all:
 init:
     test -f Pipfile.lock || pipenv lock --dev
     pipenv sync --dev
+    git submodule update --recursive --init
 
 # Format code
 format:
@@ -88,6 +89,11 @@ configure-network:
   sudo route add default gw {{net_gateway}}
   # copy the dns config from the original adapter to the bridge
   sudo resolvectl dns br0 `resolvectl dns {{net_iface}} | cut -d':' -f 2`
+
+
+# Runs all tests
+run-tests:
+  pipenv run pytest --verbose
 
 # BinRec Python API Commands
 # TODO

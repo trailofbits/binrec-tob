@@ -26,7 +26,6 @@ add_subdirectory(binrec_tracemerge)
 add_subdirectory(s2e)
 
 unset(CMAKE_RUNTIME_OUTPUT_DIRECTORY)
-add_subdirectory(test)
 
 add_custom_target(runlib ALL $(MAKE) WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/runlib)
 add_dependencies(runlib qemu)
