@@ -156,6 +156,29 @@ needs to be patched to the new entrypoint. We cannot do that automatically yet, 
 disassembler, go to `_start` and count the bytes until you get to the address of `main`. Use this value
 in `binrec_link/src/Stitch.cpp:getStartPatch`.
 
+Development
+-----------
+
+### Python API
+
+The BinRec Python 3 API and module is located in the `binrec` directory.
+
+### Linting and Formatting
+
+There are several just recipes to lint and format the Python source code for BinRec. In general, the
+project uses the following tools:
+
+- [black](https://github.com/psf/black) - Python code formatting and style
+- [flake8](https://flake8.pycqa.org/en/latest/) - Python static code analysis
+- [mypy](https://github.com/python/mypy) - Python type checking
+- [isort](https://github.com/PyCQA/isort) - Python import order formatting
+
+These tools can be called through just using:
+
+- `just lint` - Run all code linters
+- `just lint-<toolname>` - Run a single code linter, Ex. `just lint-flake8`
+- `just format` - Run all code formatters
+- `just format-<toolname>` - Run a single code formatter, ex. `just format-black`
 
 Change Log
 --------

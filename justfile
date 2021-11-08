@@ -52,14 +52,36 @@ init:
     git submodule update --recursive --init
 
 # Format code
-format:
-  pipenv run black .
-  # TODO: Eventually format C++ code
+format: format-black format-isort
+  # TODO: Eventually format C++ code: clang-format -i DIRNAME
+
+# Format Python code with black
+format-black:
+  pipenv run black binrec
+
+# Format Python import order with isort
+format-isort:
+  pipenv run isort binrec
 
 # Runs linting checks
-lint:
-  pipenv run black --check .
-  # TODO: Add python linter, C++ formatter and linter?
+lint: lint-mypy lint-black lint-flake8 lint-isort
+  # TODO: Add C++ formatter and linter: clang-format -Werror --dry-run DIRNAME
+
+# Runs Python static code checking with flake8
+lint-flake8:
+  pipenv run flake8 binrec
+
+# Runs Python type checking with mypy
+lint-mypy:
+  pipenv run mypy binrec
+
+# Runs Python code format and style checks with black
+lint-black:
+  pipenv run black --check binrec
+
+# Runs Python import sort order format check with isort
+lint-isort:
+  pipenv run isort --check binrec
 
 # Remove pipenv virtual environment
 clear:
