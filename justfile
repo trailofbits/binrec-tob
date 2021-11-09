@@ -15,7 +15,7 @@ install-dependencies:
     sudo apt-get update
     sudo apt-get install -y bison clang cmake flex g++ g++-multilib gcc gcc-multilib git libglib2.0-dev liblua5.1-dev \
         libsigc++-2.0-dev lld llvm-dev lua5.3 nasm nlohmann-json3-dev pkg-config python2 subversion net-tools curl \
-        pipenv
+        pipenv git-lfs
 
     # RealVNCviewer
     curl -sSf https://www.realvnc.com/download/file/viewer.files/VNC-Viewer-6.21.406-Linux-x64.deb --output vnc.deb
@@ -24,7 +24,7 @@ install-dependencies:
 
     # TODO: Initialize / Build submodules
 
-    # Initialize pipenv
+    # Initialize pipenv, submodules, git-lfs
     just init
 
 
@@ -45,11 +45,12 @@ rebuild-all:
 # TODO Eventually make incremental build commands for just the BinRec pieces
 
 # Pipenv setup /teardown commands
-# Initialize Python dependencies
+# Initialize Python dependencies, clone submodules, pull lfs files
 init:
     test -f Pipfile.lock || pipenv lock --dev
     pipenv sync --dev
     git submodule update --recursive --init
+    cd ./test/benchmark && git lfs pull
 
 # Format code
 format: format-black format-isort
