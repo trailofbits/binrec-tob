@@ -79,7 +79,7 @@ directory being recovered using our pre-built VM image in combination with S2E's
    **WARNING:** In macOS, if `ctrl+alt+2` doesn't work, try the following:
    `XQUARTS-->preferences-->Input-->Option keys send ALT L and ALT R`
 
-3. Back in the docker instance shell, load the snapshot in S2E mode with the custom plugin loaded, using the HostFiles
+3. Back in the original shell, load the snapshot in S2E mode with the custom plugin loaded, using the HostFiles
    plugin to copy the target binary to the VM:
 
        $ ./qemu/cmd-debian.sh --vnc 0 hello
