@@ -16,13 +16,12 @@ install-dependencies:
     sudo apt-get install -y bison clang cmake flex g++ g++-multilib gcc gcc-multilib git libglib2.0-dev liblua5.1-dev \
         libsigc++-2.0-dev lld llvm-dev lua5.3 nasm nlohmann-json3-dev pkg-config python2 subversion net-tools curl \
         pipenv git-lfs
+    git lfs install
 
     # RealVNCviewer
     curl -sSf https://www.realvnc.com/download/file/viewer.files/VNC-Viewer-6.21.406-Linux-x64.deb --output vnc.deb
     sudo apt install ./vnc.deb
     rm vnc.deb
-
-    # TODO: Initialize / Build submodules
 
     # Initialize pipenv, submodules, git-lfs
     just init
