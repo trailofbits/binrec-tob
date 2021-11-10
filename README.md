@@ -40,6 +40,16 @@ We use S2E's [init\_env.so][4] library to detect execution of the target binary 
 built copy integrated, but for a custom image you need to build the library (along with the [`s2eget`][5] tool) in
 [s2e/guest/tools](/s2e/guest/tools/) and copy them into the VM.
 
+If you use the pre-build [image][8], make sure to name it debian.raw and store it in the qemu-directory. Following that, create a link to it with the name debian.s2e. The following commands can be used:
+
+```shell
+$ cd qemu
+$ wget https://www.ics.uci.edu/~fparzefa/binrec/debian10.raw.xz
+$ unzx debian10.raw.xz
+$ mv debian10.raw debian.raw
+$ ln debian.raw debian.s2e
+```
+
 ### Running the binary
 
 S2E builds two QEMU binaries: one unmodified and one with S2E instrumentation to facilitate symbolic execution and
