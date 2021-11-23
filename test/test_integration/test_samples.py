@@ -1,27 +1,25 @@
+import os
 import subprocess
 from typing import List, Optional
-from pathlib import Path
-import os
 
 from _pytest.python import Metafunc
 
+from binrec.env import BINREC_ROOT, BINREC_SCRIPTS
 
-ROOT = Path(__file__).absolute().parents[2]
-QEMU_DIR = ROOT / "qemu"
-SCRIPTS_DIR = ROOT / "scripts"
-TEST_INPUT_DIR = ROOT / "test" / "benchmark" / "samples" / "binrec" / "test_inputs"
-TEST_BUILD_DIR = ROOT / "test" / "benchmark" / "samples" / "bin" / "x86" / "binrec"
+QEMU_DIR = BINREC_ROOT / "qemu"
+TEST_INPUT_DIR = BINREC_ROOT / "test" / "benchmark" / "samples" / "binrec" / "test_inputs"
+TEST_BUILD_DIR = BINREC_ROOT / "test" / "benchmark" / "samples" / "bin" / "x86" / "binrec"
 
 
-if not os.environ.get('S2EDIR'):
+if not os.environ.get("S2EDIR"):
     # this is needed by the binrec scripts
-    os.environ['S2EDIR'] = str(ROOT)
+    os.environ["S2EDIR"] = str(BINREC_ROOT)
 
 
 def load_sample_test_cases(func: callable) -> callable:
-    '''
+    """
     Load sample test cases from the test input directory.
-    '''
+    """
     sample_names = []
 
     for filename in sorted(os.listdir(TEST_INPUT_DIR)):
@@ -36,17 +34,17 @@ def load_sample_test_cases(func: callable) -> callable:
 
 
 def pytest_generate_tests(metafunc: Metafunc):
-    '''
+    """
     This method is called by pytest to generate test cases for this module.
-    '''
+    """
     sample_names: Optional[List[str]] = getattr(metafunc.function, "sample_names", None)
     if sample_names:
-        metafunc.parametrize('sample_name', sample_names, ids=sample_names)
+        metafunc.parametrize("sample_name", sample_names, ids=sample_names)
 
 
 @load_sample_test_cases
 def test_sample(sample_name: str):
-    with open(TEST_INPUT_DIR / sample_name, 'r') as file:
+    with open(TEST_INPUT_DIR / sample_name, "r") as file:
         # read command line invocations
         invocations = [line.strip().split() for line in file]
         if not invocations:
@@ -57,15 +55,15 @@ def test_sample(sample_name: str):
 
 
 def assert_subprocess(*args, assert_error: str = "", **kwargs) -> None:
-    '''
+    """
     Run a subprocess and assert that is exits with a 0 return code.
-    '''
+    """
     proc = subprocess.run(*args, **kwargs)
     assert proc.returncode == 0, assert_error
 
 
 def compare_lift(binary: str, invocations: List[List[str]]) -> None:
-    '''
+    """
     Compare the original binary against the lifted binary for each test input. This method runs
     the original and the lifted and then compares the process return code, stdout, and stderr
     content. An ``AssertionError`` is raised if any of the comparison criteria does not match
@@ -74,18 +72,22 @@ def compare_lift(binary: str, invocations: List[List[str]]) -> None:
     :param binary: test binary name
     :param invocations: list of command line arguments to run
     :param log_file: binrec log file
-    '''
-    lifted = str(ROOT / f"s2e-out-{binary}" / "recovered")
-    original = str(ROOT / f"s2e-out-{binary}" / "binary")
-    target = str(ROOT / f"s2e-out-{binary}" / "test-target")
+    """
+    lifted = str(BINREC_ROOT / f"s2e-out-{binary}" / "recovered")
+    original = str(BINREC_ROOT / f"s2e-out-{binary}" / "binary")
+    target = str(BINREC_ROOT / f"s2e-out-{binary}" / "test-target")
 
     for args in invocations:
         # We link to the binary we are running to make sure argv[0] is the same for the original
         # and the lifted program.
         os.link(original, target)
-        print('>> running original sample with args:', args)
-        original_proc = subprocess.Popen([target] + args, stdout=subprocess.PIPE,
-                                         stderr=subprocess.PIPE, stdin=subprocess.DEVNULL)
+        print(">> running original sample with args:", args)
+        original_proc = subprocess.Popen(
+            [target] + args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.DEVNULL,
+        )
         original_proc.wait()
         os.remove(target)
 
@@ -93,9 +95,13 @@ def compare_lift(binary: str, invocations: List[List[str]]) -> None:
         original_stderr = original_proc.stderr.read()
 
         os.link(lifted, target)
-        print('>> running recovered sample with args:', args)
-        lifted_proc = subprocess.Popen([target] + args, stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE, stdin=subprocess.DEVNULL)
+        print(">> running recovered sample with args:", args)
+        lifted_proc = subprocess.Popen(
+            [target] + args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.DEVNULL,
+        )
         lifted_proc.wait()
         os.remove(target)
 
@@ -107,9 +113,8 @@ def compare_lift(binary: str, invocations: List[List[str]]) -> None:
         assert original_stderr == lifted_stderr
 
 
-
 def run_test(binary: str, invocations: List[List[str]]) -> None:
-    '''
+    """
     Run a test binary, merge results, and lift the results. The binary may be executed multiple
     times depending on how many items are in the ``invocations`` parameter. For example:
 
@@ -132,27 +137,40 @@ def run_test(binary: str, invocations: List[List[str]]) -> None:
     :param binary: test binary name
     :param invocations: list of command line arguments to run
     :param log_file: binrec log file
-    '''
+    """
     cmd_debian = str(QEMU_DIR / "cmd-debian.sh")
 
     print(">> running", len(invocations), "traces")
 
     for i, args in enumerate(invocations, start=1):
-        print('>> starting trace', i, 'with arguments:', args)
-        assert_subprocess([cmd_debian, binary] + args, stderr=subprocess.STDOUT,
-                          assert_error=f"trace failed with arguments: {args}")
+        print(">> starting trace", i, "with arguments:", args)
+        assert_subprocess(
+            [cmd_debian, binary] + args,
+            stderr=subprocess.STDOUT,
+            assert_error=f"trace failed with arguments: {args}",
+        )
 
     # Merge traces
-    print('>> merging traces')
-    double_merge = str(SCRIPTS_DIR / "double_merge.sh")
-    assert_subprocess([double_merge, binary], stderr=subprocess.STDOUT, assert_error="merge failed")
+    print(">> merging traces")
+    double_merge = str(BINREC_SCRIPTS / "double_merge.sh")
+    assert_subprocess(
+        [double_merge, binary], stderr=subprocess.STDOUT, assert_error="merge failed"
+    )
 
     # Lift
-    print('>> lifting sample')
-    lift2 = str(SCRIPTS_DIR / "lift2.sh")
-    assert_subprocess([lift2], cwd=str(ROOT / f"s2e-out-{binary}"), stderr=subprocess.STDOUT,
-                      assert_error="lift failed")
+    print(">> lifting sample")
+    lift2 = str(BINREC_SCRIPTS / "lift2.sh")
+    assert_subprocess(
+        [lift2],
+        cwd=str(BINREC_ROOT / f"s2e-out-{binary}"),
+        stderr=subprocess.STDOUT,
+        assert_error="lift failed",
+    )
 
-    print('>> successfully ran and merged', len(invocations), 'traces, verifying recovered binary')
+    print(
+        ">> successfully ran and merged",
+        len(invocations),
+        "traces, verifying recovered binary",
+    )
     compare_lift(binary, invocations)
-    print('>> verified recovered binary')
+    print(">> verified recovered binary")

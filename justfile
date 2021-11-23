@@ -1,12 +1,11 @@
 # Environment Variables (Include in all justfiles that need them)
-export S2EDIR := `pwd`
-export user := `echo $USER`
-export COMPOSE_PROJECT_NAME := user + "_" + S2EDIR
+set dotenv-load := true
 
 # Recipe Variables
 net_iface := `ip route get 8.8.8.8 | head -n1 | cut -d' ' -f 5`
 net_ipaddr := `ip route get 8.8.8.8 | head -n1 | cut -d' ' -f 7`
 net_gateway := `ip route get 8.8.8.8 | head -n1 | cut -d' ' -f 3`
+
 
 # Binrec Build commands
 # Install apt packages, RealVNCviewer. Required once before build. Requires super user privileges.
@@ -69,7 +68,7 @@ lint: lint-mypy lint-black lint-flake8 lint-isort
 
 # Runs Python static code checking with flake8
 lint-flake8:
-  pipenv run flake8 binrec
+  pipenv run flake8 --max-line-length 88 binrec
 
 # Runs Python type checking with mypy
 lint-mypy:
@@ -82,6 +81,14 @@ lint-black:
 # Runs Python import sort order format check with isort
 lint-isort:
   pipenv run isort --check binrec
+
+# Build Sphinx Documentation
+build-docs target="html":
+  cd docs && pipenv run sphinx-build -M {{target}} source build
+
+# Clean built Sphinx documentation
+clean-docs:
+  just build-docs clean
 
 # Remove pipenv virtual environment
 clear:
@@ -102,7 +109,7 @@ configure-network:
   sudo ip addr flush dev {{net_iface}}
   # setup the bridge / tap
   sudo ip link set {{net_iface}} master br0
-  sudo ip tuntap add dev tap0 mode tap user {{user}}
+  sudo ip tuntap add dev tap0 mode tap user $USER
   sudo ip link set tap0 master br0
   sudo ip link set dev br0 up
   sudo ip link set dev tap0 up
@@ -113,9 +120,40 @@ configure-network:
   sudo resolvectl dns br0 `resolvectl dns {{net_iface}} | cut -d':' -f 2`
 
 
-# Runs all tests
-run-tests:
-  pipenv run pytest --verbose
+# Runs all unit and integration tests, which may take several minutes to complete
+run-tests: erase-test-coverage run-unit-tests run-integration-tests
+
+
+# Runs unit tests
+run-unit-tests: && run-test-coverage-report
+  pipenv run coverage run --source=binrec -m pytest --verbose -k "not test_integration"
+
+
+# Runs integration tests, which may take several minutes to complete
+run-integration-tests:
+  pipenv run coverage run --source=binrec -m pytest --verbose -k "test_integration"
+
+
+# Print the last test run code coverage report
+run-test-coverage-report:
+  pipenv run coverage report -m
+
+
+# Erase the last test code coverage report
+erase-test-coverage:
+  pipenv run coverage erase
+
 
 # BinRec Python API Commands
-# TODO
+
+# Merge cpatures within a single trace (ex. hello-1)
+merge-captures trace_id:
+  pipenv run python -m binrec.merge --trace-id {{trace_id}}
+
+# Recursively merge all captures and traces for a binary (ex. hello)
+merge-traces binary:
+  pipenv run python -m binrec.merge --binary {{binary}}
+
+# Lift a recovered binary from a trace (ex. hello)
+lift-trace binary:
+  pipenv run python -m binrec.lifting {{binary}}

@@ -116,18 +116,21 @@ Deinstrumentation and lowering of captured bitcode
 Before we run the lifting script, we need to merge these multiple directories into 1 directory called `s2e-out-hello`. To
 do that run following in `$S2EDIR` if you want to merge all directories \**-hello-*\*
 
-    $ ./scripts/double_merge.sh hello
+```bash
+$ just merge-traces hello
+```
 
 or run the following if you want to merge the numbered subdirectories of s2e-out-hello-1
 
-    $ ./scripts/merge_traces.sh hello-1
-
-**Note:** the scripts assume that multiple traces have been run and they will not work against a single trace.
+```bash
+$ just merge-captures hello-1
+```
 
 Now go into the `s2e-out-hello` directory and run the lifting script to obtain deinstrumented code.
 
-    $ cd s2e-out-hello
-    $ ../scripts/lift2.sh
+```bash
+$ just lift-trace hello
+```
 
 This created a recovered binary called `recovered` that contains the compiled code from `recovered.bc` (LLVM source code
 is generated in `recovered.ll`).
@@ -135,18 +138,16 @@ is generated in `recovered.ll`).
 Running Tests
 -------------
 
-Unit and integration tests are run with the `run-tests` just recipe. The tests require a working Debian qemu image with a
-`cmd` snapshot already saved. Follow the instructions in this README through the `savevm` command.
-
-With a qemu image and `cmd` snapshot ready, verify that the submodules are up to date and then run the tests with the
-`run-tests` just recipe.
+Unit and integration tests are written in pytest. Running tests can be done through multiple just recipes.
 
 ```
-git submodule update --recursive --init
-just run-tests
+just run-tests  # run all unit and integration tests
+just run-unit-tests  # run only unit tests
+just run-integration-tests  # run only integration tests (this will take several minutes)
+just run-test-coverage-report  # print the last pytest coverage report
 ```
 
-Tests are written in Python (`pytest`). Integration tests use sample code and binaries provided by the
+The integration tests require a working Debian qemu image with a `cmd` snapshot already saved. Follow the instructions in this README through the `savevm` command. Integration tests use sample code and binaries provided by the
 [binrec-benchmark](https://github.com/trailofbits/binrec-benchmark) repository, which is a submodule of the binrec repo.
 Each integration test sample is run multiple times, depending on the test inputs, the runtime traces are merged, the
 merged trace is lifted, and then the recovered binary is compared against the original binary with the same test inputs
@@ -189,6 +190,27 @@ These tools can be called through just using:
 - `just lint-<toolname>` - Run a single code linter, Ex. `just lint-flake8`
 - `just format` - Run all code formatters
 - `just format-<toolname>` - Run a single code formatter, ex. `just format-black`
+
+### Environment Variables
+
+The BinRec toolkit depends on several environment variables. The `.env` file contains the required environment variables and is loaded by every just recipe and the Python API. The `.env` file needs to be loaded when calling BinRec tools manually within Bash:
+
+```bash
+$ source .env
+```
+
+
+### Documentation
+
+The Python API is documented in [Sphinx](https://www.sphinx-doc.org/en/master/) and the docs can be built using the `build-docs` just recipe. By default, the recipe will build HTML documentation, but this can be changed by specifying a `target` parameter:
+
+```bash
+# build HTML docs to docs/build/html/index.html
+$ just build-docs
+
+# build manpage docs to docs/build/man/binrec.1
+$ just build-docs man
+```
 
 Change Log
 --------
