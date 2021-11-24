@@ -1,35 +1,76 @@
 import os
 import subprocess
+import json
 from typing import List, Optional
+from dataclasses import dataclass, field
+from pathlib import Path
 
 from _pytest.python import Metafunc
 
 from binrec.env import BINREC_ROOT, BINREC_SCRIPTS
+from binrec.merge import recursive_merge_traces
+from binrec.lift import lift_trace
 
 QEMU_DIR = BINREC_ROOT / "qemu"
 TEST_INPUT_DIR = BINREC_ROOT / "test" / "benchmark" / "samples" / "binrec" / "test_inputs"
 TEST_BUILD_DIR = BINREC_ROOT / "test" / "benchmark" / "samples" / "bin" / "x86" / "binrec"
 
 
-if not os.environ.get("S2EDIR"):
-    # this is needed by the binrec scripts
-    os.environ["S2EDIR"] = str(BINREC_ROOT)
+@dataclass
+class TraceParams:
+    args: List[str] = field(default_factory=list)
+    stdin: str = ''
+
+    @classmethod
+    def load_dict(cls, item: dict) -> "TraceParams":
+        args = item.get("args") or []
+        stdin = item.get("stdin") or None
+
+        return cls(args=args, stdin=stdin)
+
+
+@dataclass
+class TraceTestPlan:
+    binary: str
+    traces: List[TraceParams]
+
+    @classmethod
+    def load_plaintext(cls, binary: str, filename: Path) -> 'TraceTestPlan':
+        with open(filename, 'r') as file:
+            # read command line invocations
+            invocations = [line.strip().split() for line in file]
+            if not invocations:
+                # no command line arguments specified, run the test once with no arguments
+                invocations = [[]]
+
+        return TraceTestPlan(binary, [TraceParams(args) for args in invocations])
+
+    @classmethod
+    def load_json(cls, binary: str, filename: Path) -> 'TraceTestPlan':
+        with open(filename, 'r') as file:
+            body = json.loads(file.read().strip())
+
+        return TraceTestPlan(binary, [TraceParams.load_dict(item)
+                                      for item in body["runs"]])
 
 
 def load_sample_test_cases(func: callable) -> callable:
     """
     Load sample test cases from the test input directory.
     """
-    sample_names = []
+    test_plans: List[Path] = []
 
     for filename in sorted(os.listdir(TEST_INPUT_DIR)):
         binary = TEST_BUILD_DIR / filename
+        if binary.suffix.lower() == ".json":
+            binary = binary.with_suffix('')
+
         if not binary.is_file():
             continue
 
-        sample_names.append(filename)
+        test_plans.append(TEST_INPUT_DIR / filename)
 
-    func.sample_names = sample_names
+    func.test_plans = test_plans
     return func
 
 
@@ -37,21 +78,26 @@ def pytest_generate_tests(metafunc: Metafunc):
     """
     This method is called by pytest to generate test cases for this module.
     """
-    sample_names: Optional[List[str]] = getattr(metafunc.function, "sample_names", None)
-    if sample_names:
-        metafunc.parametrize("sample_name", sample_names, ids=sample_names)
+    test_plans: Optional[List[Path]] = getattr(metafunc.function, "test_plans", None)
+    if test_plans:
+        metafunc.parametrize("test_plan_file", test_plans, ids=lambda plan: plan.name)
 
 
 @load_sample_test_cases
-def test_sample(sample_name: str):
-    with open(TEST_INPUT_DIR / sample_name, "r") as file:
-        # read command line invocations
-        invocations = [line.strip().split() for line in file]
-        if not invocations:
-            # no command line arguments specified, run the test once with no arguments
-            invocations = [[]]
+def test_sample(test_plan_file: Path):
+    if test_plan_file.suffix.lower() == ".json":
+        binary = test_plan_file.with_suffix('').name
+        json_input = True
+    else:
+        binary = test_plan_file.name
+        json_input = False
 
-    run_test(sample_name, invocations)
+    if json_input:
+        plan = TraceTestPlan.load_json(binary, test_plan_file)
+    else:
+        plan = TraceTestPlan.load_plaintext(binary, test_plan_file)
+
+    run_test(binary, plan)
 
 
 def assert_subprocess(*args, assert_error: str = "", **kwargs) -> None:
@@ -62,7 +108,7 @@ def assert_subprocess(*args, assert_error: str = "", **kwargs) -> None:
     assert proc.returncode == 0, assert_error
 
 
-def compare_lift(binary: str, invocations: List[List[str]]) -> None:
+def compare_lift(binary: str, plan: TraceTestPlan) -> None:
     """
     Compare the original binary against the lifted binary for each test input. This method runs
     the original and the lifted and then compares the process return code, stdout, and stderr
@@ -73,21 +119,26 @@ def compare_lift(binary: str, invocations: List[List[str]]) -> None:
     :param invocations: list of command line arguments to run
     :param log_file: binrec log file
     """
-    lifted = str(BINREC_ROOT / f"s2e-out-{binary}" / "recovered")
-    original = str(BINREC_ROOT / f"s2e-out-{binary}" / "binary")
-    target = str(BINREC_ROOT / f"s2e-out-{binary}" / "test-target")
+    capture_dir = BINREC_ROOT / f"s2e-out-{binary}"
+    lifted = str(capture_dir / "recovered")
+    original = str(capture_dir / "binary")
+    target = str(capture_dir / "test-target")
 
-    for args in invocations:
+    for trace in plan.traces:
         # We link to the binary we are running to make sure argv[0] is the same for the original
         # and the lifted program.
         os.link(original, target)
-        print(">> running original sample with args:", args)
+        print(">> running original sample with args:", trace.args)
         original_proc = subprocess.Popen(
-            [target] + args,
+            [target] + trace.args,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            stdin=subprocess.DEVNULL,
+            stdin=subprocess.PIPE,
         )
+        if trace.stdin:
+            original_proc.stdin.write(trace.stdin.encode())
+
+        original_proc.stdin.close()
         original_proc.wait()
         os.remove(target)
 
@@ -95,13 +146,17 @@ def compare_lift(binary: str, invocations: List[List[str]]) -> None:
         original_stderr = original_proc.stderr.read()
 
         os.link(lifted, target)
-        print(">> running recovered sample with args:", args)
+        print(">> running recovered sample with args:", trace.args)
         lifted_proc = subprocess.Popen(
-            [target] + args,
+            [target] + trace.args,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            stdin=subprocess.DEVNULL,
+            stdin=subprocess.PIPE,
         )
+        if trace.stdin:
+            lifted_proc.stdin.write(trace.stdin.encode())
+
+        lifted_proc.stdin.close()
         lifted_proc.wait()
         os.remove(target)
 
@@ -113,64 +168,41 @@ def compare_lift(binary: str, invocations: List[List[str]]) -> None:
         assert original_stderr == lifted_stderr
 
 
-def run_test(binary: str, invocations: List[List[str]]) -> None:
+def run_test(binary: str, plan: TraceTestPlan) -> None:
     """
-    Run a test binary, merge results, and lift the results. The binary may be executed multiple
-    times depending on how many items are in the ``invocations`` parameter. For example:
-
-    .. code-block:: python
-
-        run_test("ab", [
-            ['ab'],
-            ['zz']
-            []
-        ])
-
-    This will run three traces of the ``ab`` test binary:
-
-    1. ``ab ab``
-    2. ``ab zz``
-    3. ``ab``
-
-    The output of S2E and binrec are recorded to the ``log_file``.
+    Run a test binary, merge results, and lift the results. The binary may be executed
+    multiple times depending on how many items are in the ``plan.traces`` parameter.
 
     :param binary: test binary name
-    :param invocations: list of command line arguments to run
-    :param log_file: binrec log file
+    :param plan: trace test plan containing list of command line arguments and stdin
+        input to use
     """
     cmd_debian = str(QEMU_DIR / "cmd-debian.sh")
 
-    print(">> running", len(invocations), "traces")
+    print(">> running", len(plan.traces), "traces")
 
-    for i, args in enumerate(invocations, start=1):
-        print(">> starting trace", i, "with arguments:", args)
+    for i, trace in enumerate(plan.traces, start=1):
+        print(">> starting trace", i, "with arguments:", trace.args)
+        command = [cmd_debian, binary]
+        if trace.stdin:
+            command += ["--stdin", trace.stdin]
+
         assert_subprocess(
-            [cmd_debian, binary] + args,
+            command + trace.args,
             stderr=subprocess.STDOUT,
-            assert_error=f"trace failed with arguments: {args}",
+            assert_error=f"trace failed with arguments: {trace.args}"
         )
 
     # Merge traces
-    print(">> merging traces")
-    double_merge = str(BINREC_SCRIPTS / "double_merge.sh")
-    assert_subprocess(
-        [double_merge, binary], stderr=subprocess.STDOUT, assert_error="merge failed"
-    )
+    recursive_merge_traces(binary)
 
     # Lift
-    print(">> lifting sample")
-    lift2 = str(BINREC_SCRIPTS / "lift2.sh")
-    assert_subprocess(
-        [lift2],
-        cwd=str(BINREC_ROOT / f"s2e-out-{binary}"),
-        stderr=subprocess.STDOUT,
-        assert_error="lift failed",
-    )
+    lift_trace(binary)
 
     print(
         ">> successfully ran and merged",
-        len(invocations),
+        len(plan.traces),
         "traces, verifying recovered binary",
     )
-    compare_lift(binary, invocations)
+    compare_lift(binary, plan)
     print(">> verified recovered binary")
