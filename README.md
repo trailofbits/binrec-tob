@@ -45,7 +45,7 @@ If you use the pre-build [image][8], make sure to name it debian.raw and store i
 ```shell
 $ cd qemu
 $ wget https://www.ics.uci.edu/~fparzefa/binrec/debian10.raw.xz
-$ unzx debian10.raw.xz
+$ unxz debian10.raw.xz
 $ mv debian10.raw debian.raw
 $ ln debian.raw debian.s2e
 ```
