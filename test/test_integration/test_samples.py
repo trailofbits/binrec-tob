@@ -60,6 +60,10 @@ def load_sample_test_cases(func: callable) -> callable:
     """
     test_plans: List[Path] = []
 
+    if not TEST_INPUT_DIR.is_dir() or not TEST_BUILD_DIR.is_dir():
+        func.sample_names = []
+        return func
+
     for filename in sorted(os.listdir(TEST_INPUT_DIR)):
         binary = TEST_BUILD_DIR / filename
         if binary.suffix.lower() == ".json":
