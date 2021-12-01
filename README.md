@@ -212,7 +212,10 @@ $ just build-docs
 $ just build-docs man
 ```
 
-Change Log
+### Continuous Integration
+Commits to pull requests in progress will be automatically checked to ensure the code is properly linted and passes unit tests. Additionally, the doc build will be checked. Integration tests are not automatically checked due to BinRec's complexity. Before submitting a PR for review, the contributor shall ensure integration tests pass on their development machine. Additionally, PR contributors shall add sufficient unit tests to maintain test coverage.
+
+Notes
 --------
 
 Trace merging scripts deduplicated. Assumes you pass the s2e-max-processes flag for directory structure. See the
