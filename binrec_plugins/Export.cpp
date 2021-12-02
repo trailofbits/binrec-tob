@@ -168,8 +168,6 @@ auto Export::getFirstStoredPc(Function *f) -> uint64_t {
     auto fname = f->getName();
     assert(fname.startswith("tcg-llvm-") && "Function does not start with tcg-llvm- (getFirstStoredPc");
     auto [first, pcstr] = fname.rsplit('-');
-    outs() << "PCStr " << pcstr << " first " << first << "\n";
-    outs() << "PCStr len" << pcstr.size() << "\n";
     uint64_t pc;
     auto fail = pcstr.getAsInteger(16, pc);
     assert(!fail && "Failed to convert pc to integer (getFirstStoredPc)");

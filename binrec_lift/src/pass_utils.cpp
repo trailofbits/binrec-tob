@@ -97,7 +97,7 @@ auto s2eRoot() -> std::string
 
 auto runlibDir() -> std::string
 {
-    return s2eRoot() + "/runlib";
+    return s2eRoot() + "/../runlib";
 }
 
 auto s2eOutFile(const std::string &basename) -> std::string

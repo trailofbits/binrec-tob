@@ -1,5 +1,6 @@
 #include "decompose_env.hpp"
 #include "pass_utils.hpp"
+#include "ir/selectors.hpp"
 #include <llvm/IR/DebugInfo.h>
 
 using namespace binrec;
@@ -106,8 +107,13 @@ auto DecomposeEnvPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAna
     get_member_names(env_info, names);
 
     for (User *use : env->users()) {
-        auto *load = cast<LoadInst>(use);
-        process_inst(m, load, env_type, names);
+        if (auto ins = dyn_cast<Instruction>(use)) {
+            auto f = ins->getFunction();
+            if (is_lifted_function(*f)) {
+                auto *load = cast<LoadInst>(use);
+                process_inst(m, load, env_type, names);
+            }
+        }
     }
 
     return PreservedAnalyses::allInSet<CFGAnalyses>();

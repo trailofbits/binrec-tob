@@ -34,6 +34,7 @@ private:
     void slotModuleExecuteBlock(S2EExecutionState *state, uint64_t pc);
 
     ModuleDescriptor m_modInitEnv;
+    ModuleDescriptor m_module;
 
     bool m_moduleInitialized;
 };
@@ -42,7 +43,7 @@ class ELFSelectorState : public PluginState
 {
     PLUGIN_STATE(ELFSelectorState)
 
-    bool pcInModule, prevPcInModule, inLibCall;
+    bool prevPcInModule, inLibCall;
     uint64_t prevPc;
 
     friend class ELFSelector;

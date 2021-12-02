@@ -19,17 +19,19 @@ template <typename T> static void replace_gep(Module &m, T *gep, Type *reg_ty)
 // NOLINTNEXTLINE
 auto RenameEnvPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAnalyses
 {
-    m.getNamedGlobal("eip")->setName("PC");
+    if (auto eip = m.getNamedGlobal("eip"))
+        eip->setName("PC");
 
-    GlobalVariable *regs = m.getNamedGlobal("regs");
-    Type *reg_ty = cast<ArrayType>(regs->getType()->getElementType())->getElementType();
-    for (User *use : regs->users()) {
-        if (auto *gep = dyn_cast<GetElementPtrInst>(use))
+    if (GlobalVariable *regs = m.getNamedGlobal("regs")) {
+        Type *reg_ty = cast<ArrayType>(regs->getType()->getElementType())->getElementType();
+        for (User *use : regs->users()) {
+            if (auto *gep = dyn_cast<GetElementPtrInst>(use))
+                replace_gep(m, gep, reg_ty);
+        }
+        for (User *use : regs->users()) {
+            auto *gep = cast<GEPOperator>(use);
             replace_gep(m, gep, reg_ty);
-    }
-    for (User *use : regs->users()) {
-        auto *gep = cast<GEPOperator>(use);
-        replace_gep(m, gep, reg_ty);
+        }
     }
 
     return PreservedAnalyses::allInSet<CFGAnalyses>();

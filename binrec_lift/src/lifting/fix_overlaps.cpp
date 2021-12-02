@@ -172,6 +172,13 @@ static void remove_exception_helper(BasicBlock *bb, BasicBlock *succ)
         }
     }
 
+    // TODO (hbrodin): Any way of verifying this? Currently there seems to be a false positive
+    // for blocks with a single jmp (store to @PC). They are identified in find_exception_overlaps
+    // but have no call to helper_raise_exception. I consider it a false positive if the function
+    // call can not be found and exit early.
+    if (erase_list.size() < 2)
+        return;
+
     for (Instruction *i : erase_list)
         i->eraseFromParent();
 
@@ -218,6 +225,5 @@ auto FixOverlapsPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAnal
         for (auto pair : merge_list)
             remove_exception_helper(pair.first, pair.second);
     }
-
     return changed ? PreservedAnalyses::none() : PreservedAnalyses::all();
 }

@@ -32,6 +32,5 @@ auto PruneNullSuccsPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedA
             }
         }
     }
-
     return PreservedAnalyses::none();
 }

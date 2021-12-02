@@ -3,6 +3,8 @@
 #include "pass_utils.hpp"
 #include <llvm/IR/Operator.h>
 #include <llvm/IR/PassManager.h>
+#include <llvm/IR/Verifier.h>
+#include <llvm/ADT/SetVector.h>
 
 using namespace binrec;
 using namespace llvm;
@@ -68,23 +70,35 @@ namespace {
 auto RemoveS2EHelpersPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAnalyses
 {
     list<Instruction *> deleteList;
+    list<Instruction *> callscan;
 
     findCalls(m, "tcg_llvm_fork_and_concretize", deleteList);
     for (Instruction *inst : deleteList)
         inst->replaceAllUsesWith(cast<CallInst>(inst)->getArgOperand(0));
 
+
+    findCalls(m, "tcg_llvm_before_memory_access", deleteList);
+    findCalls(m, "tcg_llvm_after_memory_access", deleteList);
     findCalls(m, "helper_s2e_tcg_execution_handler", deleteList);
+
     findCalls(m, "helper_lock", deleteList);
     findCalls(m, "helper_unlock", deleteList);
+    verifyModule(m, &errs());
 
     findStores(m, "s2e_icount_before_tb", deleteList);
     findStores(m, "s2e_icount", deleteList);
     findStores(m, "s2e_current_tb", deleteList);
+    findStores(m, "se_current_tb", deleteList);
 
     findConstPtrStores(m, deleteList);
 
-    for (Instruction *inst : deleteList)
+    for (Instruction *inst : deleteList) {
         inst->eraseFromParent();
+    }
+
+    for (Instruction *inst : callscan) {
+        inst->eraseFromParent();
+    }
 
     return PreservedAnalyses::allInSet<CFGAnalyses>();
 }

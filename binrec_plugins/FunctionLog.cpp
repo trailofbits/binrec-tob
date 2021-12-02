@@ -54,6 +54,8 @@ void FunctionLog::slotModuleExecute(S2EExecutionState *state, uint64_t pc) {
     if (!ti->functionLog.entries.back()) {
         s2e()->getDebugStream(state) << "FunctionLog: new entry " << hexval(pc) << '\n';
         ti->functionLog.entries.back() = pc;
+        // NOTE (hbrodin): Push the top-level entry onto the call stack to track it's translated blocks as well
+        m_callStack.push(pc);
     }
 
     m_modulePcs.insert(pc);

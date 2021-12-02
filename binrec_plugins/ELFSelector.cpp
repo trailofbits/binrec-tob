@@ -32,6 +32,7 @@ void ELFSelector::slotModuleLoad(S2EExecutionState *state, const ModuleDescripto
         m_modInitEnv = module;
     } else {
         m_moduleInitialized = true;
+        m_module = module;
         onModuleLoad.emit(state, module);
     }
 }
@@ -50,42 +51,47 @@ void ELFSelector::slotModuleTranslateBlockStart(ExecutionSignal *signal, S2EExec
         signal->connect(sigc::mem_fun(*this, &ELFSelector::slotModuleExecuteBlock));
 }
 
+
+// NOTE (hbrodin): The order of invocation matters here.
+// slotExecutedBlock is executed before slotModuleExecuteBlock
 void ELFSelector::slotModuleExecuteBlock(S2EExecutionState *state, uint64_t pc) {
-    // set a flag for in-module blocks that will be checked in the generic
-    // onExecute handler to distinguish between local and external blocks
+    // call onModuleReturn if a library call just returned
+    // call onModuleExecute if a BB in the module is executed
     DECLARE_PLUGINSTATE(ELFSelectorState, state);
-    plgState->pcInModule = true;
+
+    if (plgState->inLibCall) {
+        plgState->inLibCall = false;
+        onModuleReturn.emit(state, pc);
+    }
+
+    onModuleExecute.emit(state, pc);
+    plgState->prevPc = pc;
+    plgState->prevPcInModule = true;
 }
 
 void ELFSelector::slotExecuteBlock(S2EExecutionState *state, uint64_t pc) {
-    // call onModuleReturn if a library call just returned
-    // call onModuleExecute if a BB in the module is executed
     // call onModuleLeave on a library call
     DECLARE_PLUGINSTATE(ELFSelectorState, state);
-
-    if (plgState->pcInModule) {
-        if (plgState->inLibCall) {
-            plgState->inLibCall = false;
-            onModuleReturn.emit(state, pc);
-        }
-        onModuleExecute.emit(state, pc);
-        plgState->prevPc = pc;
-    } else if (plgState->prevPcInModule) {
+    if (plgState->prevPcInModule) {
         // ignore library calls to init_env.so
+        // TODO (hbrodin): Clean up this whole init_env thing, probably not needed
+        // anymore since we can configure ModuleExecutionDetector to only signal
+        // on load of the binary of interest.
         if (m_modInitEnv.Contains(pc)) {
             s2e()->getDebugStream() << "ignoring init_env pc " << hexval(pc) << "\n";
         }
         // FIXME: this address keeps showing up...
         else if (pc == 0xc12c62ac) {
             s2e()->getDebugStream() << "ignoring weird pc " << hexval(pc) << "\n";
-        } else {
+        } else if (!m_module.Contains(pc)) {
             plgState->inLibCall = true;
             onModuleLeave.emit(state, pc);
         }
     }
-
-    plgState->prevPcInModule = plgState->pcInModule;
-    plgState->pcInModule = false;
+    // Will be updated by slotModuleExecuteBlock if was actually in module,
+    // if not this function will detect next time that we must be in a lib
+    // call since we at some point was executing in the module.
+    plgState->prevPcInModule = false;
 }
 
 uint64_t ELFSelector::getPrevLocalPc(S2EExecutionState *state) {
@@ -97,7 +103,7 @@ uint64_t ELFSelector::getPrevLocalPc(S2EExecutionState *state) {
  * Execution-state-specific plugin state
  */
 
-ELFSelectorState::ELFSelectorState() : pcInModule(false), prevPcInModule(false), inLibCall(true), prevPc(0) {}
+ELFSelectorState::ELFSelectorState() : prevPcInModule(false), inLibCall(true), prevPc(0) {}
 
 ELFSelectorState::~ELFSelectorState() {}
 

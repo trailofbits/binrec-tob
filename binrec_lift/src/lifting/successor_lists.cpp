@@ -45,6 +45,5 @@ auto SuccessorListsPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedA
         succs.push_back(succ_bb);
         setBlockSuccs(pred_bb, succs);
     }
-
     return PreservedAnalyses::all();
 }
