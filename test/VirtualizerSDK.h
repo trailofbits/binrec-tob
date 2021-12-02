@@ -1,2 +1,0 @@
-#define VIRTUALIZER_START
-#define VIRTUALIZER_END

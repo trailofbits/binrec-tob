@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+black = "==21.9b0"
+python-dotenv = "*"
+
+[dev-packages]
+flake8 = "*"
+mypy = "*"
+pytest = "*"
+isort = "*"
+coverage = "*"
+sphinx = "*"
+
+[requires]
+python_version = "3.9"

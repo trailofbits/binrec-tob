@@ -1,0 +1,125 @@
+name: CI
+on:
+  pull_request:
+    branches:
+      - '*'
+  push:
+    branches:
+      - 'master'
+
+jobs:
+  lint:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: 'Install tools'
+        run: |
+          # Python virtual env management
+          pipx install pipenv
+          # just command runner https://github.com/casey/just#pre-built-binaries
+          curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to "${HOME}/.local/bin"
+
+
+      - name: 'Init Python'
+        run: |
+          pipenv sync --dev
+
+      - name: 'Lint'
+        run: |
+          just lint
+
+  test:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Initialize the deploy keys
+        run: |
+          mkdir -p "${HOME}/.ssh"
+          if [[ ! -d "${HOME}/.ssh" ]] ; then
+            echo "Failed to create the .ssh directory"
+            exit 1
+          fi
+
+          chmod 700 "${HOME}/.ssh"
+          if [[ $? != 0 ]] ; then
+            echo 'Failed to set the permissions for the .ssh directory'
+            exit 1
+          fi
+
+          echo "${{ secrets.BINREC_BENCHMARK_REPO_DEPLOY_KEY }}" | base64 -d > "${HOME}/.ssh/id_rsa"
+          if [[ $? != 0 ]] ; then
+            echo "Failed to decode the deploy key for trailofbits/binrec-benchmark"
+            exit 1
+          fi
+
+          if [[ ! -f "${HOME}/.ssh/id_rsa" ]] ; then
+            echo "Failed to install the deploy key for trailofbits/binrec-benchmark"
+            exit 1
+          fi
+
+          chmod 600 "${HOME}/.ssh/id_rsa"
+          if [[ $? != 0 ]] ; then
+            echo "Failed to set the permissions for the deploy key"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+          # submodules: recursive
+
+      - name: Initialize the git submodules
+        run: |
+          git submodule set-url test/benchmark git@github.com:trailofbits/binrec-benchmark
+          git submodule update --init --recursive
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: 'Install tools'
+        run: |
+          # Python virtual env management
+          pipx install pipenv
+          # just command runner https://github.com/casey/just#pre-built-binaries
+          curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to "${HOME}/.local/bin"
+
+      - name: 'Init Python'
+        run: |
+          pipenv sync --dev
+
+      - name: 'Unit Tests'
+        run: |
+          just run-unit-tests
+
+  build_docs:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: 'Install tools'
+        run: |
+          # Python virtual env management
+          pipx install pipenv
+          # just command runner https://github.com/casey/just#pre-built-binaries
+          curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to "${HOME}/.local/bin"
+
+      - name: 'Init Python'
+        run: |
+          pipenv sync --dev
+
+      - name: 'Build Sphinx Docs'
+        run: |
+          just build-docs
