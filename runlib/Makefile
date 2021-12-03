@@ -32,7 +32,7 @@ QEMU_BUILD=../build/s2e/qemu
 #		-march=native
 
 S2ESRC := ../s2e/source/s2e
-S2EGENSRC := ../s2e/build/libs2e-debug/i386-s2e-softmmu
+S2EGENSRC := ../s2e/build/libs2e-release/i386-s2e-softmmu
 
 INCLUDE_DIRS := \
 	-I${S2ESRC}/libcpu/include/cpu/i386 \
