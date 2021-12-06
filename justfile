@@ -6,6 +6,11 @@ net_iface := `ip route get 8.8.8.8 | head -n1 | cut -d' ' -f 5`
 net_ipaddr := `ip route get 8.8.8.8 | head -n1 | cut -d' ' -f 7`
 net_gateway := `ip route get 8.8.8.8 | head -n1 | cut -d' ' -f 3`
 
+# s2e paths
+plugins_root := justfile_directory() + "/s2e/source/s2e/libs2eplugins"
+plugins_dir := join(plugins_root, "src/s2e/Plugins")
+plugins_cmake := join(plugins_root, "src", "CMakeLists.txt")
+
 
 # Binrec Build commands
 # Install apt packages, RealVNCviewer. Required once before build. Requires super user privileges.
@@ -14,7 +19,8 @@ install-dependencies:
     sudo apt-get update
     sudo apt-get install -y bison clang cmake flex g++ g++-multilib gcc gcc-multilib git libglib2.0-dev liblua5.1-dev \
         libsigc++-2.0-dev lld llvm-dev lua5.3 nasm nlohmann-json3-dev pkg-config python2 subversion net-tools curl \
-        pipenv git-lfs
+        pipenv git-lfs \
+        python3.9-dev python3.9-venv # For s2e-env (and compatibility with Python 3.9 from Pipfile): http://s2e.systems/docs/s2e-env.html#id2
     git lfs install
 
     # RealVNCviewer
@@ -49,6 +55,68 @@ init:
     pipenv sync --dev
     git submodule update --recursive --init
     cd ./test/benchmark && git lfs pull
+    just init-s2e-env
+
+# Init the s2e-env, will install dependencies and checkout the s2e repository
+init-s2e-env:
+  cd ./s2e-env && pipenv run pip install .
+  pipenv run s2e init {{justfile_directory()}}/s2e
+
+# Execute a s2e command with the s2e environment active
+s2e-command command *args:
+  pipenv run s2e {{command}} {{args}}
+
+# Build all of s2e takes a long time...
+s2e-build:
+  just s2e-command build
+
+# Build the debian image.
+# TODO (hbrodin): This could be parmeterized to allow for different image builds
+s2e-image-build:
+  echo "Kernels to be readable."
+  sudo chmod ugo+r /boot/vmlinu*
+  just s2e-command image_build debian-9.2.1-i386
+
+# This will trigger a rebuild of libs2e, which contains the plugins
+s2e-rebuild-plugins:
+  rm -f s2e/build/stamps/libs2e-release-make
+  just s2e-command build
+
+s2e-insert-binrec-plugin name:
+  just s2e-command new_plugin --force {{name}}
+  cp {{name}}.cpp {{plugins_dir}}/binrec_plugins/
+  cp {{name}}.h {{plugins_dir}}/binrec_plugins/
+
+
+#  Adds the binrec-plugins to the s2e-plugins structure
+s2e-insert-binrec-plugins:
+  # "Regular plugins"
+  just s2e-insert-binrec-plugin "binrec_plugins/BBExport"
+  just s2e-insert-binrec-plugin "binrec_plugins/ELFSelector"
+  just s2e-insert-binrec-plugin "binrec_plugins/Export"
+  just s2e-insert-binrec-plugin "binrec_plugins/ExportELF"
+  just s2e-insert-binrec-plugin "binrec_plugins/FunctionLog"
+
+  # Special handling (e.g. only header, or other directory layout)
+
+  # TODO (hbrodin): Not very proud of this structure. Any way of cleaning it?
+  just s2e-command new_plugin --force "binrec_traceinfo/src/trace_info"
+  cp binrec_traceinfo/src/trace_info.cpp {{plugins_dir}}/binrec_traceinfo/src/
+  rm {{plugins_dir}}/binrec_traceinfo/src/trace_info.h
+  cp -r binrec_traceinfo/include {{plugins_dir}}/binrec_traceinfo/
+  grep -F "s2e/Plugins/binrec_traceinfo/include/" {{plugins_cmake}} || \
+    echo "\ntarget_include_directories (s2eplugins PUBLIC \"s2e/Plugins/binrec_traceinfo/include/\")" >> {{plugins_cmake}}
+
+  cp binrec_plugins/util.h {{plugins_dir}}/binrec_plugins
+  cp binrec_plugins/ModuleSelector.h {{plugins_dir}}/binrec_plugins
+
+
+# Create a new analysis project
+new-project name binary symargs *args:
+  pipenv run python -m binrec.project new --bin {{binary}} --sym-args {{symargs}} {{name}} {{args}}
+
+run project-name:
+  pipenv run python -m binrec.project run {{project-name}}
 
 # Format code
 format: format-black format-isort
