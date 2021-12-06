@@ -2,6 +2,8 @@ import logging
 import json
 import os
 import subprocess
+from pathlib import Path
+from typing import Iterable, List
 
 from .errors import BinRecError
 
@@ -11,7 +13,7 @@ logger = logging.getLogger("binrec.project")
 # TODO (hbrodin): Add comments
 
 
-def _project_dir(project):
+def project_dir(project : str) -> Path:
     try:
         output = subprocess.check_output(
             [
@@ -20,20 +22,53 @@ def _project_dir(project):
             ]
         )
     except subprocess.CalledProcessError:
-        raise BinRecError(f"s2e run failed for project: {project}")
+        raise BinRecError(f"s2e failed to get info for: {project}")
     
     d = json.loads(output)
     return d['projects'][project]['project_dir']
 
+def listing() ->List[str]:
+    try:
+        output = subprocess.check_output(
+            [
+                "s2e",
+                "info"
+            ]
+        )
+    except subprocess.CalledProcessError:
+        raise BinRecError(f"s2e run failed to get project list")
+    
+    d = json.loads(output)
+    return d['projects'].keys()
 
-def _config_file(project):
-    return os.path.join(_project_dir(project), "s2e-config.lua")
+def _get_project_name(args) -> str:
+    project = str(args.name[0])
+    if not project:
+        raise BinRecError("Please specify project name.")
+    return project
+
+def _list() -> None:
+  for proj in listing():
+    print(proj)
+
+def traces(project: str) -> Iterable[Path]:
+    projdir = project_dir(project)
+    return filter(os.path.isdir,
+            map(lambda x: os.path.join(projdir, x), 
+              filter(lambda x: x.startswith("s2e-out-"), os.listdir(projdir))))
+
+def _list_traces(args):
+    proj = _get_project_name(args)
+    for t in traces(proj):
+      print(t)
+
+
+def _config_file(project : str) -> Path:
+    return os.path.join(project_dir(project), "s2e-config.lua")
 
 
 def _run(args):
-    project = str(args.name[0])
-    if not project:
-      raise BinRecError("Don't know what project to run. Please specify name.")
+    project = _get_project_name(args)
 
     logger.info("Running project: %s", project)
     try:
@@ -49,9 +84,7 @@ def _run(args):
         raise BinRecError(f"s2e run failed for project: {project}")
     
 def _new(args):
-    project = str(args.name[0])
-    if not project:
-      raise BinRecError("Please specify a non-empty name for project")
+    project = _get_project_name(args)
 
     logger.info("Creating project: %s", project)
     callargs = [
@@ -71,7 +104,7 @@ def _new(args):
         raise BinRecError(f"s2e run failed for project: {project}")
   
 
-    projdir = _project_dir(project)
+    projdir = project_dir(project)
     cfgfile = _config_file(project)
 
     with open(cfgfile, 'a') as f:
@@ -108,6 +141,9 @@ def main() -> None:
     new_proj.add_argument("--sym-args", type=str, help='Symbolic args to pass to binary. E.g. "1 3" ensures makes arguments one and three symbolic.')
     new_proj.add_argument("args", nargs='*', type=str, help='Arguments to pass to binary. Use @@ to indicate a file with symbolic content')
 
+    listcmd = subparsers.add_parser("list")
+    listtracecmd = subparsers.add_parser("list-traces")
+    listtracecmd.add_argument("name", nargs=1, type=str, help="Name of project to run")
 
     run = subparsers.add_parser("run")
     run.add_argument("name", nargs=1, type=str, help="Name of project to run")
@@ -119,6 +155,10 @@ def main() -> None:
       _run(args)
     elif args.current_parser == "new":
       _new(args)
+    elif args.current_parser == "list":
+      _list()
+    elif args.current_parser == "list-traces":
+      _list_traces(args)
     else:
       parser.print_help()
 

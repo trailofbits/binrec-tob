@@ -113,7 +113,7 @@ s2e-insert-binrec-plugins:
 
 # Create a new analysis project
 new-project name binary symargs *args:
-  pipenv run python -m binrec.project new --bin {{binary}} --sym-args {{symargs}} {{name}} {{args}}
+  pipenv run python -m binrec.project new --bin {{binary}} --sym-args "{{symargs}}" {{name}} {{args}}
 
 run project-name:
   pipenv run python -m binrec.project run {{project-name}}
@@ -225,3 +225,9 @@ merge-traces binary:
 # Lift a recovered binary from a trace (ex. hello)
 lift-trace binary:
   pipenv run python -m binrec.lifting {{binary}}
+
+list-projects:
+  pipenv run python -m binrec.project list
+
+list-traces project:
+  pipenv run python -m binrec.project list-traces {{project}}
