@@ -12,6 +12,7 @@ logger = logging.getLogger("binrec.project")
 # TODO (hbrodin): Annotate with types
 # TODO (hbrodin): Add comments
 
+# TODO (hbrodin): Cache the contents of s2e info (until new project is created)
 
 def project_dir(project : str) -> Path:
     try:
@@ -25,7 +26,13 @@ def project_dir(project : str) -> Path:
         raise BinRecError(f"s2e failed to get info for: {project}")
     
     d = json.loads(output)
-    return d['projects'][project]['project_dir']
+    return Path(d['projects'][project]['project_dir'])
+
+def merge_dir(project : str, index : int = 0) -> Path:
+  return project_dir(project) / f"merged{index}"
+
+def trace_dir(project : str, traceid : int):
+  return project_dir(project) / f"s2e-out-{traceid}"
 
 def listing() ->List[str]:
     try:
@@ -51,16 +58,17 @@ def _list() -> None:
   for proj in listing():
     print(proj)
 
-def traces(project: str) -> Iterable[Path]:
+def traces(project: str) -> Iterable[int]:
     projdir = project_dir(project)
-    return filter(os.path.isdir,
-            map(lambda x: os.path.join(projdir, x), 
-              filter(lambda x: x.startswith("s2e-out-"), os.listdir(projdir))))
+    for name in os.listdir(projdir):
+      if not name.startswith("s2e-out-"):
+        continue
+      yield int(name.split("-")[-1])
 
-def _list_traces(args):
+def _list_traces(args) -> None:
     proj = _get_project_name(args)
     for t in traces(proj):
-      print(t)
+      print(f"{t}: {trace_dir(proj, t)}")
 
 
 def _config_file(project : str) -> Path:

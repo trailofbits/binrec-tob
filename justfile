@@ -215,16 +215,16 @@ erase-test-coverage:
 # BinRec Python API Commands
 
 # Merge cpatures within a single trace (ex. hello-1)
-merge-captures trace_id:
+merge-captures project trace_id:
   pipenv run python -m binrec.merge --trace-id {{trace_id}}
 
-# Recursively merge all captures and traces for a binary (ex. hello)
-merge-traces binary:
-  pipenv run python -m binrec.merge --binary {{binary}}
+# Recursively merge all captures and traces for a project (ex. hello)
+merge-traces project *trace_id:
+  pipenv run python -m binrec.merge --project-name {{project}} {{trace_id}}
 
 # Lift a recovered binary from a trace (ex. hello)
-lift-trace binary:
-  pipenv run python -m binrec.lifting {{binary}}
+lift-trace project *index:
+  pipenv run python -m binrec.lift {{project}} {{index}}
 
 list-projects:
   pipenv run python -m binrec.project list

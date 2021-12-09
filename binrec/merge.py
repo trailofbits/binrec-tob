@@ -17,11 +17,12 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import List
+from typing import Iterable, List
 
 from .env import BINREC_BIN, BINREC_ROOT
 from .errors import BinRecError
 from .lift import prep_bitcode_for_linkage
+from .project import merge_dir, project_dir, traces, trace_dir
 
 logger = logging.getLogger("binrec.merge")
 
@@ -124,7 +125,7 @@ def merge_bitcode(capture_dirs: List[Path], destination: Path) -> None:
     _merge_trace_info(trace_info_files, destination / "traceInfo.json")
 
 
-def merge_traces(binary_name: str) -> None:
+def merge_traces(project_name: str) -> None:
     """
     Merge multiple traces into a single trace.
 
@@ -190,7 +191,7 @@ def merge_trace_captures(trace_id: str) -> None:
     shutil.copy2(source / "Makefile", outdir / "Makefile")
 
 
-def recursive_merge_traces(binary_name: str) -> None:
+def recursive_merge_traces(project_name: str) -> None:
     """
     Merge all captures and all traces for a binary.
 
@@ -214,6 +215,8 @@ def recursive_merge_traces(binary_name: str) -> None:
             # add the trace id ({binary_name}-{iteration})
             trace_ids.append(match.group(1))
 
+    trace_ids = list(traces(project_name))
+
     if not trace_ids:
         raise BinRecError(
             f"nothing to merge: no trace directory exists: s2e-out-{binary_name}-*"
@@ -227,6 +230,63 @@ def recursive_merge_traces(binary_name: str) -> None:
     merge_traces(binary_name)
 
 
+
+def _link_captures(output_dir : Path, captures : Iterable[Path]) -> Path:
+    destination = output_dir / "captured.bc"
+    base = captures[0]
+    try:
+        subprocess.check_call(
+            [
+                "llvm-link",
+                "-print-after-all",
+                "-v",
+                "-o",
+                str(destination),
+                f"-override={base}",
+                *captures[1:]
+            ]
+        )
+    except subprocess.CalledProcessError:
+        raise BinRecError(f"llvm-link failed on captured bitcode: {source}")
+
+def _link_prep_trace(tracedir: Path) -> Path:
+    SOURCE_BITCODE = "captured.bc"
+    DESTINATION_BITCODE = "captured-link-ready.bc"
+    result_path = tracedir / DESTINATION_BITCODE
+    if not os.path.exists(result_path):
+        prep_bitcode_for_linkage(tracedir, SOURCE_BITCODE, DESTINATION_BITCODE)
+    return result_path
+
+def _get_merged_dir(project_name : str) -> Path:
+    """Create a unique merged directory in the project_dir"""
+    i=0
+    md = merge_dir(project_name, i)
+    while os.path.exists(md):
+        i += 1
+        md = merge_dir(project_name, i)
+    os.mkdir(md)
+    return md
+
+def merge_traces(project_name : str, captureids : List[int]) -> None:
+    # Get all traces if none specified
+    captureids = captureids or traces(project_name)
+    if not captureids:
+        raise BinRecError(
+            f"Failed to find any traces for project {project_name}"
+        )
+
+    # 1. Get the associated dirs for traces
+    capture_dirs = list(map(lambda x: trace_dir(project_name, x), captureids))
+
+    # 2. Create output (merge) directory
+    outdir = _get_merged_dir(project_name)
+    
+    # 3. Link prep each of the traces and merge them all to one
+    merge_bitcode(capture_dirs, outdir)
+
+    # 4. Copy first binary to the outdir
+    shutil.copy(capture_dirs[0] / "binary", outdir)
+        
 def main() -> None:
     import argparse
     import sys
@@ -239,15 +299,12 @@ def main() -> None:
     parser.add_argument(
         "-v", "--verbose", action="count", help="enable verbose logging"
     )
-    parser.add_argument("-t", "--trace-id", action="store", help="merge single trace")
-    parser.add_argument(
-        "-b",
-        "--binary-name",
-        action="store",
-        help="recursively merge all traces for binary",
-    )
+    parser.add_argument("-p", "--project-name", type=str, required=True, help="Name of analysis project")
+    parser.add_argument("captureid", nargs='*', type=int, help="Capture id, if not specified - merge all")
 
     args = parser.parse_args()
+    merge_traces(args.project_name, args.captureid)
+    sys.exit(0)
     if args.trace_id and args.binary_name:
         parser.error("cannot specify both -t/--trace-id and -b/--binary-name")
 
@@ -263,8 +320,8 @@ def main() -> None:
 
     if args.trace_id:
         merge_trace_captures(args.trace_id)
-    elif args.binary_name:
-        recursive_merge_traces(args.binary_name)
+    elif args.project_name:
+        recursive_merge_traces(args.project_name)
 
     sys.exit(0)
 
