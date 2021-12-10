@@ -41,7 +41,7 @@ namespace {
     // we enter a block with a call to __libc_start_main, wich later will call main
     // the address of main is passed in register eax.
     // Unfortunately, we don't have any symbols at this point. The ieda is instead to
-    // walk the successors to find the third block (having the call t0 __libc_start_main)
+    // walk the successors to find the third block (having the call to __libc_start_main)
     // and locate the last store to eax, this "should" be the address of main.
     uint32_t locate_main_addr(Function *entrypoint, Module &m) {
 
@@ -92,7 +92,7 @@ namespace {
 
         // Construct the Func_xxxxxx
         std::stringstream ss;
-        ss << "Func_" << std::hex<< mainpc;
+        ss << "Func_" << std::uppercase << std::hex<< mainpc;
 
         return m.getFunction(ss.str());
     }
