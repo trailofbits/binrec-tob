@@ -1,7 +1,9 @@
 import logging
 import json
 import os
+import re
 import subprocess
+import sys
 from pathlib import Path
 from typing import Iterable, List
 
@@ -31,6 +33,11 @@ def project_dir(project : str) -> Path:
 def merge_dir(project : str, index : int = 0) -> Path:
   return project_dir(project) / f"merged{index}"
 
+def merge_dirs(project : str) -> Iterable[Path]:
+    projdir = project_dir(project)
+    prog = re.compile("merged\d+")
+    return map(lambda x : projdir/x, filter(prog.match, os.listdir(projdir)))
+
 def trace_dir(project : str, traceid : int):
   return project_dir(project) / f"s2e-out-{traceid}"
 
@@ -47,6 +54,11 @@ def listing() ->List[str]:
     
     d = json.loads(output)
     return d['projects'].keys()
+
+def _list_merge_dirs(args):
+    project = _get_project_name(args)
+    for d in merge_dirs(project):
+        print(d)
 
 def _get_project_name(args) -> str:
     project = str(args.name[0])
@@ -93,6 +105,9 @@ def _run(args):
     
 def _new(args):
     project = _get_project_name(args)
+    if project in listing():
+        sys.stderr.write(f"Project {project} already exists. Please select a different name.\n")
+        sys.exit(1)
 
     logger.info("Creating project: %s", project)
     callargs = [
@@ -151,7 +166,10 @@ def main() -> None:
 
     listcmd = subparsers.add_parser("list")
     listtracecmd = subparsers.add_parser("list-traces")
-    listtracecmd.add_argument("name", nargs=1, type=str, help="Name of project to run")
+    listtracecmd.add_argument("name", nargs=1, type=str, help="Name of project to list traces for")
+
+    listtracecmd = subparsers.add_parser("list-merged")
+    listtracecmd.add_argument("name", nargs=1, type=str, help="Name of project to list merged traces for")
 
     run = subparsers.add_parser("run")
     run.add_argument("name", nargs=1, type=str, help="Name of project to run")
@@ -167,6 +185,8 @@ def main() -> None:
       _list()
     elif args.current_parser == "list-traces":
       _list_traces(args)
+    elif args.current_parser == "list-merged":
+      _list_merge_dirs(args)
     else:
       parser.print_help()
 

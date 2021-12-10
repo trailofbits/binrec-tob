@@ -231,3 +231,6 @@ list-projects:
 
 list-traces project:
   pipenv run python -m binrec.project list-traces {{project}}
+
+list-merged project:
+  pipenv run python -m binrec.project list-merged {{project}}
