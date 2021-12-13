@@ -9,7 +9,6 @@
 #include <llvm/Transforms/Utils/Cloning.h>
 #include <map>
 #include <set>
-#include <sstream>
 #include <vector>
 
 using namespace binrec;
@@ -90,11 +89,8 @@ namespace {
             exit(1);
         }
 
-        // Construct the Func_xxxxxx
-        std::stringstream ss;
-        ss << "Func_" << std::uppercase << std::hex<< mainpc;
-
-        return m.getFunction(ss.str());
+        // Return the Func_xxxxxx
+        return m.getFunction("Func_" + utohexstr(mainpc));
     }
 
 } // namespace
