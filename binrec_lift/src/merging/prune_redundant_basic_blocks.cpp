@@ -16,6 +16,9 @@ auto PruneRedundantBasicBlocksPass::run(Module &m, ModuleAnalysisManager &am) ->
     SmallVector<BasicBlock*, 4> drop;
     for (auto &bb : f) {
       if (&bb == &f.getEntryBlock()) {
+        // After making register accesses loads/stores to global variables
+        // the only remaining instruction on some entry blocks is a branch
+        // to the next block. For those cases, we drop the entry block.
         if (auto branch = dyn_cast<BranchInst>(bb.begin())) {
           if (branch->isUnconditional()) {
             drop.push_back(&bb);
