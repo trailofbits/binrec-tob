@@ -1,9 +1,9 @@
 # this file must be used from an S2E output directory
-LLC := llc
-DIS := llvm-dis
-AS := llvm-as-10
-OPT := opt-10
-CLANG := clang-10
+LLC := llc-12
+DIS := llvm-dis-12
+AS := llvm-as-12
+OPT := opt-12
+CLANG := clang-12
 
 .PHONY: all export_dylibs
 all:

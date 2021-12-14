@@ -173,7 +173,7 @@ def _apply_fixups(trace_dir: Path) -> None:
     try:
         subprocess.check_call(
             [
-                "llvm-link",
+                "llvm-link-12",
                 "-o",
                 "linked.bc",
                 "cleaned.bc",
@@ -257,7 +257,7 @@ def _disassemble_bitcode(trace_dir: Path) -> None:
     """
     logger.debug("disassembling optimized bitcode: %s", trace_dir.name)
     try:
-        subprocess.check_call(["llvm-dis", "optimized.bc"], cwd=str(trace_dir))
+        subprocess.check_call(["llvm-dis-12", "optimized.bc"], cwd=str(trace_dir))
     except subprocess.CalledProcessError:
         raise BinRecError(
             f"failed to disassemble captured LLVM bitcode: {trace_dir.name}"
