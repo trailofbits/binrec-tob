@@ -17,6 +17,7 @@ static auto find_merge_pairs(Function &wrapper) -> list<pair<BasicBlock *, Basic
     map<unsigned, vector<BasicBlock *>> bb_map;
     set<BasicBlock *> merge_blocks;
 
+    // Put all blocks ending at the same PC in the same bucket
     for (BasicBlock &bb : wrapper) {
         if (isRecoveredBlock(&bb)) {
             unsigned lastpc = getLastPc(&bb);
@@ -28,6 +29,13 @@ static auto find_merge_pairs(Function &wrapper) -> list<pair<BasicBlock *, Basic
         }
     }
 
+    // For each block in bucket (last PC of a block)
+    // merge them pairwise
+    // block1: [startpc            endpc]
+    // block2:     [startpc        endpc]
+    // block3:        [startpc     endpc] 
+    // merge_blocks_same_end_point will merge
+    // block1, block2 and block2, block3
     for (auto it : bb_map) {
         vector<BasicBlock *> &merge = it.second;
 
@@ -57,6 +65,14 @@ static auto find_merge_pairs(Function &wrapper) -> list<pair<BasicBlock *, Basic
     return merge_list;
 }
 
+// Will transform merge pairs (block1, block2) and (block2, block3)
+// block1: [startpc            endpc]
+// block2:     [startpc        endpc]
+// block3:        [startpc     endpc] 
+// into
+// block1: [   ] jmp block2
+// block2:     [  ] jmp block3 
+// block3:        [                 ]
 static void merge_blocks_same_end_point(BasicBlock *a, BasicBlock *b)
 {
     // merge b into a by removing the part emulated by b from a and connecting

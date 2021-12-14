@@ -37,6 +37,8 @@ auto FunctionInfo::get_tbs_by_function_entry(Module &m) const
     unordered_map<Function *, DenseSet<Function *>> result;
 
     if (entry_pc_to_bb_pcs.empty()) {
+        // TODO (hbrodin): This uses the old method of location "main". See recover_functions.cpp
+        // for an updated variant. It seems this part is not reached. Haven't investigated.
         auto *entry = m.getFunction("Func_" + utohexstr(entry_pc[1]));
         assert(entry);
         DenseSet<Function *> tbs;
