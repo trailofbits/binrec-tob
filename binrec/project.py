@@ -147,6 +147,26 @@ pluginsConfig.ExportELF = {{
 }}
 """)
 
+def _debug_trace_info(ti : Path):
+    with open(ti, 'r') as f:
+        ti = json.load(f)
+        # TODO (hbrodin): There is probably a more clever way of doing this...
+        def remap(a1, a2):
+            ctfup = ti[a1][a2]
+            ti[a1][a2] = list(map(lambda x: [hex(x[0]), hex(x[1])], ctfup))
+        remap("functionLog", "callerToFollowUp")
+        remap("functionLog", "entryToCaller")
+        remap("functionLog", "entryToReturn")
+        #remap("functionLog", "entryToTbs")
+
+        ti["functionLog"]["entryToTbs"] = list(map(lambda x: [hex(x[0]), list(map(hex, x[1]))], ti["functionLog"]["entryToTbs"]))
+
+        ti["successors"] = list(map(lambda x: {"pc": hex(x["pc"]), "successor": hex(x["successor"])}, ti["successors"]))
+
+        ti["functionLog"]["entries"] = list(map(hex, ti["functionLog"]["entries"]))
+
+        print(json.dumps(ti, indent=4))
+
 def main() -> None:
     import argparse
     import sys
@@ -175,6 +195,9 @@ def main() -> None:
     run.add_argument("name", nargs=1, type=str, help="Name of project to run")
     # TODO (hbrodin): Enable passing of additional parameters to s2e run
 
+    dbg = subparsers.add_parser("debug-traceinfo")
+    dbg.add_argument("path", nargs=1, type=Path, help="Path to traceinfo to debug")
+
     args = parser.parse_args()
 
     if args.current_parser == "run":
@@ -187,6 +210,8 @@ def main() -> None:
       _list_traces(args)
     elif args.current_parser == "list-merged":
       _list_merge_dirs(args)
+    elif args.current_parser == "debug-traceinfo":
+      _debug_trace_info(args.path[0])
     else:
       parser.print_help()
 
