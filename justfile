@@ -11,6 +11,8 @@ plugins_root := justfile_directory() + "/s2e/source/s2e/libs2eplugins"
 plugins_dir := join(plugins_root, "src/s2e/Plugins")
 plugins_cmake := join(plugins_root, "src", "CMakeLists.txt")
 
+justdir := justfile_directory()
+
 
 # Binrec Build commands
 # Install apt packages, RealVNCviewer. Required once before build. Requires super user privileges.
@@ -83,9 +85,13 @@ s2e-rebuild-plugins:
   just s2e-command build
 
 s2e-insert-binrec-plugin name:
+  # If we don't drop existing links it will overwrite with default plugin
+  # content
+  rm -f {{plugins_dir}}/{{name}}.cpp
+  rm -f {{plugins_dir}}/{{name}}.h
   just s2e-command new_plugin --force {{name}}
-  cp {{name}}.cpp {{plugins_dir}}/binrec_plugins/
-  cp {{name}}.h {{plugins_dir}}/binrec_plugins/
+  ln -f -s {{justdir}}/{{name}}.cpp {{plugins_dir}}/{{name}}.cpp
+  ln -f -s {{justdir}}/{{name}}.h {{plugins_dir}}/{{name}}.h
 
 
 #  Adds the binrec-plugins to the s2e-plugins structure
@@ -100,15 +106,16 @@ s2e-insert-binrec-plugins:
   # Special handling (e.g. only header, or other directory layout)
 
   # TODO (hbrodin): Not very proud of this structure. Any way of cleaning it?
+  rm -f {{plugins_dir}}/binrec_traceinfo/src/trace_info.cpp
   just s2e-command new_plugin --force "binrec_traceinfo/src/trace_info"
-  cp binrec_traceinfo/src/trace_info.cpp {{plugins_dir}}/binrec_traceinfo/src/
-  rm {{plugins_dir}}/binrec_traceinfo/src/trace_info.h
-  cp -r binrec_traceinfo/include {{plugins_dir}}/binrec_traceinfo/
+  ln -s -f {{justdir}}/binrec_traceinfo/src/trace_info.cpp {{plugins_dir}}/binrec_traceinfo/src/
+  rm -f {{plugins_dir}}/binrec_traceinfo/src/trace_info.h
+  ln -s -f {{justdir}}/binrec_traceinfo/include {{plugins_dir}}/binrec_traceinfo/
   grep -F "s2e/Plugins/binrec_traceinfo/include/" {{plugins_cmake}} || \
     echo "\ntarget_include_directories (s2eplugins PUBLIC \"s2e/Plugins/binrec_traceinfo/include/\")" >> {{plugins_cmake}}
 
-  cp binrec_plugins/util.h {{plugins_dir}}/binrec_plugins
-  cp binrec_plugins/ModuleSelector.h {{plugins_dir}}/binrec_plugins
+  ln -s -f {{justdir}}/binrec_plugins/util.h {{plugins_dir}}/binrec_plugins
+  ln -s -f {{justdir}}/binrec_plugins/ModuleSelector.h {{plugins_dir}}/binrec_plugins
 
 
 # Create a new analysis project
