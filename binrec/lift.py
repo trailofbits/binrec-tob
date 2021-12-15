@@ -64,38 +64,39 @@ def prep_bitcode_for_linkage(
             os.remove(tmp_bc)
         raise BinRecError(f"failed first stage of linkage prep for bitcode: {source}")
 
-    # try:
-    #     # softfloat appears to be part of qemu and implements floating point math
-    #     subprocess.check_call(
-    #         [
-    #             "llvm-link",
-    #             "-o",
-    #             dest,
-    #             tmp_bc,
-    #             str(BINREC_RUNLIB / "softfloat.bc"),
-    #         ],
-    #         cwd=cwd,
-    #     )
-    # except subprocess.CalledProcessError:
-    #     # The original script ran this in via "eval", which does not honor "set -e".
-    #     # So, I'm seeing this llvm-link call fail consistently when run against a
-    #     # merged capture (s2e-out-binary-1/merged), but the script continues and
-    #     # properly finishes the merging / lifting.
-    #     #
-    #     # If this call fails then the destination file won't exist and the next call
-    #     # to binrec_lift won't be run.
-    #     #
-    #     # TODO add a check that determine whether llvm-link is needed before calling
-    #     # it.
-    #     logger.warning(
-    #         "failed llvm link prep for bitcode (this may be normal if the "
-    #         "bitcode has already been merged from multiple captures): %s",
-    #         src,
-    #     )
+    try:
+        # softfloat appears to be part of qemu and implements floating point math
+        subprocess.check_call(
+            [
+                "llvm-link-12",
+                "-o",
+                dest,
+                "--override",
+                tmp_bc,
+                str(BINREC_RUNLIB / "softfloat.bc"),
+            ],
+            cwd=cwd,
+        )
+    except subprocess.CalledProcessError:
+        # The original script ran this in via "eval", which does not honor "set -e".
+        # So, I'm seeing this llvm-link call fail consistently when run against a
+        # merged capture (s2e-out-binary-1/merged), but the script continues and
+        # properly finishes the merging / lifting.
+        #
+        # If this call fails then the destination file won't exist and the next call
+        # to binrec_lift won't be run.
+        #
+        # TODO add a check that determine whether llvm-link is needed before calling
+        # it.
+        logger.warning(
+            "failed llvm link prep for bitcode (this may be normal if the "
+            "bitcode has already been merged from multiple captures): %s",
+            src,
+        )
 
-    if tmp_bc.is_file():
-        shutil.move(tmp_bc, dest_abs)
-    #if dest_abs.is_file():
+    # if tmp_bc.is_file():
+    #     shutil.move(tmp_bc, dest_abs)
+    if dest_abs.is_file():
         # llvm-link worked successfully
         try:
             subprocess.check_call(
