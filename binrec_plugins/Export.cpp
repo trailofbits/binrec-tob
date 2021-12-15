@@ -105,12 +105,16 @@ auto Export::exportBB(S2EExecutionState *state, uint64_t pc) -> bool {
         m_bbFinalized[pc] = false;
         //} else if (npassed == 1 && m_regenerateBlocks) {
     } else if (m_regenerateBlocks && !m_bbFinalized[pc]) {
+        s2e()->getDebugStream(state) << "ExportELF: Regen block " << hexval(pc) << ".\n";
         f = regenCode(state, m_bbFuns[pc]);
         m_bbCounts[pc] += 1;
     }
 
-    if (!f)
+    if (!f) {
+        s2e()->getDebugStream(state) << "ExportELF: nullptr f " << hexval(pc) << ".\n";
         return false;
+    }
+
 
     // clone LLVM funcion from translation block
     m_bbFuns[pc] = f;
@@ -386,8 +390,8 @@ auto Export::regenCode(S2EExecutionState *state, Function *old) -> Function * {
     bool equal = areBBsEqual(newF, old, &newIsValid, &oldIsValid);
 
     if (oldIsValid && newIsValid && equal) {
-        // s2e()->getDebugStream() << "Finalized Function: " << "PC= " << hexval(state->getPc()) << " #ofBB= " <<
-        // m_bbCounts[state->getPc()] << "\n";
+        s2e()->getDebugStream() << "Finalized Function: " << "PC= " << hexval(state->regs()->getPc()) << " #ofBB= " <<
+         m_bbCounts[state->regs()->getPc()] << "\n";
         m_bbFinalized[state->regs()->getPc()] = true;
         clearLLVMFunction(tb);
         return nullptr;
