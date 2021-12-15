@@ -40,6 +40,7 @@ private:
     std::shared_ptr<binrec::TraceInfo> ti;
     uint32_t m_executedBBPc;
     uint32_t m_callerPc;
+    uint64_t m_moduleEntryPoint;
     std::set<uint32_t> m_modulePcs;
     std::stack<uint32_t> m_callStack;
 };

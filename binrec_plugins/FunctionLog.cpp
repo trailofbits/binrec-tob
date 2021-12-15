@@ -45,9 +45,11 @@ FunctionLog::~FunctionLog() {
     }
 }
 
+uint64_t entrypoint;
 void FunctionLog::slotModuleLoad(S2EExecutionState *state, const ModuleDescriptor &module) {
     s2e()->getDebugStream(state) << "FunctionLog: ==> ModulePid: " << module.Pid << '\n';
     m_functionMonitor->onCall.connect(sigc::mem_fun(*this, &FunctionLog::onFunctionCall));
+    m_moduleEntryPoint = module.EntryPoint;
 }
 
 void FunctionLog::slotModuleExecute(S2EExecutionState *state, uint64_t pc) {
@@ -80,8 +82,12 @@ void FunctionLog::onFunctionCall(S2EExecutionState *state, const ModuleDescripto
     // Consider adding the pid from slotModuleLoad and check it here. If ELFSelector have choosen only
     // a specific binary there might not be a need to do such filtering.
 
-    m_callStack.push(calleePc);
-    returnSignal->connect(sigc::bind(sigc::mem_fun(*this, &FunctionLog::onFunctionReturn), callerPc, calleePc));
+    // NOTE (hbrodin): Ideally there should be a better way of filtering calls that are only relevant to the
+    // module being analyzed. There probably is. Just need to find it...
+    if ((source && source->EntryPoint == m_moduleEntryPoint) || (dest && dest->EntryPoint == m_moduleEntryPoint)) {
+      m_callStack.push(calleePc);
+      returnSignal->connect(sigc::bind(sigc::mem_fun(*this, &FunctionLog::onFunctionReturn), callerPc, calleePc));
+    }
 }
 
 void FunctionLog::onFunctionReturn(S2EExecutionState *state, const ModuleDescriptorConstPtr &source,
@@ -99,10 +105,22 @@ void FunctionLog::onFunctionReturn(S2EExecutionState *state, const ModuleDescrip
         if (m_callStack.empty()) {
             s2e()->getWarningsStream() << "FunctionLog: Couldn't match caller func: " << top
                                        << " with returned func: " << func_begin << " and call stack is empty now.\n";
+            if (source)
+                s2e()->getWarningsStream() << "\tSource: " << source->Name << " \n";
+            if (dest)
+                s2e()->getWarningsStream() << "\tDest: " << dest->Name << " \n";
+            s2e()->getWarningsStream() << " returnSite: " << hexval(returnSite) << "\n";
+
             m_callStack.push(top);
         } else if (func_begin != m_callStack.top()) {
             s2e()->getWarningsStream() << "FunctionLog: Couldn't match caller func: " << top
                                        << " with returned func: " << func_begin << "\n";
+            if (source)
+                s2e()->getWarningsStream() << "\tSource: " << source->Name << " \n";
+            if (dest)
+                s2e()->getWarningsStream() << "\tDest: " << dest->Name << " \n";
+            s2e()->getWarningsStream() << " returnSite: " << hexval(returnSite) << "\n";
+
             m_callStack.push(top);
             return;
         } else {
