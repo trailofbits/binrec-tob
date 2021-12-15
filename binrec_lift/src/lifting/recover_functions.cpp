@@ -90,7 +90,8 @@ namespace {
         }
 
         // Return the Func_xxxxxx
-        return m.getFunction("Func_" + utohexstr(mainpc));
+        auto main = "Func_" + utohexstr(mainpc);
+        return m.getFunction(main);
     }
 
 } // namespace
@@ -399,11 +400,13 @@ auto RecoverFunctionsPass::run(Module &m, ModuleAnalysisManager &am) -> Preserve
     }
 
     vector<Function *> entry_points = fl.get_entrypoint_functions(m);
+    assert(!entry_points.empty() && "No entry points, can't recover main");
     auto *wrapper = m.getFunction("Func_wrapper");
     assert(wrapper);
     BasicBlock *entry_block = BasicBlock::Create(context, "", wrapper);
     // NOTE (hbrodin): Changed how main function is located due to update S2E version
     auto main_func = get_main(entry_points[0], m);
+    assert(main_func && "Failed to locate main-function");
     CallInst::Create(main_func, {}, "", entry_block);
     ReturnInst::Create(context, entry_block);
 
