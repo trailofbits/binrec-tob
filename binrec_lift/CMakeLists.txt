@@ -1,4 +1,4 @@
-add_executable(binrec_lift
+add_library(binrec_lift_static STATIC
         src/analysis/env_alias_analysis.cpp src/analysis/env_alias_analysis.hpp
         src/analysis/trace_info_analysis.cpp src/analysis/trace_info_analysis.hpp
 
@@ -59,7 +59,8 @@ add_executable(binrec_lift
         src/utils/name_cleaner.cpp src/utils/name_cleaner.hpp
 
         src/add_custom_helper_vars.cpp src/add_custom_helper_vars.hpp
-        src/binrec_lift.cpp
+        src/binrec_lift.cpp src/binrec_lift.hpp
+        src/lift_context.hpp
         src/constant_loads.cpp src/constant_loads.hpp
         src/custom_loop_unroll.cpp src/custom_loop_unroll.hpp
         src/detect_vars.cpp src/detect_vars.hpp
@@ -83,9 +84,30 @@ add_executable(binrec_lift
         src/tag_inst_pc.cpp src/tag_inst_pc.hpp
         src/untangle_interpreter.cpp src/untangle_interpreter.hpp)
 
-target_compile_definitions(binrec_lift PRIVATE ${LLVM_DEFINITIONS})
-target_compile_options(binrec_lift PRIVATE -fno-rtti -fno-exceptions)
-target_include_directories(binrec_lift PRIVATE ${LLVM_INCLUDE_DIRS} ${CMAKE_CURRENT_LIST_DIR}/src)
+target_compile_definitions(binrec_lift_static PUBLIC ${LLVM_DEFINITIONS})
+target_compile_options(binrec_lift_static PUBLIC -fno-rtti -fpic)
+target_include_directories(binrec_lift_static PUBLIC ${LLVM_INCLUDE_DIRS} ${CMAKE_CURRENT_LIST_DIR}/src)
 llvm_map_components_to_libnames(llvm_libs CodeGen Core ipo IRReader Passes ScalarOpts Support TransformUtils)
-target_link_options(binrec_lift PRIVATE -fuse-ld=lld)
-target_link_libraries(binrec_lift PRIVATE ${llvm_libs} binrec_traceinfo)
+target_link_options(binrec_lift_static PUBLIC -fuse-ld=lld)
+target_link_libraries(binrec_lift_static PUBLIC ${llvm_libs} binrec_traceinfo)
+
+
+# binrec_lift executable
+add_executable(binrec_lift
+        src/main.cpp)
+
+target_link_libraries(binrec_lift binrec_lift_static)
+
+
+# Python binrec_lift module
+add_library(pybinrec_lift MODULE src/py_binrec_lift.cpp)
+target_link_libraries(pybinrec_lift ${Python_LIBRARIES} binrec_lift_static)
+target_include_directories(pybinrec_lift PRIVATE ${Python_INCLUDE_DIRS})
+target_link_options(pybinrec_lift PRIVATE ${Python_LINK_OPTIONS})
+
+set_target_properties(
+    pybinrec_lift
+    PROPERTIES
+        PREFIX ""
+        OUTPUT_NAME "_binrec_lift"
+        LINKER_LANGUAGE C)

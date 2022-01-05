@@ -25,19 +25,21 @@ cl::opt<std::string> EntryLabel(
 auto CustomLoopUnroll::doInitialization(Loop *L, LPPassManager &LPM) -> bool
 {
     bool HaveErr = false;
+    std::string error;
 
     if (UnrollCount.getNumOccurrences() != 1) {
-        errs() << "error: please specify one -custom-unroll-count\n";
+        error = "error: please specify one -custom-unroll-count";
         HaveErr = true;
     }
 
     if (EntryLabel.getNumOccurrences() != 1) {
-        errs() << "error: please specify one -custom-unroll-entry\n";
+        error = "error: please specify one -custom-unroll-entry";
         HaveErr = true;
     }
 
-    if (HaveErr)
-        exit(1);
+    if (HaveErr) {
+        throw std::runtime_error{error};
+    }
 
     return false;
 }

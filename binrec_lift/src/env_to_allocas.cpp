@@ -1,3 +1,4 @@
+#include "error.hpp"
 #include "env_to_allocas.hpp"
 #include "pass_utils.hpp"
 #include <set>
@@ -35,8 +36,8 @@ namespace {
                     return false;
                 }
             } else {
-                errs() << "Unexpected use of global: " << *use << "\n";
-                exit(1);
+                LLVM_ERROR(error) << "Unexpected use of global: " << *use;
+                throw std::runtime_error{error};
             }
         }
 

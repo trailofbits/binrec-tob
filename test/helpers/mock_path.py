@@ -30,6 +30,7 @@ class MockPath:
         self._exists = exists
         self.children = []
         self.is_dir = MagicMock(side_effect=lambda: self._is_dir)
+        self.is_file = MagicMock(side_effect=lambda: self._exists and not self._is_dir)
         self.exists = MagicMock(side_effect=lambda: self._exists or self._is_dir)
         self.iterdir = MagicMock(side_effect=lambda: self.children)
 
@@ -75,10 +76,13 @@ class MockPath:
         return child
 
     def __str__(self) -> str:
-        return self.name
+        return self.path
 
     def __repr__(self) -> str:
         return f"MockPath({self.path!r})"
 
     def __eq__(self, other) -> bool:
         return isinstance(other, MockPath) and other.path == self.path
+
+    def is_absolute(self) -> bool:
+        return self.path.startswith(("/", "\\"))

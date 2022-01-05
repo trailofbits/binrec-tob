@@ -18,10 +18,12 @@ sys.path.insert(0, str(Path(__file__).absolute().parents[2]))
 
 print(sys.path[0])
 
+from binrec import lib
+
 # -- Project information -----------------------------------------------------
 
 project = 'BinRec'
-copyright = '2021, Trail of Bits'
+copyright = '2022, Trail of Bits'
 author = 'Trail of Bits, University of California, Irvine and Vrije Universiteit Amsterdam'
 
 

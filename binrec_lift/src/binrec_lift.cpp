@@ -1,7 +1,9 @@
+#include "binrec_lift.hpp"
 #include "add_custom_helper_vars.hpp"
 #include "analysis/env_alias_analysis.hpp"
 #include "analysis/trace_info_analysis.hpp"
 #include "debug/call_tracer.hpp"
+#include "error.hpp"
 #include "inline_wrapper.hpp"
 #include "ir/selectors.hpp"
 #include "lifting/add_debug.hpp"
@@ -54,7 +56,6 @@
 #include <llvm/IR/IRPrintingPasses.h>
 #include <llvm/IRReader/IRReader.h>
 #include <llvm/Passes/PassBuilder.h>
-#include <llvm/Support/InitLLVM.h>
 #include <llvm/Transforms/IPO/AlwaysInliner.h>
 #include <llvm/Transforms/IPO/GlobalDCE.h>
 #include <llvm/Transforms/IPO/GlobalOpt.h>
@@ -63,50 +64,25 @@
 #include <llvm/Transforms/Scalar/GVN.h>
 #include <llvm/Transforms/Scalar/LICM.h>
 
-using namespace binrec;
 using namespace llvm;
 using namespace llvm::cl;
 using namespace std;
 
-namespace {
-    opt<string> Trace_Filename{
-        Positional,
-        desc{"<trace bitcode file>"},
-        init("-"),
-        value_desc{"filename"}};
-    opt<string> Output_Filename{"o", desc{"Output filename"}, value_desc{"filename"}};
+namespace binrec {
 
-    opt<bool> Link_Prep_1{
-        "link-prep-1",
-        desc{"Prepare trace for linking with other traces phase 1"}};
-    opt<bool> Link_Prep_2{
-        "link-prep-2",
-        desc{"Prepare trace for linking with other traces phase 2"}};
-    opt<bool> Clean{"clean", desc{"Clean trace for linking with custom helpers"}};
-    opt<bool> Lift{"lift", desc{"Lift trace into correct LLVM module"}};
-    opt<bool> Optimize{"optimize", desc{"Optimize module"}};
-    opt<bool> Optimize_Better{"optimize-better", desc{"Optimize module better"}};
-    opt<bool> Compile{"compile", desc{"Compile the trace to an object file"}};
 
-    opt<bool> No_Link_Lift{"no-link-lift", desc{"Do not lift dynamic symbols"}};
-    opt<bool> Clean_Names{"clean-names", desc{"Do not lift dynamic symbols"}};
-
-    opt<bool> Trace_Calls{
-        "trace-calls",
-        desc{"Trace calls and register values of recovered functions"}};
-
-    auto build_pipeline(PassBuilder &pb) -> ModulePassManager
+    auto build_pipeline(LiftContext &ctx, PassBuilder &pb) -> ModulePassManager
     {
         ModulePassManager mpm;
 
-        if (Link_Prep_1) {
+        if (ctx.link_prep_1) {
             mpm.addPass(RenameBlockFuncsPass{});
             mpm.addPass(ExternalizeFunctionsPass{});
             mpm.addPass(InternalizeImportsPass{});
             mpm.addPass(GlobalDCEPass{});
         }
 
-        if (Link_Prep_2) {
+        if (ctx.link_prep_2) {
             mpm.addPass(InternalizeImportsPass{});
             mpm.addPass(UnimplementCustomHelpersPass{});
             mpm.addPass(GlobalDCEPass{});
@@ -115,7 +91,7 @@ namespace {
             mpm.addPass(RenameEnvPass{});
         }
 
-        if (Clean) {
+        if (ctx.clean) {
             mpm.addPass(createModuleToFunctionPassAdaptor(InstCombinePass{}));
             mpm.addPass(TagInstPcPass{});
             mpm.addPass(RemoveS2EHelpersPass{});
@@ -124,7 +100,7 @@ namespace {
             mpm.addPass(SetDataLayout32Pass{});
         }
 
-        if (Lift) {
+        if (ctx.lift) {
             mpm.addPass(RemoveOptNonePass{});
             mpm.addPass(InternalizeGlobalsPass{});
             mpm.addPass(GlobalDCEPass{});
@@ -146,7 +122,7 @@ namespace {
             mpm.addPass(InlineLibCallArgsPass{});
             mpm.addPass(createModuleToFunctionPassAdaptor(DCEPass{}));
             mpm.addPass(AlwaysInlinerPass{});
-            if (!No_Link_Lift) {
+            if (!ctx.skip_link) {
                 mpm.addPass(ReplaceDynamicSymbolsPass{});
                 mpm.addPass(LibCallNewPLTPass{});
                 mpm.addPass(ImplementLibCallsNewPLTPass{});
@@ -155,7 +131,7 @@ namespace {
             }
             mpm.addPass(InlineQemuOpHelpersPass{});
             mpm.addPass(GlobalEnvToAllocaPass{});
-            if (Trace_Calls) {
+            if (ctx.trace_calls) {
                 mpm.addPass(CallTracerPass{});
             }
             mpm.addPass(createModuleToFunctionPassAdaptor(InternalizeFunctionsPass{}));
@@ -168,11 +144,11 @@ namespace {
             mpm.addPass(FunctionRenamingPass{});
         }
 
-        if (Optimize) {
+        if (ctx.optimize) {
             mpm.addPass(pb.buildPerModuleDefaultPipeline(PassBuilder::OptimizationLevel::O3));
         }
 
-        if (Optimize_Better) {
+        if (ctx.optimize_better) {
             // FPar: I took this from the old optimizerBetter.sh script.
             mpm.addPass(RequireAnalysisPass<GlobalsAA, Module>{});
             mpm.addPass(createModuleToFunctionPassAdaptor(
@@ -189,81 +165,83 @@ namespace {
             mpm.addPass(GlobalOptPass{});
         }
 
-        if (Compile) {
+        if (ctx.compile) {
             mpm.addPass(HaltOnDeclarationsPass{});
             mpm.addPass(RemoveSectionsPass{});
             mpm.addPass(createModuleToFunctionPassAdaptor(InternalizeDebugHelpersPass{}));
             mpm.addPass(GlobalDCEPass{});
         }
 
-        if (Clean_Names) {
+        if (ctx.clean_names) {
             mpm.addPass(createModuleToFunctionPassAdaptor(NameCleaner{}));
         }
 
         return mpm;
     }
-} // namespace
 
-auto main(int argc, char *argv[]) -> int
-{
-    InitLLVM init_llvm{argc, argv};
-    LLVMContext llvm_context;
+    void run_lift(LiftContext &ctx)
+    {
+        // This isn't ideal from the standpoint of a Python API. However, because
+        // binrec_lift appears to be stack-based, breaking this function up may cause
+        // segfaults as structs/classes go out of scope. This method is very fragile.
+        LLVMContext llvm_context;
+        SMDiagnostic err;
+        unique_ptr<Module> module = parseIRFile(ctx.trace_filename, err, llvm_context);
+        if (!module) {
+            string error;
+            raw_string_ostream error_stream{error};
+            err.print("binrec-lift", error_stream);
+            throw runtime_error{error};
+        }
+        Triple triple(module->getTargetTriple());
 
-    ParseCommandLineOptions(argc, argv, "BinRec trace lifter and optimizer\n");
+        PassBuilder pb;
 
-    SMDiagnostic err;
-    unique_ptr<Module> module = parseIRFile(Trace_Filename, err, llvm_context);
-    if (!module) {
-        err.print(argv[0], errs());
-        return 1;
+        AAManager aa = pb.buildDefaultAAPipeline();
+        aa.registerFunctionAnalysis<EnvAa>();
+
+        LoopAnalysisManager lam;
+        FunctionAnalysisManager fam;
+        fam.registerPass([] { return EnvAa{}; });
+        CGSCCAnalysisManager cgam;
+        ModuleAnalysisManager mam;
+
+        mam.registerPass([] { return TraceInfoAnalysis{}; });
+        fam.registerPass([&] { return move(aa); });
+
+        pb.registerModuleAnalyses(mam);
+        pb.registerCGSCCAnalyses(cgam);
+        pb.registerFunctionAnalyses(fam);
+        pb.registerLoopAnalyses(lam);
+        pb.crossRegisterProxies(lam, fam, cgam, mam);
+
+        ModulePassManager mpm = build_pipeline(ctx, pb);
+
+        error_code ec;
+        raw_fd_ostream output_bc{ctx.destination + ".bc", ec};
+        if (ec) {
+            LLVM_ERROR(error) << "failed to open file " << ctx.destination
+                              << ".bc: " << ec.message();
+            throw runtime_error{error};
+        }
+        raw_fd_ostream output_ll{ctx.destination + ".ll", ec};
+        if (ec) {
+            LLVM_ERROR(error) << "failed to open file " << ctx.destination
+                              << ".ll: " << ec.message();
+            throw runtime_error{error};
+        }
+        mpm.addPass(BitcodeWriterPass{output_bc});
+        mpm.addPass(PrintModulePass{output_ll});
+
+        raw_fd_ostream memssa_ll{ctx.destination + "-memssa.ll", ec};
+        if (ec) {
+            LLVM_ERROR(error) << "failed to open file " << ctx.destination
+                              << "-memssa.ll: " << ec.message();
+            throw runtime_error{error};
+        }
+        mpm.addPass(RequireAnalysisPass<GlobalsAA, Module>{});
+        mpm.addPass(createModuleToFunctionPassAdaptor(MemorySSAPrinterPass{memssa_ll}));
+
+        mpm.run(*module, mam);
     }
-    Triple triple(module->getTargetTriple());
-
-    PassBuilder pb;
-
-    AAManager aa = pb.buildDefaultAAPipeline();
-    aa.registerFunctionAnalysis<EnvAa>();
-
-    LoopAnalysisManager lam;
-    FunctionAnalysisManager fam;
-    fam.registerPass([] { return EnvAa{}; });
-    CGSCCAnalysisManager cgam;
-    ModuleAnalysisManager mam;
-
-    mam.registerPass([] { return TraceInfoAnalysis{}; });
-    fam.registerPass([&] { return move(aa); });
-
-    pb.registerModuleAnalyses(mam);
-    pb.registerCGSCCAnalyses(cgam);
-    pb.registerFunctionAnalyses(fam);
-    pb.registerLoopAnalyses(lam);
-    pb.crossRegisterProxies(lam, fam, cgam, mam);
-
-    ModulePassManager mpm = build_pipeline(pb);
-
-    error_code ec;
-    raw_fd_ostream output_bc{Output_Filename + ".bc", ec};
-    if (ec) {
-        errs() << ec.message();
-        return 1;
-    }
-    raw_fd_ostream output_ll{Output_Filename + ".ll", ec};
-    if (ec) {
-        errs() << ec.message();
-        return 1;
-    }
-    mpm.addPass(BitcodeWriterPass{output_bc});
-    mpm.addPass(PrintModulePass{output_ll});
-
-    raw_fd_ostream memssa_ll{Output_Filename + "-memssa.ll", ec};
-    if (ec) {
-        errs() << ec.message();
-        return 1;
-    }
-    mpm.addPass(RequireAnalysisPass<GlobalsAA, Module>{});
-    mpm.addPass(createModuleToFunctionPassAdaptor(MemorySSAPrinterPass{memssa_ll}));
-
-    mpm.run(*module, mam);
-
-    return 0;
-}
+} // namespace binrec

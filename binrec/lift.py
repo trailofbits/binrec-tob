@@ -6,7 +6,6 @@ import tempfile
 from contextlib import suppress
 from pathlib import Path
 
-from .core import AnyPath
 from .env import (
     BINREC_BIN,
     BINREC_LIB,
@@ -16,15 +15,15 @@ from .env import (
     BINREC_SCRIPTS,
 )
 from .errors import BinRecError
+from .lib import binrec_lift, binrec_link
 
 logger = logging.getLogger("binrec.lift")
 
 BINREC_LIFT = str(BINREC_BIN / "binrec_lift")
-BINREC_LINK = str(BINREC_BIN / "binrec_link")
 
 
 def prep_bitcode_for_linkage(
-    working_dir: AnyPath, source: AnyPath, destination: AnyPath
+    working_dir: Path, source: Path, destination: Path
 ) -> None:
     """
     Prepare captured bitcode for linkage. This was originally the content of the
@@ -43,25 +42,24 @@ def prep_bitcode_for_linkage(
     tmp_bc = f"{tmp}.bc"
 
     cwd = str(working_dir)
+
+    if not source.is_absolute():
+        source = working_dir / source
     src = str(source)
+
+    if not destination.is_absolute():
+        destination = working_dir / destination
     dest = str(destination)
 
-    # We need the absolute path to the destination so we can copy the resulting bitcode
-    # to it when we are finished. binrec_lift and llvm-link seem to be hardcoded to
-    # need the  and source/destination passed in may be relative to it. However, our
-    # Python process's CWD will be different so we need to resolve the destination
-    # path against the working_dir.
-    dest_abs = Path(destination)
-    if not dest_abs.is_absolute():
-        dest_abs = Path(working_dir) / destination
-
     try:
-        subprocess.check_call([BINREC_LIFT, "--link-prep-1", "-o", tmp, src], cwd=cwd)
-    except subprocess.CalledProcessError:
+        binrec_lift.link_prep_1(trace_filename=src, destination=tmp, working_dir=cwd)
+    except Exception as err:
         os.remove(tmp)
         with suppress(OSError):
             os.remove(tmp_bc)
-        raise BinRecError(f"failed first stage of linkage prep for bitcode: {source}")
+        raise BinRecError(
+            f"failed first stage of linkage prep for bitcode: {source}: {err}"
+        )
 
     try:
         # softfloat appears to be part of qemu and implements floating point math
@@ -92,22 +90,22 @@ def prep_bitcode_for_linkage(
             src,
         )
 
-    if dest_abs.is_file():
+    if destination.is_file():
         # llvm-link worked successfully
         try:
-            subprocess.check_call(
-                [BINREC_LIFT, "--link-prep-2", "-o", tmp, dest], cwd=cwd
+            binrec_lift.link_prep_2(
+                trace_filename=dest, destination=tmp, working_dir=cwd
             )
-        except subprocess.CalledProcessError:
+        except Exception as err:
             os.remove(tmp_bc)
             os.remove(tmp)
             raise BinRecError(
-                f"failed second stage of linkage prep for bitcode: " f"{source}"
+                f"failed second stage of linkage prep for bitcode: {source}: {err}"
             )
 
     # Regardless of the llvm-link result, the temp bitcode file will exist and we use
     # it as the final output file.
-    shutil.move(f"{tmp}.bc", dest_abs)
+    shutil.move(f"{tmp}.bc", dest)
     os.remove(tmp)
 
 
@@ -145,11 +143,15 @@ def _clean_bitcode(trace_dir: Path) -> None:
     """
     logger.debug("cleaning captured bitcode: %s", trace_dir.name)
     try:
-        subprocess.check_call(
-            [BINREC_LIFT, "--clean", "-o", "cleaned", "captured.bc"], cwd=str(trace_dir)
+        binrec_lift.clean(
+            trace_filename="captured.bc",
+            destination="cleaned",
+            working_dir=str(trace_dir),
         )
-    except subprocess.CalledProcessError:
-        raise BinRecError(f"failed to clean captured LLVM bitcode: {trace_dir.name}")
+    except Exception as err:
+        raise BinRecError(
+            f"failed to clean captured LLVM bitcode: {trace_dir.name}: {err}"
+        )
 
 
 def _apply_fixups(trace_dir: Path) -> None:
@@ -198,13 +200,16 @@ def _lift_bitcode(trace_dir: Path) -> None:
         "performing initially lifting of captured LLVM bitcode: %s", trace_dir.name
     )
     try:
-        subprocess.check_call(
-            [BINREC_LIFT, "--lift", "-o", "lifted", "linked.bc", "--clean-names"],
-            cwd=str(trace_dir),
+        binrec_lift.lift(
+            trace_filename="linked.bc",
+            destination="lifted",
+            working_dir=str(trace_dir),
+            clean_names=True,
         )
-    except subprocess.CalledProcessError:
+    except Exception as err:
         raise BinRecError(
-            f"failed to perform initial lifting of LLVM bitcode: {trace_dir.name}"
+            f"failed to perform initial lifting of LLVM bitcode: {trace_dir.name}: "
+            f"{err}"
         )
 
 
@@ -223,19 +228,16 @@ def _optimize_bitcode(trace_dir: Path) -> None:
     """
     logger.debug("optimizing lifted bitcode: %s", trace_dir.name)
     try:
-        subprocess.check_call(
-            [
-                BINREC_LIFT,
-                "--optimize",
-                "-o",
-                "optimized",
-                "lifted.bc",
-                "--memssa-check-limit=100000",
-            ],
-            cwd=str(trace_dir),
+        binrec_lift.optimize(
+            trace_filename="lifted.bc",
+            destination="optimized",
+            memssa_check_limit=100000,
+            working_dir=str(trace_dir),
         )
-    except subprocess.CalledProcessError:
-        raise BinRecError(f"failed to optimized lifted LLVM bitcode: {trace_dir.name}")
+    except Exception as err:
+        raise BinRecError(
+            f"failed to optimized lifted LLVM bitcode: {trace_dir.name}: {err}"
+        )
 
 
 def _disassemble_bitcode(trace_dir: Path) -> None:
@@ -272,12 +274,15 @@ def _recover_bitcode(trace_dir: Path) -> None:
     """
     logger.debug("lowering optimized LLVM bitcode for compilation: %s", trace_dir.name)
     try:
-        subprocess.check_call(
-            [BINREC_LIFT, "--compile", "-o", "recovered", "optimized.bc"],
-            cwd=str(trace_dir),
+        binrec_lift.compile_prep(
+            trace_filename="optimized.bc",
+            destination="recovered",
+            working_dir=str(trace_dir),
         )
-    except subprocess.CalledProcessError:
-        raise BinRecError(f"failed to lower optimized LLVM bitcode: {trace_dir.name}")
+    except Exception as err:
+        raise BinRecError(
+            f"failed to lower optimized LLVM bitcode: {trace_dir.name}: {err}"
+        )
 
 
 def _compile_bitcode(trace_dir: Path) -> None:
@@ -315,24 +320,15 @@ def _link_recovered_binary(trace_dir: Path) -> None:
 
     logger.debug("linking recovered binary: %s", trace_dir.name)
     try:
-        subprocess.check_call(
-            [
-                BINREC_LINK,
-                "-b",
-                "binary",
-                "-r",
-                "recovered.o",
-                "-l",
-                libbinrec_rt,
-                "-o",
-                "recovered",
-                "-t",
-                i386_ld,
-            ],
-            cwd=str(trace_dir),
+        binrec_link.link(
+            binary_filename=str(trace_dir / "binary"),
+            recovered_filename=str(trace_dir / "recovered.o"),
+            runtime_library=libbinrec_rt,
+            linker_script=i386_ld,
+            destination=str(trace_dir / "recovered"),
         )
-    except subprocess.CalledProcessError:
-        raise BinRecError(f"failed to link recovered binary: {trace_dir.name}")
+    except Exception as err:
+        raise BinRecError("failed to link recovered binary: %s", err)
 
 
 def lift_trace(binary: str) -> None:

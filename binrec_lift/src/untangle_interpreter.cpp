@@ -33,8 +33,7 @@ cl::list<std::string> VpcTraceFiles(
 static auto isInterpreterLoop(Loop *L) -> bool
 {
     if (InterpreterEntry.getNumOccurrences() != 1) {
-        errs() << "error: please specify one -interpreter-entry\n";
-        exit(1);
+        throw std::runtime_error{"error: please specify one -interpreter-entry"};
     }
 
     return L->getHeader()->hasName() && L->getHeader()->getName() == InterpreterEntry;
@@ -169,14 +168,14 @@ auto UntangleInterpreter::runOnLoop(Loop *L, LPPassManager &LPM) -> bool
     std::set<std::pair<unsigned, unsigned>> edges;
     const bool filesRead = readTraceFiles(entry, exits, edges);
 
-    if (!vpc || !filesRead)
-        exit(1);
+    if (!vpc || !filesRead) {
+        throw std::runtime_error{"no trace files found"};
+    }
 
     // The header cannot contain PHI nodes because this will create problems
     // when pointing successors to other nodes
     if (isa<PHINode>(L->getHeader()->begin())) {
-        errs() << "Error: interpreter header should not contain PHI nodes\n";
-        exit(1);
+        throw std::runtime_error{"interpreter header should not contain PHI nodes"};
     }
 
     auto *vpcTy = cast<IntegerType>(vpc->getType()->getElementType());
@@ -185,8 +184,7 @@ auto UntangleInterpreter::runOnLoop(Loop *L, LPPassManager &LPM) -> bool
     const HeaderLatchPair &entryPair = getOrCreatePair(entry);
 
     if (!ReplaceSuccessor(L->getLoopPreheader(), L->getHeader(), entryPair.first)) {
-        errs() << "Error: could not patch successor of preheader\n";
-        exit(1);
+        throw std::runtime_error{"could not patch successor of preheader"};
     }
 
     // Add edges between virtual instructions based on trace files, duplicating

@@ -102,8 +102,7 @@ auto PruneRetaddrPushPass::run(Module &m, ModuleAnalysisManager &am) -> Preserve
             }
 
             if (phi->getNumIncomingValues() == 0) {
-                errs() << "no phi values ";
-                exit(1);
+                throw std::runtime_error{"no phi values "};
             }
 
             lib_calls++;

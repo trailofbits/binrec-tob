@@ -82,8 +82,8 @@ class TestMerge:
         mock_shutil.rmtree.assert_not_called()
 
         assert mock_prep_bitcode.call_args_list == [
-            call(capture_dirs[0], "captured.bc", "captured-link-ready.bc"),
-            call(capture_dirs[1], "captured.bc", "captured-link-ready.bc"),
+            call(capture_dirs[0], Path("captured.bc"), Path("captured-link-ready.bc")),
+            call(capture_dirs[1], Path("captured.bc"), Path("captured-link-ready.bc")),
         ]
 
         mock_shutil.copy.assert_called_once_with(

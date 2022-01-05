@@ -1,3 +1,4 @@
+#include "error.hpp"
 #include "extern_plt.hpp"
 #include "meta_utils.hpp"
 #include "pass_utils.hpp"
@@ -97,8 +98,8 @@ auto ExternPLTPass::run(Function &f, FunctionAnalysisManager &am) -> PreservedAn
         // helper_stub_trampoline call inside its body
         InlineFunctionInfo info;
         if (!InlineFunction(*call, info).isSuccess()) {
-            errs() << "could not inline call:" << *call << "\n";
-            exit(1);
+            LLVM_ERROR(error) << "could not inline call:" << *call;
+            throw std::runtime_error{error};
         }
 
         // Attach symbol as metadata to trampoline call for optional use by

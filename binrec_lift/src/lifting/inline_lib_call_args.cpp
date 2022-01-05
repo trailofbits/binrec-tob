@@ -1,3 +1,4 @@
+#include "error.hpp"
 #include "inline_lib_call_args.hpp"
 #include "pass_utils.hpp"
 #include <fstream>
@@ -129,8 +130,8 @@ namespace {
             } else if (sig.retsize == 8) {
                 b.CreateCall(m.getFunction("virtualize_return_i64"), ret);
             } else {
-                ERROR("function " << sig.name << " has invalid return size " << sig.retsize);
-                exit(1);
+                LLVM_ERROR(error) << "function " << sig.name << " has invalid return size " << sig.retsize;
+                throw std::runtime_error{error};
             }
         }
 

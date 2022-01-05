@@ -3,6 +3,7 @@
  * that name that jumps to the corresponding PLT address
  */
 
+#include "error.hpp"
 #include "meta_utils.hpp"
 #include "pass_utils.hpp"
 #include <cassert>
@@ -57,8 +58,8 @@ struct ELFPLTFunsPass : public ModulePass {
             if (F.hasName() && F.empty() && !F.isIntrinsic() && !F.getName().startswith("__st") &&
                 !F.getName().startswith("__ld"))
             {
-                errs() << "error: unresolved function: " << F.getName() << "\n";
-                exit(1);
+                LLVM_ERROR(error) << "unresolved function: " << F.getName();
+                throw std::runtime_error{error};
             }
         }
 

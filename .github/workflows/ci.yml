@@ -98,28 +98,33 @@ jobs:
         run: |
           just run-unit-tests
 
-  build_docs:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 1
-
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-
-      - name: 'Install tools'
-        run: |
-          # Python virtual env management
-          pipx install pipenv
-          # just command runner https://github.com/casey/just#pre-built-binaries
-          curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to "${HOME}/.local/bin"
-
-      - name: 'Init Python'
-        run: |
-          pipenv sync --dev
-
-      - name: 'Build Sphinx Docs'
-        run: |
-          just build-docs
+  #
+  # Building Sphinx docs is disabled until we have the ability to compile binrec and
+  # Python C modules (_binrec_link, _binrec_lift).
+  #
+  # build_docs:
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         fetch-depth: 1
+  #
+  #     - uses: actions/setup-python@v2
+  #       with:
+  #         python-version: 3.9
+  #
+  #     - name: 'Install tools'
+  #       run: |
+  #         # Python virtual env management
+  #         pipx install pipenv
+  #         # just command runner https://github.com/casey/just#pre-built-binaries
+  #         curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to "${HOME}/.local/bin"
+  #
+  #     - name: 'Init Python'
+  #       run: |
+  #         pipenv sync --dev
+  #
+  #     - name: 'Build Sphinx Docs'
+  #       run: |
+  #         just build-docs
+  #

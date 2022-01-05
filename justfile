@@ -126,7 +126,7 @@ run-tests: erase-test-coverage run-unit-tests run-integration-tests
 
 # Runs unit tests
 run-unit-tests: && run-test-coverage-report
-  pipenv run coverage run --source=binrec -m pytest --verbose -k "not test_integration"
+  pipenv run coverage run --source=binrec --omit binrec/lib.py -m pytest --verbose -k "not test_integration"
 
 
 # Runs integration tests, which may take several minutes to complete
@@ -152,8 +152,8 @@ merge-captures trace_id:
 
 # Recursively merge all captures and traces for a binary (ex. hello)
 merge-traces binary:
-  pipenv run python -m binrec.merge --binary {{binary}}
+  pipenv run python -m binrec.merge --binary {{binary}} --verbose
 
 # Lift a recovered binary from a trace (ex. hello)
 lift-trace binary:
-  pipenv run python -m binrec.lifting {{binary}}
+  pipenv run python -m binrec.lift {{binary}} --verbose

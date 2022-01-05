@@ -1,3 +1,4 @@
+#include "error.hpp"
 #include "prune_trivially_dead_succs.hpp"
 #include "meta_utils.hpp"
 #include "pass_utils.hpp"
@@ -94,13 +95,13 @@ auto PruneTriviallyDeadSuccsPass::run(Module &m, ModuleAnalysisManager &am) -> P
                 BasicBlock *only_succ = find_successor(succs, last_stored_pc);
 
                 if (!only_succ) {
-                    ERROR(
-                        "block "
+                    LLVM_ERROR(error)
+                        << "block "
                         << bb.getName() << " stores PC " << last_stored_pc
                         << " but does not have BB_" << utohexstr(last_stored_pc)
                         << " in its successor list. Did you remember to disable multithreading in "
-                           "qemu (-smp 1)");
-                    exit(1);
+                           "qemu (-smp 1)";
+                    throw std::runtime_error{error};
                 }
 
                 if (succs.size() == 1)

@@ -1,3 +1,4 @@
+#include "error.hpp"
 #include "prune_libargs_push.hpp"
 #include "pass_utils.hpp"
 #include "pc_utils.hpp"
@@ -84,9 +85,9 @@ static auto pruneArgs(Function &stub) -> unsigned
         }
 
         if (argLoads.size() != argSizes.size()) {
-            errs() << "could not find all argument loads (" << argLoads.size() << " / "
+            LLVM_ERROR(error) << "could not find all argument loads (" << argLoads.size() << " / "
                    << argSizes.size() << "):";
-            exit(1);
+            throw std::runtime_error{error};
         }
 
         BasicBlock *caller = *pred_begin(callee);
@@ -121,21 +122,21 @@ static auto pruneArgs(Function &stub) -> unsigned
 
         for (Instruction *push : pushInsts) {
             if (CallInst *otherStore = findMemStore(push)) {
-                ERROR(
+                LLVM_ERROR(error) <<
                     "multiple memory stores where one push was "
                     "expected:"
-                    << *otherStore);
-                exit(1);
+                    << *otherStore;
+                throw std::runtime_error{error};
             }
 
             const unsigned expectedSize = argSizes[arg];
             const unsigned storedSize = byteWidth(*push->getOperand(1));
 
             if (storedSize != expectedSize) {
-                ERROR(
+                LLVM_ERROR(error) <<
                     "expected arg push of " << expectedSize << " bytes, got " << storedSize
-                                            << " bytes:" << *push);
-                exit(1);
+                                            << " bytes:" << *push;
+                throw std::runtime_error{error};
             }
 
             argLoads[arg]->replaceAllUsesWith(push->getOperand(1));

@@ -1,3 +1,4 @@
+#include "error.hpp"
 #include "replace_dynamic_symbols.hpp"
 #include "pass_utils.hpp"
 #include <llvm/IR/IRBuilder.h>
@@ -12,8 +13,8 @@ static auto get_symbols(Module &m) -> map<uint32_t, string>
 {
     auto binary_or_err = createBinary("binary");
     if (auto err = binary_or_err.takeError()) {
-        errs() << err << '\n';
-        exit(-1);
+        LLVM_ERROR(error) << err;
+        throw std::runtime_error{error};
     }
     auto &binary = binary_or_err.get();
 

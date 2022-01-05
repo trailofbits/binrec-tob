@@ -4,16 +4,35 @@ import json
 from typing import List, Optional
 from dataclasses import dataclass, field
 from pathlib import Path
+from contextlib import contextmanager
+from unittest.mock import MagicMock
 
 from _pytest.python import Metafunc
 
 from binrec.env import BINREC_ROOT, BINREC_SCRIPTS
 from binrec.merge import recursive_merge_traces
-from binrec.lift import lift_trace
+from binrec import lift
 
 QEMU_DIR = BINREC_ROOT / "qemu"
 TEST_INPUT_DIR = BINREC_ROOT / "test" / "benchmark" / "samples" / "binrec" / "test_inputs"
 TEST_BUILD_DIR = BINREC_ROOT / "test" / "benchmark" / "samples" / "bin" / "x86" / "binrec"
+
+
+@contextmanager
+def load_real_lib():
+    """
+    Load the real C modules so they can be called during the integration tests.
+    """
+    import _binrec_link
+    import _binrec_lift
+
+    lift.binrec_link = _binrec_link
+    lift.binrec_lift = _binrec_lift
+
+    yield
+
+    lift.binrec_link = MagicMock()
+    lift.binrec_lift = MagicMock()
 
 
 @dataclass
@@ -101,7 +120,8 @@ def test_sample(test_plan_file: Path):
     else:
         plan = TraceTestPlan.load_plaintext(binary, test_plan_file)
 
-    run_test(binary, plan)
+    with load_real_lib():
+        run_test(binary, plan)
 
 
 def assert_subprocess(*args, assert_error: str = "", **kwargs) -> None:
@@ -201,7 +221,7 @@ def run_test(binary: str, plan: TraceTestPlan) -> None:
     recursive_merge_traces(binary)
 
     # Lift
-    lift_trace(binary)
+    lift.lift_trace(binary)
 
     print(
         ">> successfully ran and merged",

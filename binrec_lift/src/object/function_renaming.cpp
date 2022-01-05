@@ -1,5 +1,6 @@
 #include "function_renaming.hpp"
 #include "ir/selectors.hpp"
+#include "error.hpp"
 
 using namespace binrec;
 using namespace llvm;
@@ -10,8 +11,8 @@ FunctionRenamingPass::FunctionRenamingPass()
 {
     auto binary_or_err = createBinary("binary");
     if (auto err = binary_or_err.takeError()) {
-        errs() << err << '\n';
-        exit(-1);
+        LLVM_ERROR(error) << err;
+        throw std::runtime_error{error};
     }
     binary = move(binary_or_err.get());
 }

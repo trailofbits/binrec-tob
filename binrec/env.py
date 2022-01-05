@@ -1,4 +1,5 @@
 import os
+import subprocess
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -27,6 +28,17 @@ def _load_env() -> None:
 
     if not os.environ.get("BINREC_ROOT") or not os.environ.get("S2EDIR"):
         raise BinRecError(".env file must specify both BINREC_ROOT and S2EDIR")
+
+    # binrec_link needs the GCC_LIB environment variable to work properly (see
+    # compiler_command.cpp). Attempt to set it if it isn't present.
+    if not os.environ.get("GCC_LIB"):
+        try:
+            version = subprocess.check_output(["gcc", "-dumpversion"]).decode().strip()
+        except subprocess.CalledProcessError:
+            version = ""
+
+        if version:
+            os.environ["GCC_LIB"] = f"/usr/lib/gcc/x86_64-linux-gnu/{version}"
 
 
 _load_env()

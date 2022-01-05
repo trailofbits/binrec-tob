@@ -1,3 +1,4 @@
+#include "error.hpp"
 #include "fix_overlaps.hpp"
 #include "meta_utils.hpp"
 #include "pass_utils.hpp"
@@ -37,8 +38,8 @@ static auto find_merge_pairs(Function &wrapper) -> list<pair<BasicBlock *, Basic
         // a block can only be merged with one other block
         for (BasicBlock *bb : merge) {
             if (merge_blocks.find(bb) != merge_blocks.end()) {
-                ERROR("block " << bb->getName() << " being merged twice");
-                exit(1);
+                LLVM_ERROR(error) << "block " << bb->getName() << " being merged twice";
+                throw std::runtime_error{error};
             }
             merge_blocks.insert(bb);
         }

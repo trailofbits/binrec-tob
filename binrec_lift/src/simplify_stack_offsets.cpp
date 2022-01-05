@@ -1,3 +1,4 @@
+#include "error.hpp"
 #include "simplify_stack_offsets.hpp"
 #include "pass_utils.hpp"
 
@@ -45,8 +46,8 @@ auto SimplifyStackOffsets::runOnModule(Module &m) -> bool
         int relativeOffset = cast<ConstantInt>(add->getOperand(1))->getSExtValue();
 
         if (relativeOffset % wordWidth != 0) {
-            errs() << "non-word-aligned stack offset " << relativeOffset << ": " << *add << "\n";
-            exit(1);
+            LLVM_ERROR(error) << "non-word-aligned stack offset " << relativeOffset << ": " << *add;
+            throw std::runtime_error{error};
         }
 
         auto *gep = cast<GEPOperator>(cast<ConstantExpr>(add->getOperand(0))->getOperand(0));

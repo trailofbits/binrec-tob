@@ -368,8 +368,7 @@ auto InsertTrampForRecFuncsPass::run(Module &m, ModuleAnalysisManager &am) -> Pr
     // Write func entry PC values to a file to be processed by patching script.
     ofstream out_file("rfuncs");
     if (!out_file.is_open()) {
-        errs() << "Unable to open file";
-        exit(1);
+        throw std::runtime_error{"Unable to open file: rfuncs"};
     }
     for (BasicBlock *entry : entries) {
         out_file << getPc(entry) << "\n";

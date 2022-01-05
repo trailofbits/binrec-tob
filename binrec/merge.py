@@ -86,8 +86,8 @@ def merge_bitcode(capture_dirs: List[Path], destination: Path) -> None:
     :param outdidestindestinationationr: output directory
     """
     logger.debug("merging captures %s to %s", capture_dirs, destination)
-    SOURCE_BITCODE = "captured.bc"
-    DESTINATION_BITCODE = "captured-link-ready.bc"
+    SOURCE_BITCODE = Path("captured.bc")
+    DESTINATION_BITCODE = Path("captured-link-ready.bc")
 
     # Verify that the output directory (destination) is empty.
     if destination.exists():
@@ -99,6 +99,7 @@ def merge_bitcode(capture_dirs: List[Path], destination: Path) -> None:
     for capture in capture_dirs:
         prep_bitcode_for_linkage(capture, SOURCE_BITCODE, DESTINATION_BITCODE)
 
+    # copy the first captured-link-ready.bc to {destination}/captured.bc
     outfile = destination / SOURCE_BITCODE
     shutil.copy(capture_dirs[0] / DESTINATION_BITCODE, outfile)
 
@@ -106,6 +107,7 @@ def merge_bitcode(capture_dirs: List[Path], destination: Path) -> None:
     os.close(fd)
 
     for capture_dir in capture_dirs:
+        # Link each captured-link-ready.bc to the {destination}/captured.bc
         _link_bitcode(
             base=outfile,
             source=capture_dir / DESTINATION_BITCODE,

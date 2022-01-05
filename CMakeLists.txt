@@ -9,6 +9,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 find_package(LLVM 12.0 REQUIRED CONFIG)
+find_package(Python 3.9 REQUIRED COMPONENTS Interpreter Development)
 
 FetchContent_Declare(robin_hood_hashing
     GIT_REPOSITORY https://github.com/martinus/robin-hood-hashing.git

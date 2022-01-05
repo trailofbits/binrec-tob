@@ -80,8 +80,7 @@ auto checkif(bool condition, const std::string &message) -> bool
 void failUnless(bool condition, const std::string &message)
 {
     if (!condition) {
-        errs() << "Check failed: " << message << '\n';
-        exit(1);
+        throw std::runtime_error{message};
     }
 }
 
@@ -89,8 +88,7 @@ auto s2eRoot() -> std::string
 {
     const char *envval = getenv("S2EDIR");
     if (!envval) {
-        errs() << "missing S2EDIR environment variable\n";
-        exit(1);
+        throw std::runtime_error{"missing S2EDIR environment variable"};
     }
     return std::string(envval);
 }
@@ -147,8 +145,10 @@ auto loadBitcodeFile(StringRef path, LLVMContext &ctx) -> std::unique_ptr<Module
     std::unique_ptr<Module> from = parseIRFile(path, err, ctx);
 
     if (!from) {
-        err.print("could not load bitcode file", errs());
-        exit(1);
+        std::string error;
+        raw_string_ostream error_stream{error};
+        err.print("could not load bitcode file", error_stream);
+        throw std::runtime_error{error};
     }
 
     return from;
