@@ -9,6 +9,7 @@
 #include <set>
 #include <unordered_map>
 #include <vector>
+#include <nlohmann/json.hpp>
 
 namespace binrec {
     struct MemoryAccess {
@@ -20,6 +21,8 @@ namespace binrec {
         bool isDirect;
         uint64_t fnBase;
     };
+    void to_json(nlohmann::json &j, const MemoryAccess &ma);
+    void from_json(const nlohmann::json &j, MemoryAccess &ma);
 
     struct Successor {
         uint64_t pc;
@@ -27,6 +30,8 @@ namespace binrec {
 
         auto operator<(const Successor &other) const -> bool;
     };
+    void to_json(nlohmann::json &j, const Successor &s);
+    void from_json(const nlohmann::json &j, Successor &s);
 
     struct FunctionLog {
         std::vector<uint64_t> entries;
@@ -35,6 +40,9 @@ namespace binrec {
         std::set<std::pair<uint64_t, uint64_t>> callerToFollowUp;
         std::map<uint64_t, std::set<uint64_t>> entryToTbs;
     };
+    void to_json(nlohmann::json &j, const FunctionLog &s);
+    void from_json(const nlohmann::json &j, FunctionLog &s);
+
 
     struct TraceInfo {
         static constexpr const char *defaultFilename = "traceInfo.json";
@@ -48,6 +56,8 @@ namespace binrec {
 
         void add(const TraceInfo &ti);
     };
+    void to_json(nlohmann::json &j, const TraceInfo &s);
+    void from_json(const nlohmann::json &j, TraceInfo &s);
 
     auto operator<<(std::ostream &os, const TraceInfo &ti) -> std::ostream &;
     auto operator>>(std::istream &is, TraceInfo &ti) -> std::istream &;

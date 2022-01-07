@@ -71,6 +71,7 @@ namespace binrec {
     {
         j = json{
             {"stackSizes", ti.stackFrameSizes},
+            {"stackDifference", ti.stackDifference},
             {"memoryAccesses", ti.memoryAccesses},
             {"successors", ti.successors},
             {"functionLog", ti.functionLog}};

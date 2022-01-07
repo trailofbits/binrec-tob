@@ -121,7 +121,7 @@ configure-network:
 
 
 # Runs all unit and integration tests, which may take several minutes to complete
-run-tests: erase-test-coverage run-unit-tests run-integration-tests
+run-tests: erase-test-coverage run-unit-tests run-gtest run-integration-tests
 
 
 # Runs unit tests
@@ -132,6 +132,11 @@ run-unit-tests: && run-test-coverage-report
 # Runs integration tests, which may take several minutes to complete
 run-integration-tests:
   pipenv run coverage run --source=binrec -m pytest --verbose -k "test_integration"
+
+
+# Runs C++ unit tests
+run-gtest:
+  cd build && ctest
 
 
 # Print the last test run code coverage report
