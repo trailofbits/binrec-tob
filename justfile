@@ -13,7 +13,7 @@ install-dependencies:
     # Packages
     sudo apt-get update
     sudo apt-get install -y bison clang cmake flex g++ g++-multilib gcc gcc-multilib git libglib2.0-dev liblua5.1-dev \
-        libsigc++-2.0-dev lld llvm-dev lua5.3 nasm nlohmann-json3-dev pkg-config python2 subversion net-tools curl \
+        libsigc++-2.0-dev lld llvm-12-dev lua5.3 nasm nlohmann-json3-dev pkg-config python2 subversion net-tools curl \
         pipenv git-lfs
     git lfs install
 
