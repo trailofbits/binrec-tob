@@ -111,3 +111,12 @@ set_target_properties(
         PREFIX ""
         OUTPUT_NAME "_binrec_lift"
         LINKER_LANGUAGE C)
+
+
+# Doxygen
+set(DOXYGEN_PROJECT_NAME binrec_lift)
+set(DOXYGEN_PROJECT_BRIEF "binrec lifting")
+set(DOXYGEN_GENERATE_TAGFILE ${CMAKE_CURRENT_BINARY_DIR}/binrec_lift.tag)
+set(DOXYGEN_TAGFILES "../binrec_traceinfo/binrec_traceinfo.tag=../../binrec_traceinfo/html")
+
+doxygen_add_docs(binrec_lift_docs)

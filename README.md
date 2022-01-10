@@ -201,14 +201,28 @@ $ source .env
 
 ### Documentation
 
-The Python API is documented in [Sphinx](https://www.sphinx-doc.org/en/master/) and the docs can be built using the `build-docs` just recipe. By default, the recipe will build HTML documentation, but this can be changed by specifying a `target` parameter:
+The `build-docs` just recipe builds documentation for both the Python API and the C++ API.
+
+```bash
+$ just build-docs
+```
+
+Alternatively, Python and C++ API documentation can be built independently using the language-specific just recipes.
+
+The Python API is documented in [Sphinx](https://www.sphinx-doc.org/en/master/) and the docs can be built using the `build-python-docs` just recipe. By default, the recipe will build HTML documentation, but this can be changed by specifying a `target` parameter:
 
 ```bash
 # build HTML docs to docs/build/html/index.html
-$ just build-docs
+$ just build-python-docs
 
 # build manpage docs to docs/build/man/binrec.1
-$ just build-docs man
+$ just build-python-docs man
+```
+
+The C++ API is documented with [Doxygen](https://www.doxygen.nl/index.html) and the docs can be built using the `build-cpp-docs` just recipe.
+
+```bash
+$ just build-cpp-docs
 ```
 
 ### Continuous Integration

@@ -34,3 +34,10 @@ set_target_properties(
         PREFIX ""
         OUTPUT_NAME "_binrec_link"
         LINKER_LANGUAGE C)
+
+# Doxygen
+set(DOXYGEN_PROJECT_NAME binrec_link)
+set(DOXYGEN_PROJECT_BRIEF "binrec recovered binary linking")
+set(DOXYGEN_GENERATE_TAGFILE ${CMAKE_CURRENT_BINARY_DIR}/binrec_link.tag)
+
+doxygen_add_docs(binrec_link_docs)

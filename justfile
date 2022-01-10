@@ -14,7 +14,7 @@ install-dependencies:
     sudo apt-get update
     sudo apt-get install -y bison clang-12 cmake flex g++ g++-multilib gcc gcc-multilib git libglib2.0-dev liblua5.1-dev \
         libsigc++-2.0-dev lld-12 llvm-12-dev lua5.3 nasm nlohmann-json3-dev pkg-config python2 subversion net-tools curl \
-        pipenv git-lfs
+        pipenv git-lfs doxygen graphviz
     git lfs install
 
     # RealVNCviewer
@@ -82,13 +82,20 @@ lint-black:
 lint-isort:
   pipenv run isort --check binrec
 
-# Build Sphinx Documentation
-build-docs target="html":
+# Build all documentation
+build-docs: build-python-docs build-cpp-docs
+
+# Build C++ documentation (doxygen)
+build-cpp-docs:
+  cd build && cmake --build . --target doxygen
+
+# Build Python documentation (sphinx)
+build-python-docs target="html":
   cd docs && pipenv run sphinx-build -M {{target}} source build
 
 # Clean built Sphinx documentation
-clean-docs:
-  just build-docs clean
+clean-python-docs:
+  just build-python-docs clean
 
 # Remove pipenv virtual environment
 clear:

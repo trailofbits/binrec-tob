@@ -10,6 +10,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 find_package(LLVM 12.0 REQUIRED CONFIG)
 find_package(Python 3.9 REQUIRED COMPONENTS Interpreter Development)
+find_package(Doxygen
+             REQUIRED dot
+             OPTIONAL_COMPONENTS mscgen dia)
 
 FetchContent_Declare(robin_hood_hashing
     GIT_REPOSITORY https://github.com/martinus/robin-hood-hashing.git
@@ -26,6 +29,7 @@ FetchContent_MakeAvailable(googletest)
 enable_testing()
 include(GoogleTest)
 
+
 add_compile_options(-Wall -pedantic -Wno-comment)
 
 add_subdirectory(binrec_lift)
@@ -39,3 +43,11 @@ unset(CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 
 add_custom_target(runlib ALL $(MAKE) WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/runlib)
 add_dependencies(runlib qemu)
+
+
+add_custom_target(doxygen)
+add_dependencies(doxygen
+                 binrec_traceinfo_docs
+                 binrec_lift_docs
+                 binrec_link_docs
+                 binrec_rt_docs)
