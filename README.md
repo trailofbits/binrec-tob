@@ -11,10 +11,9 @@ BinRec dynamically lifts binary executables to LLVM IR. It is based on
 Building BinRec
 -------------
 BinRec uses [just](https://github.com/casey/just#installation) to automate various tasks including building BinRec. The
-first step in building BinRec is to install this tool (and curl if not already installed):
+first step in building BinRec is to install this tool (and curl if not already installed). We provide a simple shell script for this:
 
-	  $ sudo apt-get install -y curl
-      $ curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | sudo bash -s -- --to /usr/local/bin
+	  $ ./get_just.sh
 
 Then, BinRec can be built from the root of this repository with:
 
