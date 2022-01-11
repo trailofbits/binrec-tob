@@ -7,9 +7,20 @@ Overview
 BinRec dynamically lifts binary executables to LLVM IR. It is based on
 [S2E][1]. For a full description of the framework, see our [paper][9].
 
+Key Dependencies and Environment
+--------------------------------
+
+Binrec has been developed targeting and test against the following dependencies and environments:
+
+- Ubuntu: 21.04, 21.10
+- LLVM (dependency or compiler suite): 12
+
+For LLVM, the `setup_clang.sh` script properly detects and handles configuring the system to build binrec by selecting LLVM 12 as the primary LLVM version. This script is automatically called by `just init` and should not need to be run manually.
+
 
 Building BinRec
--------------
+---------------
+
 BinRec uses [just](https://github.com/casey/just#installation) to automate various tasks including building BinRec. The
 first step in building BinRec is to install this tool (and curl if not already installed). We provide a simple shell script for this:
 
@@ -91,6 +102,7 @@ directory being recovered using our pre-built VM image in combination with S2E's
 3. Back in the original shell, load the snapshot in S2E mode with the custom plugin loaded, using the HostFiles
    plugin to copy the target binary to the VM:
 
+       $ source .env
        $ ./qemu/cmd-debian.sh --vnc 0 hello
 
    This loads the "cmd" snapshot and copies the "hello" binary into the VM as requested by the `getrun-cmd`
