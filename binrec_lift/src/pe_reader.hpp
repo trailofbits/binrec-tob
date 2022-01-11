@@ -4,6 +4,7 @@
 #include <fstream>
 #include <llvm/Object/COFF.h>
 #include <vector>
+#include <optional>
 
 struct Section {
     std::string name;
