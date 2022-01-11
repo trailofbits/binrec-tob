@@ -49,6 +49,7 @@ init:
     pipenv sync --dev
     git submodule update --recursive --init
     cd ./test/benchmark && git lfs pull
+    ./setup_clang.sh
 
 # Format code
 format: format-black format-isort
