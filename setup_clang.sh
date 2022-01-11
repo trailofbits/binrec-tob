@@ -112,12 +112,24 @@ function register_clang_version {
         ${items[@]}
 }
 
+if [ -f /var/lib/dpkg/alternatives/clang ];
+then
+    echo "Clearing out current LLVM selection"
+    sudo update-alternatives --remove-all clang
+fi
+
 if [ -f /usr/bin/clang-12 ];
 then
+    echo "Registering LLVM 12"
     register_clang_version 12 100
 fi
 
 if [ -f /usr/bin/clang-13 ];
 then
+    echo "Registering LLVM 13"
     register_clang_version 13 90
 fi
+
+# explicitly use llvm 12
+echo "Selecting LLVM 12"
+sudo update-alternatives --set clang /usr/bin/clang-12
