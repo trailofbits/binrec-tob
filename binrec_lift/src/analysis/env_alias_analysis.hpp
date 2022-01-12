@@ -3,8 +3,16 @@
 
 #include <llvm/Analysis/AliasAnalysis.h>
 #include <llvm/IR/PassManager.h>
+#include <llvm/Config/llvm-config.h>
 
 namespace binrec {
+#if LLVM_VERSION_MAJOR == 12
+    using LlvmAliasResult = llvm::AliasResult;
+#elif LLVM_VERSION_MAJOR == 13
+    using LlvmAliasResult = llvm::AliasResult::Kind;
+#else
+    #error "Unsupported LLVM version!"
+#endif
 
     class EnvAaResult : public llvm::AAResultBase<EnvAaResult> {
         friend AAResultBase<EnvAaResult>;
@@ -25,7 +33,7 @@ namespace binrec {
         auto alias(
             const llvm::MemoryLocation &loc_a,
             const llvm::MemoryLocation &loc_b,
-            llvm::AAQueryInfo &aaqi) -> llvm::AliasResult;
+            llvm::AAQueryInfo &aaqi) -> LlvmAliasResult;
         using AAResultBase::getModRefInfo;
         auto getModRefInfo(
             const llvm::CallBase *call,

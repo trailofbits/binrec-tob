@@ -19,7 +19,7 @@ auto EnvAaResult::invalidate(
 }
 
 auto EnvAaResult::alias(const MemoryLocation &loc_a, const MemoryLocation &loc_b, AAQueryInfo &aaqi)
-    -> AliasResult
+    -> LlvmAliasResult
 {
     auto *a = dyn_cast<GlobalVariable>(getUnderlyingObject(loc_a.Ptr));
     auto *b = dyn_cast<GlobalVariable>(getUnderlyingObject(loc_b.Ptr));
@@ -40,12 +40,12 @@ auto EnvAaResult::alias(const MemoryLocation &loc_a, const MemoryLocation &loc_b
     }
 
     if (a && b) {
-        return a == b ? MayAlias : NoAlias;
+        return a == b ? LlvmAliasResult::MayAlias : LlvmAliasResult::NoAlias;
     }
     if (a || b) {
-        return NoAlias;
+        return LlvmAliasResult::NoAlias;
     }
-    return MayAlias;
+    return LlvmAliasResult::MayAlias;
 }
 
 static constexpr array<StringRef, 2> Safe_Intrinsics = {"llvm.stacksave", "llvm.stackrestore"};
