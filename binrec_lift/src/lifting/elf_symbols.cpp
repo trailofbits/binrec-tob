@@ -34,17 +34,12 @@ static auto get_fall_through_succ(Function *f) -> Function *
     vector<Function *> succs;
     getBlockSuccs(f, succs);
 
-    // get the block with the lowest PC that is still higher than that of f
-    for (Function *succ : succs) {
-        unsigned succ_pc = getBlockAddress(succ);
-        if (succ_pc > block_pc && succ_pc < lowest_pc) {
-            next = succ;
-            lowest_pc = succ_pc;
-        }
-    }
-
-    // this assumes a 6-byte stub containing a jmp instruction
-    return lowest_pc - block_pc == 6 ? next : nullptr;
+    // If the PLT was not resolved there might not be any successors,
+    // otherwise it should be the first.
+    // NOTE (hbrodin): Can we assume the order is preserved???
+    if (succs.empty())
+        return nullptr;
+    return succs[0];
 }
 
 static auto remove_plt_succs(Function *f, set<Function *> &erase_list) -> bool

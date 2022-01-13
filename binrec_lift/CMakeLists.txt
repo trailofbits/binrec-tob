@@ -43,6 +43,8 @@ add_library(binrec_lift_static STATIC
         src/lowering/remove_sections.cpp src/lowering/remove_sections.hpp
 
         src/merging/decompose_env.cpp src/merging/decompose_env.hpp
+        src/merging/globalize_env.cpp src/merging/globalize_env.hpp
+        src/merging/prune_redundant_basic_blocks.cpp src/merging/prune_redundant_basic_blocks.hpp
         src/merging/externalize_functions.cpp src/merging/externalize_functions.hpp
         src/merging/internalize_imports.cpp src/merging/internalize_imports.hpp
         src/merging/rename_block_funcs.cpp src/merging/rename_block_funcs.hpp

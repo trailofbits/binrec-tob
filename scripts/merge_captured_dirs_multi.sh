@@ -1,6 +1,8 @@
 #!/bin/bash
+#set -o nounset
+
 echo "Hello from merge_captured_dirs_multi"
-source $S2EDIR/scripts/outrc.sh
+source $S2EDIR/../scripts/outrc.sh
 
 if [[ ! -n "$1" ]]; then
     echo "Please provide binary name"
@@ -9,11 +11,15 @@ fi
 set -e
 # this makes the script pwd-agnostic
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT=`realpath $DIR/..`
+ROOT=`realpath $DIR/../s2e`
 
 merge_inner() {
 echo "mif"
 echo "$capdir_regex"
+if [ -z "$outdir" ]; then
+    echo "outdir is not set"
+    exit 1
+fi
 # remove any old output directory of the same name to avoid conflicts
 rm -rf $outdir/*
 mkdir -p $outdir
@@ -25,7 +31,7 @@ for file in $capdir_regex ; do
         echo $file
         #infile=$file/captured.bc
         #outfile=$file/captured-link-ready.bc
-        command="cd $file && $S2EDIR/scripts/prep_for_linkage.sh captured.bc captured-link-ready.bc"
+        command="cd $file && $S2EDIR/../scripts/prep_for_linkage.sh captured.bc captured-link-ready.bc"
         eval $command
         #(eval $ommand) & #theoretically this should parallelize, but it makes malfomred files for some reason
     fi
@@ -71,10 +77,9 @@ for file in $capdir_regex ; do
         found=1
     fi
 done
-
 [ $found -ne 1 ] && echo "Did not find frontend data, " && exit 1
 
-$S2EDIR/build/bin/binrec_tracemerge $traceInfoFiles $outdir/traceInfo.json
+$S2EDIR/../build/bin/binrec_tracemerge $traceInfoFiles $outdir/traceInfo.json
 echo "finished all traceInfo.json"
 
 echo "done mi"
@@ -102,10 +107,27 @@ merge_one_input() {
     id=$1
     outdirbase=s2e-out-$id
     outdir=$ROOT/$outdirbase/merged
+    find $ROOT -maxdepth 2 -print | grep "${outdirbase}/[0-9]\{1,\}"
     capdir_regex=$(find $ROOT -maxdepth 2 -print | grep "${outdirbase}/[0-9]\{1,\}")
     merge_inner 
     header "Creating necessary symlink.."
     cp -P $ROOT/$outdirbase/0/binary $outdir/binary
     cp -P $ROOT/$outdirbase/Makefile $outdir/Makefile
     echo "moi-end"
+}
+
+
+merge_all_proj_inputs() {
+    echo "merge_all_proj_inputs-begin $1"
+    rootdir="$S2EDIR/projects/$1"
+    outdir="$rootdir/merged"
+    echo $rootdir
+    capdir_regex=$(find $rootdir -maxdepth 1 -type d  -print | grep "s2e-out-[0-9]\{1,\}")
+    echo $capdir_regex
+    if [ -z "$outdir" ]; then
+      echo "outdir is not set"
+      exit 1
+    fi
+    merge_inner
+    echo "merge_all_proj_inputs-end"
 }

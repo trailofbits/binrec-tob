@@ -95,24 +95,46 @@ extern uint8_t fptags[8];
 #define STACK_SIZE (1024 * 1024 * 16) / sizeof(stackword_t)
 extern stackword_t stack[STACK_SIZE] __attribute__((aligned(16)));
 
-uint8_t __ldb_mmu(target_ulong addr, int mmu_idx);
-void __stb_mmu(target_ulong addr, uint8_t val, int mmu_idx);
-uint16_t __ldw_mmu(target_ulong addr, int mmu_idx);
-void __stw_mmu(target_ulong addr, uint16_t val, int mmu_idx);
-uint32_t __ldl_mmu(target_ulong addr, int mmu_idx);
-void __stl_mmu(target_ulong addr, uint32_t val, int mmu_idx);
-uint64_t __ldq_mmu(target_ulong addr, int mmu_idx);
-void __stq_mmu(target_ulong addr, uint64_t val, int mmu_idx);
+struct CPUX86State;
 
-uint8_t __ldb_cmmu(target_ulong addr, int mmu_idx);
-void __stb_cmmu(target_ulong addr, uint8_t val, int mmu_idx);
-uint16_t __ldw_cmmu(target_ulong addr, int mmu_idx);
-void __stw_cmmu(target_ulong addr, uint16_t val, int mmu_idx);
-uint32_t __ldl_cmmu(target_ulong addr, int mmu_idx);
-void __stl_cmmu(target_ulong addr, uint32_t val, int mmu_idx);
-uint64_t __ldq_cmmu(target_ulong addr, int mmu_idx);
-void __stq_cmmu(target_ulong addr, uint64_t val, int mmu_idx);
+uint8_t helper_ldb_mmu(CPUX86State *env, target_ulong addr, int mmu_idx, void *retaddr);
+void helper_stb_mmu(CPUX86State *env, target_ulong addr, uint8_t val, int mmu_idx, void *retaddr);
+uint16_t helper_ldw_mmu(CPUX86State *env, target_ulong addr, int mmu_idx, void *retaddr);
+void helper_stw_mmu(CPUX86State *env, target_ulong addr, uint16_t val, int mmu_idx, void *retaddr);
+uint32_t helper_ldl_mmu(CPUX86State *env, target_ulong addr, int mmu_idx, void *retaddr);
+void helper_stl_mmu(CPUX86State *env, target_ulong addr, uint32_t val, int mmu_idx, void *retaddr);
+uint64_t helper_ldq_mmu(CPUX86State *env, target_ulong addr, int mmu_idx, void *retaddr);
+void helper_stq_mmu(CPUX86State *env, target_ulong addr, uint64_t val, int mmu_idx, void *retaddr);
 
+uint8_t helper_ldb_cmmu(CPUX86State *env, target_ulong addr, int mmu_idx, void *retaddr);
+void helper_stb_cmmu(CPUX86State *env, target_ulong addr, uint8_t val, int mmu_idx, void *retaddr);
+uint16_t helper_ldw_cmmu(CPUX86State *env, target_ulong addr, int mmu_idx, void *retaddr);
+void helper_stw_cmmu(CPUX86State *env, target_ulong addr, uint16_t val, int mmu_idx, void *retaddr);
+uint32_t helper_ldl_cmmu(CPUX86State *env, target_ulong addr, int mmu_idx, void *retaddr);
+void helper_stl_cmmu(CPUX86State *env, target_ulong addr, uint32_t val, int mmu_idx, void *retaddr);
+uint64_t helper_ldq_cmmu(CPUX86State *env, target_ulong addr, int mmu_idx, void *retaddr);
+void helper_stq_cmmu(CPUX86State *env, target_ulong addr, uint64_t val, int mmu_idx, void *retaddr);
+
+#if 0
+// TODO (hbrodin): Delete!
+uint8_t helper_ldb_mmu(target_ulong addr, int mmu_idx);
+void helper_stb_mmu(target_ulong addr, uint8_t val, int mmu_idx);
+uint16_t helper_ldw_mmu(target_ulong addr, int mmu_idx);
+void helper_stw_mmu(target_ulong addr, uint16_t val, int mmu_idx);
+uint32_t helper_ldl_mmu(target_ulong addr, int mmu_idx);
+void helper_stl_mmu(target_ulong addr, uint32_t val, int mmu_idx);
+uint64_t helper_ldq_mmu(target_ulong addr, int mmu_idx);
+void helper_stq_mmu(target_ulong addr, uint64_t val, int mmu_idx);
+
+uint8_t helper_ldb_cmmu(target_ulong addr, int mmu_idx);
+void helper_stb_cmmu(target_ulong addr, uint8_t val, int mmu_idx);
+uint16_t helper_ldw_cmmu(target_ulong addr, int mmu_idx);
+void helper_stw_cmmu(target_ulong addr, uint16_t val, int mmu_idx);
+uint32_t helper_ldl_cmmu(target_ulong addr, int mmu_idx);
+void helper_stl_cmmu(target_ulong addr, uint32_t val, int mmu_idx);
+uint64_t helper_ldq_cmmu(target_ulong addr, int mmu_idx);
+void helper_stq_cmmu(target_ulong addr, uint64_t val, int mmu_idx);
+#endif
 #ifdef __cplusplus
 }
 #endif

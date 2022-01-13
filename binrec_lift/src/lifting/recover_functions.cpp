@@ -27,6 +27,73 @@ namespace {
         DenseMap<uint32_t, Function *> addr_to_fn_map;
         uint32_t parent = 0;
     };
+
+
+
+    // NOTE (hbrodin):
+    // Previous implementation/versions of BinRec and S2E didn't instrument starting at the entrypoint
+    // in the updated S2E we do. Because of this the previous method for identifying "main" doesn't
+    // any more. Previously they could rely on multiple "entry-points", first being __libc_csu_init and
+    // then, the second time, main.
+    // Our updated approach looks like this:
+    // First block: _start, it has one call to get the eip, on return from that
+    // we enter a block with a call to __libc_start_main, wich later will call main
+    // the address of main is passed in register eax.
+    // Unfortunately, we don't have any symbols at this point. The ieda is instead to
+    // walk the successors to find the third block (having the call to __libc_start_main)
+    // and locate the last store to eax, this "should" be the address of main.
+    uint32_t locate_main_addr(Function *entrypoint, Module &m) {
+
+        auto eax = m.getGlobalVariable("R_EAX", true); // true is AllowInternalLinkage since registers are made internal
+        if (!eax) {
+            errs() << "Failed to get a reference to R_EAX\n";
+            exit(1);
+        }
+
+        std::vector<BasicBlock*> successors;
+        auto block = &entrypoint->getEntryBlock();
+        for (size_t i=0;i<2;i++) {
+            if (!getBlockSuccs(block, successors)) {
+                errs() << "Failed to find successors for block:\n" << *block;
+                exit(1);
+            }
+
+            if (successors.size() != 1) {
+                errs() << "Expected a single successor to block, got " << successors.size() << "\n";
+                exit(1);
+            }
+            block = successors[0];
+            successors.clear();
+        }
+
+        // Block is now where we should find the store to eax
+        uint32_t lastpc = 0;
+        for (auto &ins : *block) {
+            if (auto store = dyn_cast<StoreInst>(&ins)) {
+                if (store->getPointerOperand() == eax) {
+                    if (auto ci = dyn_cast<ConstantInt>(store->getValueOperand())) {
+                        lastpc = ci->getZExtValue();
+                    }
+                }
+            }
+        }
+
+        return lastpc;
+    }
+
+
+    Function *get_main(Function *entrypoint, Module &m) {
+        auto mainpc = locate_main_addr(entrypoint, m);
+        if (mainpc == 0) {
+            errs() << "Failed to located main via entrypoint\n";
+            exit(1);
+        }
+
+        // Return the Func_xxxxxx
+        auto main = "Func_" + utohexstr(mainpc);
+        return m.getFunction(main);
+    }
+
 } // namespace
 
 static auto copy_metadata(Instruction *from, Instruction *to) -> bool
@@ -333,10 +400,14 @@ auto RecoverFunctionsPass::run(Module &m, ModuleAnalysisManager &am) -> Preserve
     }
 
     vector<Function *> entry_points = fl.get_entrypoint_functions(m);
+    assert(!entry_points.empty() && "No entry points, can't recover main");
     auto *wrapper = m.getFunction("Func_wrapper");
     assert(wrapper);
     BasicBlock *entry_block = BasicBlock::Create(context, "", wrapper);
-    CallInst::Create(entry_points[1], {}, "", entry_block);
+    // NOTE (hbrodin): Changed how main function is located due to update S2E version
+    auto main_func = get_main(entry_points[0], m);
+    assert(main_func && "Failed to locate main-function");
+    CallInst::Create(main_func, {}, "", entry_block);
     ReturnInst::Create(context, entry_block);
 
     return PreservedAnalyses::none();

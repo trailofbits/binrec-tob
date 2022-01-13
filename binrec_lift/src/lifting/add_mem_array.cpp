@@ -20,9 +20,9 @@ auto AddMemArrayPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAnal
                         StringRef name = calledFunction->getName();
 
                         if (name.endswith("_mmu")) {
-                            if (name.startswith("__ld"))
+                            if (name.startswith("helper_ld"))
                                 loads.push_back(call);
-                            else if (name.startswith("__st"))
+                            else if (name.startswith("helper_st"))
                                 stores.push_back(call);
                         }
                     }
@@ -33,25 +33,25 @@ auto AddMemArrayPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAnal
                 Function *calledFunction = call->getCalledFunction();
                 PointerType *ptrTy = calledFunction->getReturnType()->getPointerTo(0);
 
-                if (!isa<ConstantInt>(call->getOperand(1)))
+                if (!isa<ConstantInt>(call->getOperand(2)))
                     WARNING("weird mmu_idx:" << *call);
 
                 IRBuilder<> builder(call);
-                Value *ptr = builder.CreateIntToPtr(call->getOperand(0), ptrTy);
+                Value *ptr = builder.CreateIntToPtr(call->getOperand(1), ptrTy);
                 auto *load = new LoadInst(call->getType(), ptr, "", call);
                 call->replaceAllUsesWith(load);
                 call->eraseFromParent();
             }
 
             for (CallInst *call : stores) {
-                Value *target = call->getOperand(1);
+                Value *target = call->getOperand(2);
 
-                if (!isa<ConstantInt>(call->getOperand(2)))
+                if (!isa<ConstantInt>(call->getOperand(3)))
                     WARNING("weird mmu_idx:" << *call);
 
                 IRBuilder<> builder(call);
                 Value *ptr =
-                    builder.CreateIntToPtr(call->getOperand(0), target->getType()->getPointerTo());
+                    builder.CreateIntToPtr(call->getOperand(1), target->getType()->getPointerTo());
                 builder.CreateStore(target, ptr);
                 call->eraseFromParent();
             }

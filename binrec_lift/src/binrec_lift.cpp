@@ -36,9 +36,11 @@
 #include "lowering/halt_on_declarations.hpp"
 #include "lowering/internalize_debug_helpers.hpp"
 #include "lowering/remove_sections.hpp"
+#include "merging/globalize_env.hpp"
 #include "merging/decompose_env.hpp"
 #include "merging/externalize_functions.hpp"
 #include "merging/internalize_imports.hpp"
+#include "merging/prune_redundant_basic_blocks.hpp"
 #include "merging/rename_block_funcs.hpp"
 #include "merging/rename_env.hpp"
 #include "merging/unflatten_env.hpp"
@@ -86,13 +88,13 @@ namespace binrec {
             mpm.addPass(InternalizeImportsPass{});
             mpm.addPass(UnimplementCustomHelpersPass{});
             mpm.addPass(GlobalDCEPass{});
-            mpm.addPass(UnflattenEnvPass{});
-            mpm.addPass(DecomposeEnvPass{});
+            mpm.addPass(GlobalizeEnvPass{});
             mpm.addPass(RenameEnvPass{});
         }
 
         if (ctx.clean) {
             mpm.addPass(createModuleToFunctionPassAdaptor(InstCombinePass{}));
+            mpm.addPass(PruneRedundantBasicBlocksPass{});
             mpm.addPass(TagInstPcPass{});
             mpm.addPass(RemoveS2EHelpersPass{});
             mpm.addPass(createModuleToFunctionPassAdaptor(DCEPass{}));

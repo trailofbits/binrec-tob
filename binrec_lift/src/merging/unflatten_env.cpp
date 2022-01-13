@@ -32,12 +32,34 @@ auto UnflattenEnvPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAna
 
             // get constant offset added to env pointer
             if (auto *gep = dyn_cast<GetElementPtrInst>(iuse)) {
+                if (gep->getNumIndices() != 1)
+                    continue; // Ignore
+
+                if (!gep->hasAllZeroIndices())
+                    continue; // Ignore
+
+                if (!gep->hasOneUse())
+                    continue; // Ignore
+                /*
                 failUnless(gep->getNumIndices() == 1, "multiple indices");
                 failUnless(gep->hasAllZeroIndices(), "non-zero index");
                 failUnless(gep->hasOneUse(), "multiple GEP uses");
+                */
                 load = cast<LoadInst>(*gep->user_begin());
+            } /*else if (auto *ptrtoint = dyn_cast<PtrToIntInst>(iuse)) {
+                errs() << "Ignore ptrtoint "; 
+                ptrtoint->print(errs());
+                continue;
+            } */
+            else if (auto ld = dyn_cast<LoadInst>(iuse)) {
+                //load = cast<LoadInst>(iuse);
+                load = ld;
             } else {
-                load = cast<LoadInst>(iuse);
+                outs() << "Ignore use of env: ";
+                iuse->print(outs());
+                outs() << "\n";
+                continue;
+
             }
 
             for (User *juse : load->users()) {

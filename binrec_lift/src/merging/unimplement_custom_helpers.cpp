@@ -1,6 +1,8 @@
 #include "unimplement_custom_helpers.hpp"
 #include "pass_utils.hpp"
 
+#include <regex>
+
 using namespace binrec;
 using namespace llvm;
 
@@ -29,14 +31,18 @@ auto UnimplementCustomHelpersPass::run(Module &m, ModuleAnalysisManager &am) -> 
         }
     }
 
-    unimplement_if_exists(m, "__ldb_mmu");
-    unimplement_if_exists(m, "__ldw_mmu");
-    unimplement_if_exists(m, "__ldl_mmu");
-    unimplement_if_exists(m, "__ldq_mmu");
-    unimplement_if_exists(m, "__stb_mmu");
-    unimplement_if_exists(m, "__stw_mmu");
-    unimplement_if_exists(m, "__stl_mmu");
-    unimplement_if_exists(m, "__stq_mmu");
+    // The ldl_mmu functions have new names, some are suffixed with a number
+    // TODO (hbrodin): What does the suffix mean?
+    std::regex re("^helper_(ld|st)[bwlq]_mmu(\\.\\d+)?$");
+    for (Function &f : m) {
+        if (!f.hasName())
+            continue;
+        auto name = f.getName();
+
+        if (std::regex_match(name.begin(), name.end(), re))
+            f.deleteBody();
+    }
+
 
     return PreservedAnalyses::none();
 }

@@ -18,6 +18,7 @@ static auto find_merge_pairs(Function &wrapper) -> list<pair<BasicBlock *, Basic
     map<unsigned, vector<BasicBlock *>> bb_map;
     set<BasicBlock *> merge_blocks;
 
+    // Put all blocks ending at the same PC in the same bucket
     for (BasicBlock &bb : wrapper) {
         if (isRecoveredBlock(&bb)) {
             unsigned lastpc = getLastPc(&bb);
@@ -29,6 +30,13 @@ static auto find_merge_pairs(Function &wrapper) -> list<pair<BasicBlock *, Basic
         }
     }
 
+    // For each block in bucket (last PC of a block)
+    // merge them pairwise
+    // block1: [startpc            endpc]
+    // block2:     [startpc        endpc]
+    // block3:        [startpc     endpc] 
+    // merge_blocks_same_end_point will merge
+    // block1, block2 and block2, block3
     for (auto it : bb_map) {
         vector<BasicBlock *> &merge = it.second;
 
@@ -58,6 +66,14 @@ static auto find_merge_pairs(Function &wrapper) -> list<pair<BasicBlock *, Basic
     return merge_list;
 }
 
+// Will transform merge pairs (block1, block2) and (block2, block3)
+// block1: [startpc            endpc]
+// block2:     [startpc        endpc]
+// block3:        [startpc     endpc] 
+// into
+// block1: [   ] jmp block2
+// block2:     [  ] jmp block3 
+// block3:        [                 ]
 static void merge_blocks_same_end_point(BasicBlock *a, BasicBlock *b)
 {
     // merge b into a by removing the part emulated by b from a and connecting
@@ -173,6 +189,13 @@ static void remove_exception_helper(BasicBlock *bb, BasicBlock *succ)
         }
     }
 
+    // TODO (hbrodin): Any way of verifying this? Currently there seems to be a false positive
+    // for blocks with a single jmp (store to @PC). They are identified in find_exception_overlaps
+    // but have no call to helper_raise_exception. I consider it a false positive if the function
+    // call can not be found and exit early.
+    if (erase_list.size() < 2)
+        return;
+
     for (Instruction *i : erase_list)
         i->eraseFromParent();
 
@@ -219,6 +242,5 @@ auto FixOverlapsPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAnal
         for (auto pair : merge_list)
             remove_exception_helper(pair.first, pair.second);
     }
-
     return changed ? PreservedAnalyses::none() : PreservedAnalyses::all();
 }

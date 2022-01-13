@@ -89,7 +89,7 @@ static void init_env()
 void __attribute__((always_inline)) nonlib_setjmp()
 {
 
-    addr_t retaddr = __ldl_mmu(R_ESP, 0);
+    addr_t retaddr = helper_ldl_mmu(nullptr, R_ESP, 0, nullptr);
     R_ESP += sizeof(stackword_t);
 
     reg_t *r_esp = (reg_t *)R_ESP;
@@ -175,7 +175,7 @@ helper_stub_trampoline(const reg_t ecx, const reg_t edx, const reg_t esp, const 
 void __attribute__((always_inline)) helper_extern_stub()
 {
     // return address should be on top of virtual stack, pop it
-    addr_t retaddr = __ldl_mmu(R_ESP, 0);
+    addr_t retaddr =helper_ldl_mmu(nullptr, R_ESP, 0, nullptr);
     R_ESP += sizeof(stackword_t);
 
     // PC should contain the address of the target function, call it
@@ -217,22 +217,22 @@ void helper_break()
 
 uint64_t __attribute__((always_inline)) ldq_data(uint32_t ptr)
 {
-    return __ldq_mmu(ptr, 0);
+    return helper_ldq_mmu(nullptr, ptr, 0, nullptr);
 }
 
 uint32_t __attribute__((always_inline)) lduw_data(uint32_t ptr)
 {
-    return __ldw_mmu(ptr, 0);
+    return helper_ldw_mmu(nullptr, ptr, 0, nullptr);
 }
 
 void __attribute__((always_inline)) stq_data(uint32_t ptr, uint64_t value)
 {
-    __stq_mmu(ptr, value, 0);
+    helper_stq_mmu(nullptr, ptr, value, 0, nullptr);
 }
 
 void __attribute__((always_inline)) stw_data(uint32_t ptr, uint32_t value)
 {
-    __stw_mmu(ptr, value, 0);
+    helper_stw_mmu(nullptr, ptr, value, 0, nullptr);
 }
 
 void helper_s2e_tcg_custom_instruction_handler(uint32_t opcode)

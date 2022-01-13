@@ -41,7 +41,7 @@ auto RenameBlockFuncsPass::run(Module &m, ModuleAnalysisManager &am) -> Preserve
     std::set<uint32_t> renamed_pcs;
 
     for (Function &f : m) {
-        if (f.hasName() && f.getName().startswith("tcg-llvm-tb-")) {
+        if (f.hasName() && f.getName().startswith("tcg-llvm-")) {
             unsigned address = hexToInt(f.getName().substr(f.getName().rfind('-') + 1));
 
             if (known_pcs.find(address) == known_pcs.end() ||
