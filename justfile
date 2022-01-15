@@ -36,14 +36,21 @@ install-dependencies:
     just init
 
 
-# Cleans out a previous BinRec build
+# Cleans out a previous BinRec and s2e build - Note this also wipes out s2e dependencies which take a long time to build.
 clean-all:
     rm -rf build
+    rm -rf ./s2e/build
+
+# Builds BinRec and s2e from scratch, default number of jobs is 4.
+build-all jobs="4":
+  just s2e-build
+  just build-binrec {{jobs}}
 
 # Builds BinRec from scratch, default number of jobs is 4.
-build-all jobs="4":
+build-binrec jobs="4":
     mkdir -p build
     cd build && cmake .. && make -j{{jobs}}
+    just s2e-insert-binrec-plugins
 
 # Cleans and re-builds BinRec from scratch. This takes a long time (for now).
 rebuild-all:

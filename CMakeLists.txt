@@ -43,8 +43,6 @@ add_subdirectory(binrec_tracemerge)
 unset(CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 
 add_custom_target(runlib ALL $(MAKE) WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/runlib)
-add_dependencies(runlib qemu)
-
 
 add_custom_target(doxygen)
 add_dependencies(doxygen

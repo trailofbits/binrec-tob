@@ -30,3 +30,4 @@ s2e-last
 s2e-out-*
 venv/
 .coverage
+s2e/

@@ -90,7 +90,12 @@ target_compile_definitions(binrec_lift_static PUBLIC ${LLVM_DEFINITIONS})
 target_compile_options(binrec_lift_static PUBLIC -fno-rtti -fpic)
 target_include_directories(binrec_lift_static PUBLIC ${LLVM_INCLUDE_DIRS} ${CMAKE_CURRENT_LIST_DIR}/src)
 llvm_map_components_to_libnames(llvm_libs CodeGen Core ipo IRReader Passes ScalarOpts Support TransformUtils)
-target_link_options(binrec_lift_static PUBLIC -fuse-ld=lld)
+
+# NOTE (mdbrown) The original build process specified lld, which might not be on system (lld-13 is not 
+#                symlinked by default. Commenting this out does'nt seem to be a problem, but if we have issues 
+#                later then we will need to create a softlink for lld if it doesn't exist during install.
+#target_link_options(binrec_lift_static PUBLIC -fuse-ld=lld)
+
 target_link_libraries(binrec_lift_static PUBLIC ${llvm_libs} binrec_traceinfo)
 
 

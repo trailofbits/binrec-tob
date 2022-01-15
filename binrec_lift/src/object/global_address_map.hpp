@@ -4,6 +4,7 @@
 #include <llvm/ADT/StringRef.h>
 #include <llvm/Object/ELFObjectFile.h>
 #include <map>
+#include <optional>
 
 namespace binrec {
     class GlobalAddressMap {

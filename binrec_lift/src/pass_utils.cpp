@@ -2,6 +2,7 @@
 #include <fstream>
 #include <llvm/IR/InlineAsm.h>
 #include <llvm/IRReader/IRReader.h>
+#include <llvm/Support/SourceMgr.h>
 
 using namespace llvm;
 

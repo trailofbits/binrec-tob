@@ -5,13 +5,24 @@ Overview
 --------
 
 BinRec dynamically lifts binary executables to LLVM IR. It is based on
-[S2E][1]. For a full description of the framework, see our [paper][9].
+[S2E][1]. For a full description of the framework, see the original research [paper][9].
 
+
+Key Dependencies and Environment
+--------------------------------
+
+Binrec has been developed for and tested against the following environments and major dependencies:
+
+- Ubuntu: 20.04.03
+- LLVM (Clang): 12
+- Python 3.9
+- s2e-env @97727c4
+
+The limiting factor for both Linux environment and LLVM is s2e, which supports Ubuntu 20.04 LTS at a maximum.
 
 Building BinRec
--------------
-BinRec uses [just](https://github.com/casey/just#installation) to automate various tasks including building BinRec. The
-first step in building BinRec is to install this tool (and curl if not already installed). We provide a simple shell script for this:
+---------------
+BinRec uses [just](https://github.com/casey/just#installation) to automate various tasks including building BinRec. The first step in building BinRec is to install this tool (and curl if not already installed). We provide a simple shell script for this:
 
 	  $ ./get_just.sh
 
@@ -19,6 +30,10 @@ Then, BinRec can be built from the root of this repository with:
 
        $ just install-dependencies
        $ just build-all
+
+NOTE: You may be asked to confirm installation of packages S2E depends on.
+NOTE: Your `git` instance requires a configured user name to install BinRec's S2E plugins.
+
 
 3. You can use the network to put stuff into your qemu vm. Lifting binaries that actually use the network is untested.
    Run the `configure-network` just recipe to configure the network. The recipe detects the active adapter and creates a a bride and tap interface.
@@ -91,7 +106,10 @@ directory being recovered using our pre-built VM image in combination with S2E's
 3. Back in the original shell, load the snapshot in S2E mode with the custom plugin loaded, using the HostFiles
    plugin to copy the target binary to the VM:
 
+       $ source .env
        $ ./qemu/cmd-debian.sh --vnc 0 hello
+
+    (TODO: I think we can eliminate the `source .env` above if we wrap this in `just`.)
 
    This loads the "cmd" snapshot and copies the "hello" binary into the VM as requested by the `getrun-cmd`
    command. `--vnc` makes the script pass `-vnc

@@ -40,12 +40,12 @@ auto EnvAaResult::alias(const MemoryLocation &loc_a, const MemoryLocation &loc_b
     }
 
     if (a && b) {
-        return a == b ? MayAlias : NoAlias;
+        return a == b ? AliasResult::MayAlias : AliasResult::NoAlias;
     }
     if (a || b) {
-        return NoAlias;
+        return AliasResult::NoAlias;
     }
-    return MayAlias;
+    return AliasResult::MayAlias;
 }
 
 static constexpr array<StringRef, 2> Safe_Intrinsics = {"llvm.stacksave", "llvm.stackrestore"};
