@@ -22,49 +22,37 @@ The limiting factor for both Linux environment and LLVM is s2e, which supports U
 
 Building BinRec
 ---------------
-BinRec uses [just](https://github.com/casey/just#installation) to automate various tasks including building BinRec. The first step in building BinRec is to install this tool (and curl if not already installed). We provide a simple shell script for this:
+1. BinRec uses [just](https://github.com/casey/just#installation) to automate various tasks including building BinRec. The first step in building BinRec is to install this tool (and curl if not already installed). We provide a simple shell script for this:
 
-	  $ ./get_just.sh
+        $ ./get_just.sh
 
-Then, BinRec can be built from the root of this repository with:
+2. Then, BinRec can be built from the root of this repository with:
 
        $ just install-dependencies
        $ just build-all
 
 NOTE: You may be asked to confirm installation of packages S2E depends on.
+
 NOTE: Your `git` instance requires a configured user name to install BinRec's S2E plugins.
 
+3. Next, you will need to download a QEMU virtual machine image within which target binaries will run. To download a pre-built `x86` Linux image (currently the only supported environemnt) use the following command:
 
-3. You can use the network to put stuff into your qemu vm. Lifting binaries that actually use the network is untested.
+        $ just build-s2e-image
+
+NOTE: You may optionally provide a parameter to this command with the name of an alternate image to download (e.g., `debian-9.2.1-x86_64`).
+
+
+4. You can use the network to put stuff into your qemu vm. Lifting binaries that actually use the network is untested.
    Run the `configure-network` just recipe to configure the network. The recipe detects the active adapter and creates a a bride and tap interface.
 
        $ just configure-network  # enter sudo password when prompted
 
    **Note:** When running as a VM on VMWare Fusion, you may be prompted in the Mac host OS to allow the VM to monitor network traffic.
 
+
+
 Running a binary in the BinRec front-end
 ----------------------------------------
-
-### Preparing a VM image
-
-You need a QEMU VM image to run the binary in the front-end. Follow [S2E's guide for building a VM image][3] to create a
-Debian image, or use our pre-built image from [here][8]. Save the image to `qemu/debian.raw`.
-
-We use S2E's [init\_env.so][4] library to detect execution of the target binary in the VM. Our pre-built image has a
-built copy integrated, but for a custom image you need to build the library (along with the [`s2eget`][5] tool) in
-[s2e/guest/tools](/s2e/guest/tools/) and copy them into the VM.
-
-If you use the pre-build [image][8], make sure to name it debian.raw and store it in the qemu-directory. Following that, create a link to it with the name debian.s2e. The following commands can be used:
-
-```shell
-$ cd qemu
-$ wget https://www.ics.uci.edu/~fparzefa/binrec/debian10.raw.xz
-$ unxz debian10.raw.xz
-$ mv debian10.raw debian.raw
-$ ln debian.raw debian.s2e
-```
-
-### Running the binary
 
 S2E builds two QEMU binaries: one unmodified and one with S2E instrumentation to facilitate symbolic execution and
 plugins. The latter is considerably slower and does not support KVM mode, so you want to do as much set-up work (like
@@ -73,37 +61,8 @@ binary needs to be in the VM, which does not support mounting host directories, 
 into the VM on beforehand or load them at runtime. Here, we give an example of the `hello` program from the `test`
 directory being recovered using our pre-built VM image in combination with S2E's "HostFiles" plugin.
 
-1. Boot the VM:
-
-       $ export MEM_AMOUNT=1024    # if you want to modify VM ram, default is 1G
-       $ ./qemu/debian.sh -vnc :0  # boot the VM
-
-   Pass `-net` if you want the qemu to access the network. Put it before vnc arg
-
-       $ ./qemu/debian.sh -net -vnc :0   # boot the VM
-
-2. Open RealVNC Viewer client to connect to the VM. You can also launch the GUI directly to do this. FIXME: The port reported by your environment configuration
-   step is not correct.
-
-       $ vncviewer 127.0.0.1:5900
-
-
-   Log in (user "user" and password "password" for the prebuilt image) and run the command `getrun-cmd`:
-
-       $ getrun-cmd
-
-   This command is a wrapper that adds input arguments to `s2eget`, which blocks in regular QEMU and continues in S2E's
-   modified version of QEMU, so we can now create a snapshot to continue later in S2E mode. Switch to the QEMU shell by
-   pressing `ctrl+alt+2` and save a snapshot with the name "cmd". Note, the directory from which you invoke getrun-cmd
-   is important is some cases. Then, exit the VM:
-
-       # savevm cmd
-       # quit
-
-   **WARNING:** In macOS, if `ctrl+alt+2` doesn't work, try the following:
-   `XQUARTS-->preferences-->Input-->Option keys send ALT L and ALT R`
-
-3. Back in the original shell, load the snapshot in S2E mode with the custom plugin loaded, using the HostFiles
+<TODO: From here, the process has changed and must be re-documented.>
+1. Load the snapshot in S2E mode with the custom plugin loaded, using the HostFiles
    plugin to copy the target binary to the VM:
 
        $ source .env
@@ -118,7 +77,7 @@ directory being recovered using our pre-built VM image in combination with S2E's
    binary should reside in directories scanned by the HostFiles plugin, configured in `plugins/config.debian.lua`. Also
    see https://github.com/S2E/s2e-old/blob/master/docs/Howtos/init_env.rst
 
-4. Parallel lifting is supported by creating a config file which contains the binary invocation and args, then using the
+2. Parallel lifting is supported by creating a config file which contains the binary invocation and args, then using the
    cmd-debian-mt script. Edit this script, for instance to pass `--net` to the cmd-debian invocations
 
         $ ./qemu/cmd-debian-mt.sh configFile

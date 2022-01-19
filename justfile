@@ -35,6 +35,9 @@ install-dependencies:
     # Initialize pipenv, submodules, git-lfs
     just init
 
+    # Make kernels readable to support image generation
+    sudo chmod ugo+r /boot/vmlinu*
+
 
 # Cleans out a previous BinRec and s2e build - Note this also wipes out s2e dependencies which take a long time to build.
 clean-all:
@@ -81,12 +84,10 @@ s2e-command command *args:
 s2e-build:
   just s2e-command build
 
-# Build the debian image.
-# TODO (hbrodin): This could be parmeterized to allow for different image builds
-s2e-image-build:
-  echo "Kernels to be readable."
-  sudo chmod ugo+r /boot/vmlinu*
-  just s2e-command image_build debian-9.2.1-i386
+# Build an s2e image. Default is x86 Debian-9.2.1
+# Other (eventually useful) targets: debian-9.2.1-x86_64
+build-s2e-image image="debian-9.2.1-i386":
+  just s2e-command image_build -d {{image}}
 
 # This will trigger a rebuild of libs2e, which contains the plugins
 s2e-rebuild-plugins:
