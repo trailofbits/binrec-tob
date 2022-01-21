@@ -22,33 +22,22 @@ The limiting factor for both Linux environment and LLVM is s2e, which supports U
 
 Building BinRec
 ---------------
-1. BinRec uses [just](https://github.com/casey/just#installation) to automate various tasks including building BinRec. The first step in building BinRec is to install this tool (and curl if not already installed). We provide a simple shell script for this:
+1. BinRec uses [just](https://github.com/casey/just#installation) to automate various tasks including building BinRec. The first step in building BinRec is to install this tool (and `curl` if not already installed). We provide a simple shell script for this:
 
         $ ./get_just.sh
 
-2. Then, BinRec can be built from the root of this repository with:
+2. Next, BinRec and its dependencies can be fetched, built, and installed from the root of this repository with:
 
-       $ just install-dependencies
-       $ just build-all
+       $ just install-binrec
 
-NOTE: You may be asked to confirm installation of packages S2E depends on.
+   NOTE: Your `git` instance requires a configured user name to install BinRec's S2E plugins.
 
-NOTE: Your `git` instance requires a configured user name to install BinRec's S2E plugins.
+3. (Optional) The above command will download a pre-built QEMU virtual machine image within which target binaries will run. The default pre-built image is a Linux `x86` image (currently the only supported environment). If you want to download additional images (e.g., Linux `x64`) you can use the following command:
 
-3. Next, you will need to download a QEMU virtual machine image within which target binaries will run. To download a pre-built `x86` Linux image (currently the only supported environemnt) use the following command:
-
-        $ just build-s2e-image
-
-NOTE: You may optionally provide a parameter to this command with the name of an alternate image to download (e.g., `debian-9.2.1-x86_64`).
-
-
-4. You can use the network to put stuff into your qemu vm. Lifting binaries that actually use the network is untested.
-   Run the `configure-network` just recipe to configure the network. The recipe detects the active adapter and creates a a bride and tap interface.
-
-       $ just configure-network  # enter sudo password when prompted
-
-   **Note:** When running as a VM on VMWare Fusion, you may be prompted in the Mac host OS to allow the VM to monitor network traffic.
-
+   ```bash
+   # just build-s2e-image <image_name>
+   $ just build-s2e-image debian-9.2.1-x86_64
+   ```
 
 
 Running a binary in the BinRec front-end

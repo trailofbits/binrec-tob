@@ -14,8 +14,14 @@ plugins_cmake := join(plugins_root, "src", "CMakeLists.txt")
 justdir := justfile_directory()
 
 
-# Binrec Build commands
-# Install apt packages, RealVNCviewer. Required once before build. Requires super user privileges.
+# BinRec one-shot install command
+install-binrec:
+    just install-dependencies
+    just build-all
+    just build-s2e-image
+
+
+# Install apt packages, git Large File Storage. Initialize system. Required once before build. Requires super user privileges.
 install-dependencies:
     # Packages
     sudo apt-get update
@@ -25,12 +31,7 @@ install-dependencies:
         pipenv git-lfs doxygen graphviz \
         python3.9-dev python3.9-venv # For s2e-env (and compatibility with Python 3.9 from Pipfile): http://s2e.systems/docs/s2e-env.html#id2
 
-    git lfs install
-
-    # RealVNCviewer
-    curl -sSf https://www.realvnc.com/download/file/viewer.files/VNC-Viewer-6.21.406-Linux-x64.deb --output vnc.deb
-    sudo apt install ./vnc.deb
-    rm vnc.deb
+    git lfs install    
 
     # Initialize pipenv, submodules, git-lfs
     just init
@@ -53,7 +54,6 @@ build-all jobs="4":
 build-binrec jobs="4":
     mkdir -p build
     cd build && cmake .. && make -j{{jobs}}
-    just s2e-insert-binrec-plugins
 
 # Cleans and re-builds BinRec from scratch. This takes a long time (for now).
 rebuild-all:
@@ -74,7 +74,8 @@ init:
 # Init the s2e-env, will install dependencies and checkout the s2e repository
 init-s2e-env:
   cd ./s2e-env && pipenv run pip install .
-  pipenv run s2e init {{justfile_directory()}}/s2e
+  pipenv run s2e init --non-interactive {{justfile_directory()}}/s2e
+  just s2e-insert-binrec-plugins
 
 # Execute a s2e command with the s2e environment active
 s2e-command command *args:
@@ -193,25 +194,6 @@ full-reset: clear
 update:
   pipenv update
 
-# Setup the initial network configuration
-configure-network:
-  # create the bridge
-  sudo ip link add br0 type bridge
-  # reset the interface
-  sudo ip addr flush dev {{net_iface}}
-  # setup the bridge / tap
-  sudo ip link set {{net_iface}} master br0
-  sudo ip tuntap add dev tap0 mode tap user $USER
-  sudo ip link set tap0 master br0
-  sudo ip link set dev br0 up
-  sudo ip link set dev tap0 up
-  sudo ifconfig br0 {{net_ipaddr}}
-  sudo ifconfig {{net_iface}} 0.0.0.0 promisc
-  sudo route add default gw {{net_gateway}}
-  # copy the dns config from the original adapter to the bridge
-  sudo resolvectl dns br0 `resolvectl dns {{net_iface}} | cut -d':' -f 2`
-
-
 # Runs all unit and integration tests, which may take several minutes to complete
 run-tests: erase-test-coverage run-unit-tests run-gtest run-integration-tests
 
@@ -274,3 +256,28 @@ list-traces project:
 
 list-merged project:
   pipenv run python -m binrec.project list-merged {{project}}
+
+
+
+########## DEPRECATED RECIPES ##########
+
+# This recipe was originally used for setting up the host machine's network to allow connection to the QEMU VM.
+# This facilitated VM interop that is now handled by s2e.
+
+# Setup the initial network configuration
+#configure-network:
+#  # create the bridge
+#  sudo ip link add br0 type bridge
+#  # reset the interface
+#  sudo ip addr flush dev {{net_iface}}
+#  # setup the bridge / tap
+#  sudo ip link set {{net_iface}} master br0
+#  sudo ip tuntap add dev tap0 mode tap user $USER
+#  sudo ip link set tap0 master br0
+#  sudo ip link set dev br0 up
+#  sudo ip link set dev tap0 up
+#  sudo ifconfig br0 {{net_ipaddr}}
+#  sudo ifconfig {{net_iface}} 0.0.0.0 promisc
+#  sudo route add default gw {{net_gateway}}
+#  # copy the dns config from the original adapter to the bridge
+#  sudo resolvectl dns br0 `resolvectl dns {{net_iface}} | cut -d':' -f 2`
