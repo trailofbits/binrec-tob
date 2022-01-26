@@ -7,7 +7,7 @@ import sys
 import pytest
 
 from binrec import lift
-from binrec.env import BINREC_ROOT
+from binrec.env import BINREC_ROOT, llvm_command
 from binrec.errors import BinRecError
 from binrec import audit
 
@@ -54,7 +54,7 @@ class TestLifting:
         lift._apply_fixups(trace_dir)
 
         mock_check_call.assert_called_once_with([
-                "llvm-link",
+                llvm_command("llvm-link"),
                 "-o",
                 "linked.bc",
                 "cleaned.bc",
@@ -108,7 +108,7 @@ class TestLifting:
 
         lift._disassemble_bitcode(trace_dir)
 
-        mock_check_call.assert_called_once_with(["llvm-dis", "optimized.bc"], cwd=str(trace_dir))
+        mock_check_call.assert_called_once_with([llvm_command("llvm-dis"), "optimized.bc"], cwd=str(trace_dir))
 
     @patch.object(lift.subprocess, 'check_call')
     def test_disassemble_bitcode_error(self, mock_check_call):
@@ -176,10 +176,10 @@ class TestLifting:
     @patch.object(lift, '_recover_bitcode')
     @patch.object(lift, '_compile_bitcode')
     @patch.object(lift, '_link_recovered_binary')
-    @patch.object(lift, 'BINREC_ROOT', new_callable=MockPath)
-    def test_lift_trace(self, mock_root, mock_link, mock_compile, mock_recover, mock_disasm, mock_optimize,
+    @patch.object(lift, 'project')
+    def test_lift_trace(self, mock_project, mock_link, mock_compile, mock_recover, mock_disasm, mock_optimize,
                         mock_lift, mock_apply, mock_clean, mock_extract):
-        trace_dir = mock_root / MockPath("s2e-out-hello", is_dir=True)
+        mock_project.merged_trace_dir.return_value = trace_dir = MockPath("s2e-out", is_dir=True)
         lift.lift_trace("hello")
         mock_extract.assert_called_once_with(trace_dir)
         mock_clean.assert_called_once_with(trace_dir)
@@ -200,10 +200,10 @@ class TestLifting:
     @patch.object(lift, '_recover_bitcode')
     @patch.object(lift, '_compile_bitcode')
     @patch.object(lift, '_link_recovered_binary')
-    @patch.object(lift, 'BINREC_ROOT', new_callable=MockPath)
-    def test_lift_trace_error(self, mock_root, mock_link, mock_compile, mock_recover, mock_disasm, mock_optimize,
+    @patch.object(lift, 'project')
+    def test_lift_trace_error(self, mock_project, mock_link, mock_compile, mock_recover, mock_disasm, mock_optimize,
                         mock_lift, mock_apply, mock_clean, mock_extract):
-        trace_dir = mock_root / MockPath("s2e-out-hello", exists=False)
+        mock_project.merged_trace_dir.return_value = MockPath("s2e-out", exists=False)
         with pytest.raises(BinRecError):
             lift.lift_trace("hello")
 

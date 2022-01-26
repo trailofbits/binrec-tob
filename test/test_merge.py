@@ -7,7 +7,7 @@ import logging
 import pytest
 
 from binrec import merge
-from binrec.env import BINREC_ROOT
+from binrec.env import BINREC_ROOT, llvm_command
 from binrec.errors import BinRecError
 from binrec import audit
 
@@ -20,7 +20,7 @@ class TestMerge:
         merge._link_bitcode("base", "source", "dest")
         mock_check_call.assert_called_once_with(
             [
-                "llvm-link",
+                llvm_command("llvm-link"),
                 "-print-after-all",
                 "-v",
                 "-o",
@@ -93,24 +93,16 @@ class TestMerge:
         mock_mkstemp.assert_called_once_with(suffix=".bc")
         mock_os.close.assert_called_once_with(100)
 
-        assert mock_link.call_args_list == [
-            call(
-                base=outfile,
-                source=capture_dirs[0] / "captured-link-ready.bc",
-                destination=Path("temp"),
-            ),
-            call(
-                base=outfile,
-                source=capture_dirs[1] / "captured-link-ready.bc",
-                destination=Path("temp"),
-            ),
-        ]
-        assert mock_shutil.move.call_args_list == [
-            call("temp", outfile),
-            call("temp", outfile),
-        ]
+        mock_link.assert_called_once_with(
+            base=outfile,
+            source=capture_dirs[1] / "captured-link-ready.bc",
+            destination=Path("temp"),
+        )
+        mock_shutil.move.assert_called_once_with("temp", outfile)
 
-        mock_check_call.assert_called_once_with(["llvm-dis", str(outfile)])
+        mock_check_call.assert_called_once_with(
+            [llvm_command("llvm-dis"), str(outfile)]
+        )
         mock_merge.assert_called_once_with(
             [capture_dirs[0] / "traceInfo.json", capture_dirs[1] / "traceInfo.json"],
             dest / "traceInfo.json",
@@ -173,135 +165,50 @@ class TestMerge:
         with pytest.raises(BinRecError):
             merge.merge_bitcode(capture_dirs, dest)
 
-    @patch.object(merge, "BINREC_ROOT", new_callable=MockPath)
+    @patch.object(merge, "project")
     @patch.object(merge, "shutil")
     @patch.object(merge, "merge_bitcode")
-    def test_merge_traces(self, mock_merge_bc, mock_shutil, mock_root):
-        normal_file = MockPath("norm", is_dir=False)
-        dir_no_merged = MockPath("s2e-out-hello-1", is_dir=True)
-        dir_with_merged = MockPath("s2e-out-hello-2", is_dir=True)
-        dir_no_match = MockPath("dir3", is_dir=True)
-        merged_dir = MockPath("merged", is_dir=True)
-        mock_root.build_tree(normal_file, dir_no_merged, dir_with_merged, dir_no_match)
-        dir_with_merged.build_tree(merged_dir)
-
-        outdir = mock_root / "s2e-out-hello"
+    def test_merge_traces(self, mock_merge_bc, mock_shutil, mock_project):
+        mock_root = MockPath("/")
+        outdir = mock_project.merged_trace_dir.return_value = mock_root / "out"
+        trace_dirs = mock_project.get_trace_dirs.return_value = [
+            mock_root / "1",
+            mock_root / "2",
+        ]
 
         merge.merge_traces("hello")
 
-        mock_merge_bc.assert_called_once_with([merged_dir], outdir)
+        mock_merge_bc.assert_called_once_with(trace_dirs, outdir)
 
-        assert mock_shutil.copy2.call_args_list == [
-            call(merged_dir / "binary", outdir / "binary"),
-            call(merged_dir / "Makefile", outdir / "Makefile"),
-        ]
-
-    @patch.object(merge, "BINREC_ROOT", new_callable=MockPath)
-    @patch.object(merge, "shutil")
-    @patch.object(merge, "merge_bitcode")
-    def test_merge_traces_no_dirs(self, mock_merge_bc, mock_shutil, mock_root):
-        mock_root.build_tree(
-            MockPath("s2e-out-hello-1", is_dir=False),
-            MockPath("s2e-out-hello-2", is_dir=True),
-            MockPath("asdf", is_dir=True),
+        mock_shutil.copy2.assert_called_once_with(
+            trace_dirs[0] / "binary", outdir / "binary"
         )
+
+    @patch.object(merge, "project")
+    def test_merge_traces_no_dirs(self, mock_project):
+        mock_project.get_trace_dirs.return_value = []
 
         with pytest.raises(BinRecError):
             merge.merge_traces("hello")
 
-    @patch.object(merge, "BINREC_ROOT", new_callable=MockPath)
-    @patch.object(merge, "shutil")
-    @patch.object(merge, "merge_bitcode")
-    def test_merge_trace_captures(self, mock_merge_bc, mock_shutil, mock_root):
-        source = mock_root / "s2e-out-hello-1"
-        outdir = source / "merged"
-
-        trace0 = source / MockPath("0", is_dir=True)
-        source.build_tree(
-            MockPath("1"), MockPath("100", is_dir=True), MockPath("asdf", is_dir=True)
-        )
-
-        merge.merge_trace_captures("hello-1")
-
-        mock_merge_bc.assert_called_once_with([trace0], outdir)
-        assert mock_shutil.copy2.call_args_list == [
-            call(trace0 / "binary", outdir / "binary"),
-            call(source / "Makefile", outdir / "Makefile"),
-        ]
-
-    @patch.object(merge, "BINREC_ROOT", new_callable=MockPath)
-    def test_merge_trace_captures_error(self, mock_root):
-        source = mock_root / "s2e-out-hello-1"
-
-        source.build_tree(
-            MockPath("1"), MockPath("100", is_dir=True), MockPath("asdf", is_dir=True)
-        )
-
-        with pytest.raises(BinRecError):
-            merge.merge_trace_captures("hello-1")
-
-    @patch.object(merge, "BINREC_ROOT", new_callable=MockPath)
-    @patch.object(merge, "merge_trace_captures")
+    @patch("sys.argv", ["merge", "hello"])
+    @patch.object(sys, "exit")
     @patch.object(merge, "merge_traces")
-    def test_recursive_merge_traces(
-        self, mock_merge_traces, mock_merge_captures, mock_root
-    ):
-        mock_root.build_tree(
-            MockPath("s2e-out-hello-1", is_dir=True),
-            MockPath("s2e-out-hello2-1", is_dir=True),
-            MockPath("asdf"),
-            MockPath("s2e-out-hello-2"),
-        )
-
-        merge.recursive_merge_traces("hello")
-
-        mock_merge_captures.assert_called_once_with("hello-1")
-        mock_merge_traces.assert_called_once_with("hello")
-
-    @patch.object(merge, "BINREC_ROOT", new_callable=MockPath)
-    def test_recursive_merge_traces_error(self, mock_root):
-        mock_root.build_tree(
-            MockPath("s2e-out-hello2-1", is_dir=True),
-            MockPath("asdf"),
-            MockPath("s2e-out-hello-2"),
-        )
-
-        with pytest.raises(BinRecError):
-            merge.recursive_merge_traces("hello")
-
-    @patch("sys.argv", ["merge", "-t", "hello-1"])
-    @patch.object(sys, "exit")
-    @patch.object(merge, "merge_trace_captures")
-    def test_main_captures(self, mock_merge_captures, mock_exit):
-        merge.main()
-        mock_merge_captures.assert_called_once_with("hello-1")
-        mock_exit.assert_called_once_with(0)
-
-    @patch("sys.argv", ["merge", "-b", "hello"])
-    @patch.object(sys, "exit")
-    @patch.object(merge, "recursive_merge_traces")
     def test_main_traces(self, mock_merge_traces, mock_exit):
         merge.main()
         mock_merge_traces.assert_called_once_with("hello")
         mock_exit.assert_called_once_with(0)
 
-    @patch("sys.argv", ["merge", "-b", "hello", "-t", "hello-1"])
-    def test_main_usage_error1(self):
-        with pytest.raises(SystemExit) as err:
-            merge.main()
-
-        assert err.value.code == 2
-
     @patch("sys.argv", ["merge"])
-    def test_main_usage_error2(self):
+    def test_main_usage_error(self):
         with pytest.raises(SystemExit) as err:
             merge.main()
 
         assert err.value.code == 2
 
-    @patch("sys.argv", ["merge", "-v", "-b", "hello"])
+    @patch("sys.argv", ["merge", "-v", "hello"])
     @patch.object(sys, "exit")
-    @patch.object(merge, "recursive_merge_traces")
+    @patch.object(merge, "merge_traces")
     @patch.object(merge, "logging")
     def test_main_verbose(self, mock_logging, mock_merge, mock_exit):
         merge.logging.DEBUG = logging.DEBUG
@@ -312,9 +219,9 @@ class TestMerge:
             logging.DEBUG
         )
 
-    @patch("sys.argv", ["merge", "-vv", "-b", "hello"])
+    @patch("sys.argv", ["merge", "-vv", "hello"])
     @patch.object(sys, "exit")
-    @patch.object(merge, "recursive_merge_traces")
+    @patch.object(merge, "merge_traces")
     @patch.object(merge, "logging")
     @patch.object(audit, "enable_python_audit_log")
     def test_main_audit(self, mock_audit, mock_logging, mock_merge, mock_exit):

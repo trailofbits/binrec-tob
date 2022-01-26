@@ -6,28 +6,17 @@ import tempfile
 from contextlib import suppress
 from pathlib import Path
 
-from .env import (
-    BINREC_BIN,
-    BINREC_LIB,
-    BINREC_LINK_LD,
-    BINREC_ROOT,
-    BINREC_RUNLIB,
-    BINREC_SCRIPTS,
-)
+from . import project
+from .env import BINREC_LIB, BINREC_LINK_LD, BINREC_RUNLIB, BINREC_SCRIPTS, llvm_command
 from .errors import BinRecError
-
-# TODO: This is from old S2E version, kept her in case we need it as we perform a difficult merge
-#from .lib import binrec_lift, binrec_link
-
-from .project import merge_dir
-
+from .lib import binrec_lift, binrec_link
 
 logger = logging.getLogger("binrec.lift")
 
-BINREC_LIFT = str(BINREC_BIN / "binrec_lift")
+# This is related to issue #39 and is commented out for now.
+# SOFTFLOAT_BC = (BINREC_ROOT / "s2e" / "build" / "tools-release"/ "lib" /
+#                 "X86BitcodeLibrary" /"softfloat.bc")
 
-# TODO (hbrodin): Trying to use the s2e-built softfloat.bc
-SOFTFLOAT_BC = BINREC_ROOT / "s2e/build/tools-release/lib/X86BitcodeLibrary/softfloat.bc"
 
 def prep_bitcode_for_linkage(
     working_dir: Path, source: Path, destination: Path
@@ -68,64 +57,55 @@ def prep_bitcode_for_linkage(
             f"failed first stage of linkage prep for bitcode: {source}: {err}"
         )
 
-#     TODO: This is commented out due to open issue #39
-#       try:
-#         # softfloat appears to be part of qemu and implements floating point math
-#         subprocess.check_call(
-#             [
-#                 "llvm-link-12",
-#                 "-o",
-#                 dest,
-#                 "--override",
-#                 tmp_bc,
-# #                str(SOFTFLOAT_BC),
-#                 str(BINREC_RUNLIB / "softfloat.bc"),
-#             ],
-#             cwd=cwd,
-#         )
-#     except subprocess.CalledProcessError:
-#         # The original script ran this in via "eval", which does not honor "set -e".
-#         # So, I'm seeing this llvm-link call fail consistently when run against a
-#         # merged capture (s2e-out-binary-1/merged), but the script continues and
-#         # properly finishes the merging / lifting.
-#         #
-#         # If this call fails then the destination file won't exist and the next call
-#         # to binrec_lift won't be run.
-#         #
-#         # TODO add a check that determine whether llvm-link is needed before calling
-#         # it.
-#         logger.warning(
-#             "failed llvm link prep for bitcode (this may be normal if the "
-#             "bitcode has already been merged from multiple captures): %s",
-#             src,
-#         )
+    # TODO: This is commented out due to open issue #39.
+    # The code for this issue is commented out and binrec, with the updated s2e,
+    # appears to be working. I'm leaving in the commented out code block for now since
+    # I'm not absolutely confident that we are exercising floating point math fully in
+    # our current integration test samples.
+    # try:
+    #     # softfloat appears to be part of qemu and implements floating point math
+    #     subprocess.check_call(
+    #         [
+    #             "llvm-link-12",
+    #             "-o",
+    #             dest,
+    #             "--override",
+    #             tmp_bc,
+    #             # str(SOFTFLOAT_BC),
+    #             str(BINREC_RUNLIB / "softfloat.bc"),
+    #         ],
+    #         cwd=cwd,
+    #     )
+    # except subprocess.CalledProcessError:
+    #     # The original script ran this in via "eval", which does not honor "set -e".
+    #     # So, I'm seeing this llvm-link call fail consistently when run against a
+    #     # merged capture (s2e-out-binary-1/merged), but the script continues and
+    #     # properly finishes the merging / lifting.
+    #     #
+    #     # If this call fails then the destination file won't exist and the next call
+    #     # to binrec_lift won't be run.
+    #     #
+    #     # TODO add a check that determine whether llvm-link is needed before calling
+    #     # it.
+    #     logger.warning(
+    #         "failed llvm link prep for bitcode (this may be normal if the "
+    #         "bitcode has already been merged from multiple captures): %s",
+    #         src,
+    #     )
 
-
-    # TODO This was old version condition, kept in case we need it.  Delete if we don't
-    # if destination.is_file():
-
-    if tmp_bc.is_file():
-        shutil.move(tmp_bc, dest_abs)
-    #if dest_abs.is_file():
-        # llvm-link worked successfully
-        try:
-            binrec_lift.link_prep_2(
-                trace_filename=dest, destination=tmp, working_dir=cwd
-            )
-        except Exception as err:
+    shutil.move(tmp_bc, destination)
+    try:
+        binrec_lift.link_prep_2(trace_filename=dest, destination=tmp, working_dir=cwd)
+    except Exception as err:
+        with suppress(OSError):
             os.remove(tmp_bc)
-            os.remove(tmp)
-            raise BinRecError(
-                f"failed second stage of linkage prep for bitcode: {source}: {err}"
-            )
 
-    # else:
-    # TODO (hbrodin): Raise exception here. If any step fails we have little chance of
-    # getting any sucess later...
+        os.remove(tmp)
+        raise BinRecError(
+            f"failed second stage of linkage prep for bitcode: {source}: {err}"
+        )
 
-    # Regardless of the llvm-link result, the temp bitcode file will exist and we use
-    # it as the final output file.
-    shutil.move(f"{tmp}.bc", dest)
+    shutil.move(tmp_bc, destination)
     os.remove(tmp)
 
 
@@ -188,7 +168,7 @@ def _apply_fixups(trace_dir: Path) -> None:
     try:
         subprocess.check_call(
             [
-                "llvm-link-12",
+                llvm_command("llvm-link"),
                 "-o",
                 "linked.bc",
                 "cleaned.bc",
@@ -220,19 +200,11 @@ def _lift_bitcode(trace_dir: Path) -> None:
         "performing initially lifting of captured LLVM bitcode: %s", trace_dir.name
     )
     try:
-
-        # TODO: We need to check to make sure this call is still correct, Henrik's branch was still a subprocess call. 
-        #.      It is commented out below so we can reference it, these comments should be deleted when we figure it out.
         binrec_lift.lift(
             trace_filename="linked.bc",
             destination="lifted",
             working_dir=str(trace_dir),
             clean_names=True,
-
-        #subprocess.check_call(
-        #    [BINREC_LIFT, "--loglevel", "debug", "--lift", "-o", "lifted", "linked.bc", "--clean-names"],
-        #    cwd=str(trace_dir),
-
         )
     except Exception as err:
         raise BinRecError(
@@ -280,7 +252,9 @@ def _disassemble_bitcode(trace_dir: Path) -> None:
     """
     logger.debug("disassembling optimized bitcode: %s", trace_dir.name)
     try:
-        subprocess.check_call(["llvm-dis-12", "optimized.bc"], cwd=str(trace_dir))
+        subprocess.check_call(
+            [llvm_command("llvm-dis"), "optimized.bc"], cwd=str(trace_dir)
+        )
     except subprocess.CalledProcessError:
         raise BinRecError(
             f"failed to disassemble captured LLVM bitcode: {trace_dir.name}"
@@ -359,7 +333,7 @@ def _link_recovered_binary(trace_dir: Path) -> None:
         raise BinRecError("failed to link recovered binary: %s", err)
 
 
-def lift_trace(project_name: str, index : int) -> None:
+def lift_trace(project_name: str) -> None:
     """
     Lift and recover a binary from a binrec trace. This lifts, compiles, and links
     capture bitcode to a recovered binary. This method works on the binrec trace
@@ -367,40 +341,44 @@ def lift_trace(project_name: str, index : int) -> None:
 
     :param binary: binary name
     """
-    trace_dir = merge_dir(project_name, index)
-    if not trace_dir.is_dir():
+    merged_trace_dir = project.merged_trace_dir(project_name)
+    if not merged_trace_dir.is_dir():
         raise BinRecError(
-            f"nothing to lift: directory does not exist: s2e-out-{binary}"
+            f"nothing to lift: directory does not exist: {merged_trace_dir}"
         )
 
     # Step 1: extract symbols
-    _extract_binary_symbols(trace_dir)
+    _extract_binary_symbols(merged_trace_dir)
 
     # Step 2: clean captured LLVM bitcode
-    _clean_bitcode(trace_dir)
+    _clean_bitcode(merged_trace_dir)
 
     # Step 3: apply fixups to captured bitcode
-    _apply_fixups(trace_dir)
+    _apply_fixups(merged_trace_dir)
 
     # Step 4: initial lifting
-    _lift_bitcode(trace_dir)
+    _lift_bitcode(merged_trace_dir)
 
     # Step 5: optimize the lifted bitcode
-    _optimize_bitcode(trace_dir)
+    _optimize_bitcode(merged_trace_dir)
 
     # Step 6: disassemble optimized bitcode
-    _disassemble_bitcode(trace_dir)
+    _disassemble_bitcode(merged_trace_dir)
 
     # Step 7: recover the optimized bitcode
-    _recover_bitcode(trace_dir)
+    _recover_bitcode(merged_trace_dir)
 
     # Step 8: compile recovered bitcode
-    _compile_bitcode(trace_dir)
+    _compile_bitcode(merged_trace_dir)
 
     # Step 9: Link the recovered binary
-    _link_recovered_binary(trace_dir)
+    _link_recovered_binary(merged_trace_dir)
 
-    logger.info(f"successfully lifted and recovered binary in project: {project_name}, available as {trace_dir}/recovered")
+    logger.info(
+        "successfully lifted and recovered binary for project %s: %s",
+        project_name,
+        merged_trace_dir / "recovered",
+    )
 
 
 def main() -> None:
@@ -416,7 +394,6 @@ def main() -> None:
         "-v", "--verbose", action="count", help="enable verbose logging"
     )
     parser.add_argument("project_name", help="lift and compile the binary trace")
-    parser.add_argument("index", type=int, nargs='?', help="index of merge to lift and compile", default=0)
 
     args = parser.parse_args()
     if args.verbose:
@@ -426,7 +403,7 @@ def main() -> None:
 
             enable_python_audit_log()
 
-    lift_trace(args.project_name, args.index)
+    lift_trace(args.project_name)
     sys.exit(0)
 
 

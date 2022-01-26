@@ -1,10 +1,12 @@
 # Environment Variables (Include in all justfiles that need them)
 set dotenv-load := true
+set positional-arguments := true
 
 # Recipe Variables
 net_iface := `ip route get 8.8.8.8 | head -n1 | cut -d' ' -f 5`
 net_ipaddr := `ip route get 8.8.8.8 | head -n1 | cut -d' ' -f 7`
 net_gateway := `ip route get 8.8.8.8 | head -n1 | cut -d' ' -f 3`
+binrec_authors := "Trail of Bits, University of California, Irvine and Vrije Universiteit Amsterdam"
 
 # s2e paths
 plugins_root := justfile_directory() + "/s2e/source/s2e/libs2eplugins"
@@ -31,7 +33,7 @@ install-dependencies:
         pipenv git-lfs doxygen graphviz \
         python3.9-dev python3.9-venv # For s2e-env (and compatibility with Python 3.9 from Pipfile): http://s2e.systems/docs/s2e-env.html#id2
 
-    git lfs install    
+    git lfs install
 
     # Initialize pipenv, submodules, git-lfs
     just init
@@ -88,7 +90,7 @@ s2e-build:
 # Build an s2e image. Default is x86 Debian-9.2.1
 # Other (eventually useful) targets: debian-9.2.1-x86_64
 build-s2e-image image="debian-9.2.1-i386":
-  just s2e-command image_build -d {{image}}
+  just s2e-command image_build -d \"{{image}}\"
 
 # This will trigger a rebuild of libs2e, which contains the plugins
 s2e-rebuild-plugins:
@@ -98,11 +100,11 @@ s2e-rebuild-plugins:
 s2e-insert-binrec-plugin name:
   # If we don't drop existing links it will overwrite with default plugin
   # content
-  rm -f {{plugins_dir}}/{{name}}.cpp
-  rm -f {{plugins_dir}}/{{name}}.h
-  just s2e-command new_plugin --force {{name}}
-  ln -f -s {{justdir}}/{{name}}.cpp {{plugins_dir}}/{{name}}.cpp
-  ln -f -s {{justdir}}/{{name}}.h {{plugins_dir}}/{{name}}.h
+  rm -f "{{plugins_dir}}/{{name}}.cpp"
+  rm -f "{{plugins_dir}}/{{name}}.h"
+  just s2e-command new_plugin --author-name \"{{binrec_authors}}\" --force \"{{name}}\"
+  ln -f -s "{{justdir}}/{{name}}.cpp" "{{plugins_dir}}/{{name}}.cpp"
+  ln -f -s "{{justdir}}/{{name}}.h" "{{plugins_dir}}/{{name}}.h"
 
 
 #  Adds the binrec-plugins to the s2e-plugins structure
@@ -118,23 +120,28 @@ s2e-insert-binrec-plugins:
 
   # TODO (hbrodin): Not very proud of this structure. Any way of cleaning it?
   rm -f {{plugins_dir}}/binrec_traceinfo/src/trace_info.cpp
-  just s2e-command new_plugin --force "binrec_traceinfo/src/trace_info"
-  ln -s -f {{justdir}}/binrec_traceinfo/src/trace_info.cpp {{plugins_dir}}/binrec_traceinfo/src/
-  rm -f {{plugins_dir}}/binrec_traceinfo/src/trace_info.h
-  ln -s -f {{justdir}}/binrec_traceinfo/include {{plugins_dir}}/binrec_traceinfo/
-  grep -F "s2e/Plugins/binrec_traceinfo/include/" {{plugins_cmake}} || \
-    echo "\ntarget_include_directories (s2eplugins PUBLIC \"s2e/Plugins/binrec_traceinfo/include/\")" >> {{plugins_cmake}}
+  just s2e-command new_plugin --author-name \"{{binrec_authors}}\" --force \"binrec_traceinfo/src/trace_info\"
+  ln -s -f "{{justdir}}/binrec_traceinfo/src/trace_info.cpp" "{{plugins_dir}}/binrec_traceinfo/src/"
+  rm -f "{{plugins_dir}}/binrec_traceinfo/src/trace_info.h"
+  ln -s -f "{{justdir}}/binrec_traceinfo/include" "{{plugins_dir}}/binrec_traceinfo/"
+  grep -F "s2e/Plugins/binrec_traceinfo/include/" "{{plugins_cmake}}" || \
+    echo "\ntarget_include_directories (s2eplugins PUBLIC \"s2e/Plugins/binrec_traceinfo/include/\")" >> "{{plugins_cmake}}"
 
-  ln -s -f {{justdir}}/binrec_plugins/util.h {{plugins_dir}}/binrec_plugins
-  ln -s -f {{justdir}}/binrec_plugins/ModuleSelector.h {{plugins_dir}}/binrec_plugins
+  ln -s -f "{{justdir}}/binrec_plugins/util.h" "{{plugins_dir}}/binrec_plugins"
+  ln -s -f "{{justdir}}/binrec_plugins/ModuleSelector.h" "{{plugins_dir}}/binrec_plugins"
 
 
 # Create a new analysis project
 new-project name binary symargs *args:
-  pipenv run python -m binrec.project new --bin {{binary}} --sym-args "{{symargs}}" {{name}} {{args}}
+  pipenv run python -m binrec.project new --bin "{{binary}}" --sym-args "{{symargs}}" "{{name}}" {{args}}
 
-run project-name:
-  pipenv run python -m binrec.project run {{project-name}}
+# Run an S2E analysis project. Override sample command line arguments by passing "--args ARGS ARGS"
+run project-name *args:
+  pipenv run python -m binrec.project run "$@"
+
+# Set an S2E analysis project command line arguments.
+set-args project-name *args:
+  pipenv run python -m binrec.project --verbose set-args "$@"
 
 # Format code
 format: format-black format-isort
@@ -225,11 +232,6 @@ erase-test-coverage:
 
 # BinRec Python API Commands
 
-# Merge cpatures within a single trace (ex. hello-1)
-merge-captures project trace_id:
-  pipenv run python -m binrec.merge --trace-id {{trace_id}}
-
-
 # TODO: These interfaces are for old S2E - we should remove them once we get them working after merge.
 #       They are kept here in case we need them as we perform the merge.
 # Recursively merge all captures and traces for a binary (ex. hello)
@@ -241,21 +243,21 @@ merge-captures project trace_id:
 #  pipenv run python -m binrec.lift {{binary}} --verbose
 
 # Recursively merge all captures and traces for a project (ex. hello)
-merge-traces project *trace_id:
-  pipenv run python -m binrec.merge --project-name {{project}} {{trace_id}}
+merge-traces project:
+  pipenv run python -m binrec.merge -vv "{{project}}"
 
 # Lift a recovered binary from a trace (ex. hello)
-lift-trace project *index:
-  pipenv run python -m binrec.lift {{project}} {{index}}
+lift-trace project:
+  pipenv run python -m binrec.lift -vv "{{project}}"
 
 list-projects:
   pipenv run python -m binrec.project list
 
 list-traces project:
-  pipenv run python -m binrec.project list-traces {{project}}
+  pipenv run python -m binrec.project list-traces "{{project}}"
 
 list-merged project:
-  pipenv run python -m binrec.project list-merged {{project}}
+  pipenv run python -m binrec.project list-merged "{{project}}"
 
 
 

@@ -13,7 +13,21 @@ __all__ = (
     "BINREC_SCRIPTS",
     "BINREC_LINK_LD",
     "BINREC_LIB",
+    "BINREC_PROJECTS",
+    "llvm_command",
 )
+
+LLVM_MAJOR_VERSION = 12
+
+
+def llvm_command(command_name: str) -> str:
+    """
+    A stub function to resolve an unversioned LLVM command to the correct command for
+    the system. For now, this function simply appends the major version of the
+    supported LLVM platform. In the future, this may resolve the LLVM command to a path
+    or support multiple LVVM versions.
+    """
+    return f"{command_name}-{LLVM_MAJOR_VERSION}"
 
 
 def _load_env() -> None:
@@ -55,3 +69,5 @@ BINREC_SCRIPTS = Path(os.environ["BINREC_SCRIPTS"]).absolute()
 BINREC_LINK_LD = Path(os.environ["BINREC_LINK_LD"]).absolute()
 #: The absolute path to the BinRec build library directory
 BINREC_LIB = Path(os.environ["BINREC_LIB"]).absolute()
+#: The aboslute path to the BinRec S2E projects directory
+BINREC_PROJECTS = Path(os.environ["BINREC_PROJECTS"]).absolute()

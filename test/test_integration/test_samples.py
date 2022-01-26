@@ -10,7 +10,7 @@ from unittest.mock import MagicMock
 from _pytest.python import Metafunc
 
 from binrec.env import BINREC_ROOT, BINREC_SCRIPTS
-from binrec.merge import recursive_merge_traces
+from binrec.merge import merge_traces
 from binrec import lift
 
 QEMU_DIR = BINREC_ROOT / "qemu"
