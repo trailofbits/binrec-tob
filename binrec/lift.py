@@ -197,7 +197,7 @@ def _lift_bitcode(trace_dir: Path) -> None:
     :param trace_dir: binrec binary trace directory
     """
     logger.debug(
-        "performing initially lifting of captured LLVM bitcode: %s", trace_dir.name
+        "performing initial lifting of captured LLVM bitcode: %s", trace_dir.name
     )
     try:
         binrec_lift.lift(
