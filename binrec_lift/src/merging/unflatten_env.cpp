@@ -47,19 +47,19 @@ auto UnflattenEnvPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAna
                 */
                 load = cast<LoadInst>(*gep->user_begin());
             } /*else if (auto *ptrtoint = dyn_cast<PtrToIntInst>(iuse)) {
-                errs() << "Ignore ptrtoint "; 
+                errs() << "Ignore ptrtoint ";
                 ptrtoint->print(errs());
                 continue;
             } */
-            else if (auto ld = dyn_cast<LoadInst>(iuse)) {
-                //load = cast<LoadInst>(iuse);
+            else if (auto ld = dyn_cast<LoadInst>(iuse))
+            {
+                // load = cast<LoadInst>(iuse);
                 load = ld;
             } else {
                 outs() << "Ignore use of env: ";
                 iuse->print(outs());
                 outs() << "\n";
                 continue;
-
             }
 
             for (User *juse : load->users()) {

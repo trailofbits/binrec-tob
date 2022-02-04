@@ -168,23 +168,20 @@ auto PcJumpsPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAnalyses
             // FPar: This loop is still in there, because I am not sure whether trace info will find
             // all rets.
             // NOTE (hbrodin): Essentially, this checks that if any of the successor blocks have a
-            //  different parent function, master_block must be a ret-block, that is a block from 
+            //  different parent function, master_block must be a ret-block, that is a block from
             // where execution returns to a parent function.
             for (BasicBlock *succ : successors) {
                 if (succ->getParent() != &f) {
-                    // TODO (hbrodin): Ignore this error. Seems to work. Needs investigation as to why
-                    // we are in this situation.
-                    // NOTE (hbrodin): This seems to be a problem related to plt section. 
-                    // During symbol resolution there are several jumps, ending in the same section.
-                    // Because of the jumps, not calls it looks like the plt block belongs to both
-                    // functions. 
-                    // plt.sec.__libc_start_main -> plt+ 0x20 -> plt
-                    // plt.sec.puts -> plt+ 0x10 -> plt
-                    // plt is a successor of both 
-                    // When checking successor of plt block in __libc_start_main jmp chain, a successor of
-                    // plt from the puts chain is found. But the plt block is not a ret-block, it contains
-                    // an additional jump.
-                    //assert(is_ret_block);
+                    // TODO (hbrodin): Ignore this error. Seems to work. Needs investigation as to
+                    // why we are in this situation. NOTE (hbrodin): This seems to be a problem
+                    // related to plt section. During symbol resolution there are several jumps,
+                    // ending in the same section. Because of the jumps, not calls it looks like the
+                    // plt block belongs to both functions. plt.sec.__libc_start_main -> plt+ 0x20
+                    // -> plt plt.sec.puts -> plt+ 0x10 -> plt plt is a successor of both When
+                    // checking successor of plt block in __libc_start_main jmp chain, a successor
+                    // of plt from the puts chain is found. But the plt block is not a ret-block, it
+                    // contains an additional jump.
+                    // assert(is_ret_block);
                     is_ret_block = true;
                     break;
                 }

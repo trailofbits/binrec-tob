@@ -5,11 +5,11 @@
 #include <istream>
 #include <map>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <ostream>
 #include <set>
 #include <unordered_map>
 #include <vector>
-#include <nlohmann/json.hpp>
 
 namespace binrec {
     struct MemoryAccess {

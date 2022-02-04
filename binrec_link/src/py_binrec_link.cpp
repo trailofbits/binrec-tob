@@ -1,8 +1,8 @@
 #include "binrec_link.hpp"
 #include "link_error.hpp"
 #include <llvm/Support/FileSystem.h>
-#include <llvm/Support/raw_ostream.h>
 #include <llvm/Support/ManagedStatic.h>
+#include <llvm/Support/raw_ostream.h>
 
 extern "C" {
 

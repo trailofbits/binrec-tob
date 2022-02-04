@@ -1,5 +1,5 @@
-#include "error.hpp"
 #include "fix_overlaps.hpp"
+#include "error.hpp"
 #include "meta_utils.hpp"
 #include "pass_utils.hpp"
 #include "pc_utils.hpp"
@@ -34,7 +34,7 @@ static auto find_merge_pairs(Function &wrapper) -> list<pair<BasicBlock *, Basic
     // merge them pairwise
     // block1: [startpc            endpc]
     // block2:     [startpc        endpc]
-    // block3:        [startpc     endpc] 
+    // block3:        [startpc     endpc]
     // merge_blocks_same_end_point will merge
     // block1, block2 and block2, block3
     for (auto it : bb_map) {
@@ -69,10 +69,10 @@ static auto find_merge_pairs(Function &wrapper) -> list<pair<BasicBlock *, Basic
 // Will transform merge pairs (block1, block2) and (block2, block3)
 // block1: [startpc            endpc]
 // block2:     [startpc        endpc]
-// block3:        [startpc     endpc] 
+// block3:        [startpc     endpc]
 // into
 // block1: [   ] jmp block2
-// block2:     [  ] jmp block3 
+// block2:     [  ] jmp block3
 // block3:        [                 ]
 static void merge_blocks_same_end_point(BasicBlock *a, BasicBlock *b)
 {
@@ -86,7 +86,8 @@ static void merge_blocks_same_end_point(BasicBlock *a, BasicBlock *b)
     // check whether it is the last store instruction
     Instruction *real_pivot = pivot->getNextNode();
     if (real_pivot->getOpcode() == Instruction::Store &&
-        real_pivot->getOperand(1)->getName() == "cc_op") {
+        real_pivot->getOperand(1)->getName() == "cc_op")
+    {
         DBG("realPivot's operand is " << real_pivot->getOperand(1)->getName());
         real_pivot = real_pivot->getNextNode();
     }

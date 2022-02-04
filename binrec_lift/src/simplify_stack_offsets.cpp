@@ -1,5 +1,5 @@
-#include "error.hpp"
 #include "simplify_stack_offsets.hpp"
+#include "error.hpp"
 #include "pass_utils.hpp"
 
 using namespace llvm;

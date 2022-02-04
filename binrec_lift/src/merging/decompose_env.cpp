@@ -1,6 +1,6 @@
 #include "decompose_env.hpp"
-#include "pass_utils.hpp"
 #include "ir/selectors.hpp"
+#include "pass_utils.hpp"
 #include <llvm/IR/DebugInfo.h>
 
 using namespace binrec;

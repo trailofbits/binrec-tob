@@ -31,6 +31,7 @@ install-dependencies:
     sudo apt-get install -y bison clang-12 cmake flex g++ g++-multilib gcc gcc-multilib git libglib2.0-dev liblua5.1-dev \
         libsigc++-2.0-dev lld-12 llvm-12-dev lua5.3 nasm nlohmann-json3-dev pkg-config python2 subversion net-tools curl \
         pipenv git-lfs doxygen graphviz \
+        clang-format-12 \
         python3.9-dev python3.9-venv # For s2e-env (and compatibility with Python 3.9 from Pipfile): http://s2e.systems/docs/s2e-env.html#id2
 
     git lfs install
@@ -156,9 +157,25 @@ format-black:
 format-isort:
   pipenv run isort binrec
 
+
+# Runs clang-format linting on C++ code
+format-clang:
+  just _format-clang-dir binrec_lift
+  just _format-clang-dir binrec_link
+  just _format-clang-dir binrec_plugins
+  just _format-clang-dir binrec_rt
+  just _format-clang-dir binrec_traceinfo
+  just _format-clang-dir binrec_tracemerge
+
+# Run clang-format linting recursively on a directory
+_format-clang-dir dirname:
+  find {{dirname}} -iname *.cpp -or -iname *.hpp -or -iname *.h | xargs clang-format-12 -Werror -i
+
 # Runs linting checks
-lint: lint-mypy lint-black lint-flake8 lint-isort
-  # TODO: Add C++ formatter and linter: clang-format -Werror --dry-run DIRNAME
+lint: lint-python lint-clang
+
+# Runs linting checks for Python code
+lint-python: lint-mypy lint-black lint-flake8 lint-isort
 
 # Runs Python static code checking with flake8
 lint-flake8:
@@ -175,6 +192,19 @@ lint-black:
 # Runs Python import sort order format check with isort
 lint-isort:
   pipenv run isort --check binrec
+
+# Runs linting checks for C++ code
+lint-clang:
+  just _lint-clang-dir binrec_lift
+  just _lint-clang-dir binrec_link
+  just _lint-clang-dir binrec_plugins
+  just _lint-clang-dir binrec_rt
+  just _lint-clang-dir binrec_traceinfo
+  just _lint-clang-dir binrec_tracemerge
+
+# Run clang-format linting recursively on a directory
+_lint-clang-dir dirname:
+  find {{dirname}} -iname *.cpp -or -iname *.hpp -or -iname *.h | xargs clang-format-12 -Werror --dry-run
 
 # Build all documentation
 build-docs: build-python-docs build-cpp-docs

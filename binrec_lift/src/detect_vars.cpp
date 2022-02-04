@@ -1,7 +1,7 @@
 #include "detect_vars.hpp"
+#include "error.hpp"
 #include "pass_utils.hpp"
 #include "section_utils.hpp"
-#include "error.hpp"
 
 using namespace llvm;
 
@@ -60,8 +60,9 @@ static auto detectSectionVars(Module &m, section_meta_t &s) -> bool
 
             for (auto it : sizes) {
                 if (overlap(it.first, it.second, index, size)) {
-                    LLVM_ERROR(error) << "overlapping globals in " << s.global->getName() << ": (" << it.first
-                           << ", " << it.second << ") and (" << index << ", " << size << ")";
+                    LLVM_ERROR(error)
+                        << "overlapping globals in " << s.global->getName() << ": (" << it.first
+                        << ", " << it.second << ") and (" << index << ", " << size << ")";
                     throw std::runtime_error{error};
                 }
             }

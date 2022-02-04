@@ -1,5 +1,5 @@
-#include "error.hpp"
 #include "replace_dynamic_symbols.hpp"
+#include "error.hpp"
 #include "pass_utils.hpp"
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/Object/ELFObjectFile.h>

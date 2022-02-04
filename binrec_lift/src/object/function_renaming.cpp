@@ -1,6 +1,6 @@
 #include "function_renaming.hpp"
-#include "ir/selectors.hpp"
 #include "error.hpp"
+#include "ir/selectors.hpp"
 
 using namespace binrec;
 using namespace llvm;

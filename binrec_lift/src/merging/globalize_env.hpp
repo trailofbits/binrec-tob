@@ -5,7 +5,7 @@
 
 namespace binrec {
     // Converts all references to the CPUX86State struct, either directly from the global
-    // env-variable or from usage of CPUX86State * as first argument to functions (i.e. how 
+    // env-variable or from usage of CPUX86State * as first argument to functions (i.e. how
     // translated blocks access it).
     // For each access, replace the access with access to a global variable representing the
     // CPUX86State field (split the struct into global variables for each field).

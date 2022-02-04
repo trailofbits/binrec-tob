@@ -30,30 +30,30 @@ namespace {
     };
 
 
-
     // NOTE (hbrodin):
-    // Previous implementation/versions of BinRec and S2E didn't instrument starting at the entrypoint
-    // in the updated S2E we do. Because of this the previous method for identifying "main" doesn't
-    // any more. Previously they could rely on multiple "entry-points", first being __libc_csu_init and
-    // then, the second time, main.
-    // Our updated approach looks like this:
-    // First block: _start, it has one call to get the eip, on return from that
-    // we enter a block with a call to __libc_start_main, wich later will call main
-    // the address of main is passed in register eax.
-    // Unfortunately, we don't have any symbols at this point. The ieda is instead to
+    // Previous implementation/versions of BinRec and S2E didn't instrument starting at the
+    // entrypoint in the updated S2E we do. Because of this the previous method for identifying
+    // "main" doesn't any more. Previously they could rely on multiple "entry-points", first being
+    // __libc_csu_init and then, the second time, main. Our updated approach looks like this: First
+    // block: _start, it has one call to get the eip, on return from that we enter a block with a
+    // call to __libc_start_main, wich later will call main the address of main is passed in
+    // register eax. Unfortunately, we don't have any symbols at this point. The ieda is instead to
     // walk the successors to find the third block (having the call to __libc_start_main)
     // and locate the last store to eax, this "should" be the address of main.
-    uint32_t locate_main_addr(Function *entrypoint, Module &m) {
+    uint32_t locate_main_addr(Function *entrypoint, Module &m)
+    {
 
-        auto eax = m.getGlobalVariable("R_EAX", true); // true is AllowInternalLinkage since registers are made internal
+        auto eax = m.getGlobalVariable(
+            "R_EAX",
+            true); // true is AllowInternalLinkage since registers are made internal
         if (!eax) {
             LLVM_ERROR(error) << "Failed to get a reference to R_EAX";
             throw std::runtime_error{error};
         }
 
-        std::vector<BasicBlock*> successors;
+        std::vector<BasicBlock *> successors;
         auto block = &entrypoint->getEntryBlock();
-        for (size_t i=0;i<2;i++) {
+        for (size_t i = 0; i < 2; i++) {
             if (!getBlockSuccs(block, successors)) {
                 LLVM_ERROR(error) << "Failed to find successors for block:\n" << *block;
                 throw std::runtime_error{error};
@@ -83,7 +83,8 @@ namespace {
     }
 
 
-    Function *get_main(Function *entrypoint, Module &m) {
+    Function *get_main(Function *entrypoint, Module &m)
+    {
         auto mainpc = locate_main_addr(entrypoint, m);
         if (mainpc == 0) {
             LLVM_ERROR(error) << "Failed to located main via entrypoint";

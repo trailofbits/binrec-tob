@@ -1,8 +1,8 @@
 #include "compiler_command.hpp"
 #include "link_error.hpp"
+#include <cstdlib>
 #include <llvm/Support/Program.h>
 #include <llvm/Support/raw_ostream.h>
-#include <cstdlib>
 
 using namespace binrec;
 using namespace llvm;
@@ -12,12 +12,11 @@ using namespace std;
 static const char *ENV_GCC_LIB = getenv("GCC_LIB");
 static const string GCC_LIB = ENV_GCC_LIB ? ENV_GCC_LIB : "";
 
-CompilerCommand::CompilerCommand(CompilerCommandMode mode) : mode{mode} {
-}
+CompilerCommand::CompilerCommand(CompilerCommandMode mode) : mode{mode} {}
 
 auto CompilerCommand::run() -> error_code
 {
-    if(!GCC_LIB.length()) {
+    if (!GCC_LIB.length()) {
         errs() << "error: GCC_LIB environment variable not set\n";
         return LinkError::CC_Err;
     }
