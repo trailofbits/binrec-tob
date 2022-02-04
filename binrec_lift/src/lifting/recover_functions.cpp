@@ -1,3 +1,4 @@
+#include "error.hpp"
 #include "recover_functions.hpp"
 #include "analysis/trace_info_analysis.hpp"
 #include "meta_utils.hpp"
@@ -46,21 +47,21 @@ namespace {
 
         auto eax = m.getGlobalVariable("R_EAX", true); // true is AllowInternalLinkage since registers are made internal
         if (!eax) {
-            errs() << "Failed to get a reference to R_EAX\n";
-            exit(1);
+            LLVM_ERROR(error) << "Failed to get a reference to R_EAX";
+            throw std::runtime_error{error};
         }
 
         std::vector<BasicBlock*> successors;
         auto block = &entrypoint->getEntryBlock();
         for (size_t i=0;i<2;i++) {
             if (!getBlockSuccs(block, successors)) {
-                errs() << "Failed to find successors for block:\n" << *block;
-                exit(1);
+                LLVM_ERROR(error) << "Failed to find successors for block:\n" << *block;
+                throw std::runtime_error{error};
             }
 
             if (successors.size() != 1) {
-                errs() << "Expected a single successor to block, got " << successors.size() << "\n";
-                exit(1);
+                LLVM_ERROR(error) << "Expected a single successor to block, got " << successors.size();
+                throw std::runtime_error{error};
             }
             block = successors[0];
             successors.clear();
@@ -85,8 +86,8 @@ namespace {
     Function *get_main(Function *entrypoint, Module &m) {
         auto mainpc = locate_main_addr(entrypoint, m);
         if (mainpc == 0) {
-            errs() << "Failed to located main via entrypoint\n";
-            exit(1);
+            LLVM_ERROR(error) << "Failed to located main via entrypoint";
+            throw std::runtime_error{error};
         }
 
         // Return the Func_xxxxxx

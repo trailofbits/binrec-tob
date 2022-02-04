@@ -1,8 +1,12 @@
 
+import subprocess
 from unittest.mock import patch, mock_open, call
+
+import pytest
 
 from binrec import project
 from binrec.env import BINREC_PROJECTS
+from binrec.errors import BinRecError
 from helpers.mock_path import MockPath
 
 
@@ -76,3 +80,68 @@ class TestProject:
                 'execute "${TARGET_PATH}" \'hello world\' goodbye\n'
             ]
         )
+
+    @patch.object(project.subprocess, "check_call")
+    def test_run_project(self, mock_check_call):
+        project.run_project("asdf")
+        mock_check_call.assert_called_once_with(["s2e", "run", "--no-tui", "asdf"])
+
+    @patch.object(project.subprocess, "check_call")
+    @patch.object(project, "set_project_args")
+    def test_run_project_args(self, mock_set_args, mock_check_call):
+        project.run_project("asdf", ["qwer"])
+        mock_set_args.assert_called_once_with("asdf", ["qwer"])
+
+    @patch.object(project.subprocess, "check_call")
+    def test_run_project_error(self, mock_check_call):
+        mock_check_call.side_effect = subprocess.CalledProcessError(1, "zxcv")
+        with pytest.raises(BinRecError):
+            project.run_project("asdf")
+
+    @patch.object(project, "project_dir")
+    @patch.object(project.subprocess, "check_call")
+    @patch.object(project, "open", new_callable=mock_open)
+    def test_new_project(self, mock_file, mock_check_call, mock_project_dir):
+        project_dir = mock_project_dir.return_value = MockPath("/asdf", exists=False)
+        assert project.new_project("asdf", "/binary") is project_dir
+        mock_check_call.assert_called_once_with(["s2e", "new_project", "--name", "asdf", "/binary"])
+        mock_file.assert_called_once_with(project_dir / "s2e-config.lua", "a")
+        handle = mock_file()
+        handle.write.assert_called_once_with(f"""
+add_plugin(\"ELFSelector\")
+add_plugin(\"FunctionMonitor\")
+add_plugin(\"FunctionLog\")
+pluginsConfig.FunctionLog = {{
+    logFile = 'function-log.txt'
+}}
+add_plugin(\"ExportELF\")
+pluginsConfig.ExportELF = {{
+    baseDirs = {{
+        "{project_dir}"
+    }},
+    exportInterval = 1000 -- export every 1000 basic blocks
+}}
+"""
+        )
+
+    @patch.object(project, "project_dir")
+    @patch.object(project.subprocess, "check_call")
+    @patch.object(project, "open", new_callable=mock_open)
+    def test_new_project_args(self, mock_file, mock_check_call, mock_project_dir):
+        mock_project_dir.return_value = MockPath("/asdf", exists=False)
+        project.new_project("asdf", "/binary", "1 2", ["one", "two"])
+        mock_check_call.assert_called_once_with(["s2e", "new_project", "--name", "asdf", "--sym-args", "1 2", "/binary", "one", "two"])
+
+    @patch.object(project, "project_dir")
+    @patch.object(project.subprocess, "check_call")
+    def test_new_project_error(self, mock_check_call, mock_project_dir):
+        mock_project_dir.return_value = MockPath("/asdf", exists=False)
+        mock_check_call.side_effect = subprocess.CalledProcessError(1, "asdf")
+        with pytest.raises(BinRecError):
+            project.new_project("asdf", "/binary")
+
+    @patch.object(project, "project_dir")
+    def test_new_project_exists(self, mock_project_dir):
+        mock_project_dir.return_value = MockPath("/asdf", is_dir=True)
+        with pytest.raises(FileExistsError):
+            project.new_project("asdf", "/binary")

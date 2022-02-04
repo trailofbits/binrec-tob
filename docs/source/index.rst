@@ -10,6 +10,7 @@ Welcome to BinRec's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   projects
    merging
    lifting
    env
