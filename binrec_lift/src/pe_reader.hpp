@@ -3,8 +3,8 @@
 
 #include <fstream>
 #include <llvm/Object/COFF.h>
-#include <vector>
 #include <optional>
+#include <vector>
 
 struct Section {
     std::string name;

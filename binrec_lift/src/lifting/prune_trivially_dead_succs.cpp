@@ -1,5 +1,5 @@
-#include "error.hpp"
 #include "prune_trivially_dead_succs.hpp"
+#include "error.hpp"
 #include "meta_utils.hpp"
 #include "pass_utils.hpp"
 #include <llvm/IR/CFG.h>
@@ -96,8 +96,7 @@ auto PruneTriviallyDeadSuccsPass::run(Module &m, ModuleAnalysisManager &am) -> P
 
                 if (!only_succ) {
                     LLVM_ERROR(error)
-                        << "block "
-                        << bb.getName() << " stores PC " << last_stored_pc
+                        << "block " << bb.getName() << " stores PC " << last_stored_pc
                         << " but does not have BB_" << utohexstr(last_stored_pc)
                         << " in its successor list. Did you remember to disable multithreading in "
                            "qemu (-smp 1)";

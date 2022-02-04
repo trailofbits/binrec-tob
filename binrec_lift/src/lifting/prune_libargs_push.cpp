@@ -1,5 +1,5 @@
-#include "error.hpp"
 #include "prune_libargs_push.hpp"
+#include "error.hpp"
 #include "pass_utils.hpp"
 #include "pc_utils.hpp"
 #include <llvm/IR/CFG.h>
@@ -86,7 +86,7 @@ static auto pruneArgs(Function &stub) -> unsigned
 
         if (argLoads.size() != argSizes.size()) {
             LLVM_ERROR(error) << "could not find all argument loads (" << argLoads.size() << " / "
-                   << argSizes.size() << "):";
+                              << argSizes.size() << "):";
             throw std::runtime_error{error};
         }
 
@@ -122,10 +122,9 @@ static auto pruneArgs(Function &stub) -> unsigned
 
         for (Instruction *push : pushInsts) {
             if (CallInst *otherStore = findMemStore(push)) {
-                LLVM_ERROR(error) <<
-                    "multiple memory stores where one push was "
-                    "expected:"
-                    << *otherStore;
+                LLVM_ERROR(error) << "multiple memory stores where one push was "
+                                     "expected:"
+                                  << *otherStore;
                 throw std::runtime_error{error};
             }
 
@@ -133,9 +132,8 @@ static auto pruneArgs(Function &stub) -> unsigned
             const unsigned storedSize = byteWidth(*push->getOperand(1));
 
             if (storedSize != expectedSize) {
-                LLVM_ERROR(error) <<
-                    "expected arg push of " << expectedSize << " bytes, got " << storedSize
-                                            << " bytes:" << *push;
+                LLVM_ERROR(error) << "expected arg push of " << expectedSize << " bytes, got "
+                                  << storedSize << " bytes:" << *push;
                 throw std::runtime_error{error};
             }
 

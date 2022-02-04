@@ -1,10 +1,10 @@
 #include "remove_s2e_helpers.hpp"
 #include "ir/selectors.hpp"
 #include "pass_utils.hpp"
+#include <llvm/ADT/SetVector.h>
 #include <llvm/IR/Operator.h>
 #include <llvm/IR/PassManager.h>
 #include <llvm/IR/Verifier.h>
-#include <llvm/ADT/SetVector.h>
 
 using namespace binrec;
 using namespace llvm;

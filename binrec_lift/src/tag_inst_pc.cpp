@@ -1,15 +1,16 @@
-#include <algorithm>
 #include "tag_inst_pc.hpp"
+#include "ir/selectors.hpp"
 #include "meta_utils.hpp"
 #include "pass_utils.hpp"
-#include "ir/selectors.hpp"
+#include <algorithm>
 
 using namespace binrec;
 using namespace llvm;
 
 
 namespace {
-    void tag_pc_in_function(Function &f, GlobalVariable *pc, GlobalVariable *ret, MDNode *md) {
+    void tag_pc_in_function(Function &f, GlobalVariable *pc, GlobalVariable *ret, MDNode *md)
+    {
         // We are only interested in the first blocks (before conditional branches). Other blocks
         // will be handled separately.
         auto bb = &f.getEntryBlock();
@@ -34,7 +35,8 @@ namespace {
                         unsigned pc = ci->getZExtValue();
                         if (MDNode *mdlast = binrec::getBlockMeta(&f, "lastpc")) {
                             unsigned curlastpc =
-                                cast<ConstantInt>(dyn_cast<ValueAsMetadata>(mdlast->getOperand(0))->getValue())
+                                cast<ConstantInt>(
+                                    dyn_cast<ValueAsMetadata>(mdlast->getOperand(0))->getValue())
                                     ->getZExtValue();
                             if (curlastpc >= pc)
                                 continue;
@@ -55,7 +57,8 @@ namespace {
         }
     }
 
-    void tag_pc(Module &m) {
+    void tag_pc(Module &m)
+    {
         GlobalVariable *pc = m.getNamedGlobal("PC");
         // Used for for calls
         GlobalVariable *ret = m.getNamedGlobal("return_address");
@@ -64,11 +67,11 @@ namespace {
 
         for (auto &f : m) {
             if (!binrec::is_lifted_function(f))
-               continue;
+                continue;
             tag_pc_in_function(f, pc, ret, md);
         }
     }
-}
+} // namespace
 
 // NOLINTNEXTLINE
 auto TagInstPcPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAnalyses

@@ -1,38 +1,37 @@
-#include <limits.h>
-#include <stdlib.h>
-#include <cassert>
-
-#include <s2e/S2E.h>
-#include <s2e/S2EExecutor.h>
-#include <s2e/ConfigFile.h>
-#include <s2e/Utils.h>
-#include <s2e/Plugins/WindowsInterceptor/WindowsImage.h>
-
-#include <llvm/IR/Function.h>
-#include <llvm/IR/Metadata.h>
-
 #include "ExportPE.h"
 #include "ModuleSelector.h"
 #include "PELibCallMonitor.h"
 #include "util.h"
+#include <cassert>
+#include <limits.h>
+#include <llvm/IR/Function.h>
+#include <llvm/IR/Metadata.h>
+#include <s2e/ConfigFile.h>
+#include <s2e/Plugins/WindowsInterceptor/WindowsImage.h>
+#include <s2e/S2E.h>
+#include <s2e/S2EExecutor.h>
+#include <s2e/Utils.h>
+#include <stdlib.h>
 
 namespace s2e {
-namespace plugins {
+    namespace plugins {
 
-using namespace llvm;
+        using namespace llvm;
 
-S2E_DEFINE_PLUGIN(ExportPE,
-                  "Log addresses of executed basic blocks",
-                  "ExportPE", "ModuleSelector", "PELibCallMonitor");
+        S2E_DEFINE_PLUGIN(
+            ExportPE,
+            "Log addresses of executed basic blocks",
+            "ExportPE",
+            "ModuleSelector",
+            "PELibCallMonitor");
 
 #ifdef TARGET_I386
 
-void ExportPE::initialize()
-{
-    m_baseDirs = s2e()->getConfig()->getStringList(getConfigKey() + ".baseDirs");
+        void ExportPE::initialize()
+        {
+            m_baseDirs = s2e()->getConfig()->getStringList(getConfigKey() + ".baseDirs");
 
-    m_exportInterval =
-        s2e()->getConfig()->getInt(getConfigKey() + ".exportInterval", 0);
+            m_exportInterval = s2e()->getConfig()->getInt(getConfigKey() + ".exportInterval", 0);
 
 #if 0
     // print configuration for CPUArchState struct offsets
@@ -54,96 +53,95 @@ void ExportPE::initialize()
     errs() << "#define OFFSET_MFLAGS         " << CPU_OFFSET(mflags) << '\n';
 #endif
 
-    m_selector = (ModuleSelector*)(s2e()->getPlugin("ModuleSelector"));
-    PELibCallMonitor *libCallMonitor =
-        (PELibCallMonitor*)(s2e()->getPlugin("PELibCallMonitor"));
+            m_selector = (ModuleSelector *)(s2e()->getPlugin("ModuleSelector"));
+            PELibCallMonitor *libCallMonitor =
+                (PELibCallMonitor *)(s2e()->getPlugin("PELibCallMonitor"));
 
-    m_selector->onModuleLoad.connect(
-            sigc::mem_fun(*this, &ExportPE::slotModuleLoad));
-    m_selector->onModuleExecute.connect(
-            sigc::mem_fun(*this, &ExportPE::slotModuleExecute));
-    libCallMonitor->onLibCall.connect(
-            sigc::mem_fun(*this, &ExportPE::slotLibCall));
+            m_selector->onModuleLoad.connect(sigc::mem_fun(*this, &ExportPE::slotModuleLoad));
+            m_selector->onModuleExecute.connect(sigc::mem_fun(*this, &ExportPE::slotModuleExecute));
+            libCallMonitor->onLibCall.connect(sigc::mem_fun(*this, &ExportPE::slotLibCall));
 
-    s2e()->getCorePlugin()->onStateFork.connect(
-            sigc::mem_fun(*this, &ExportPE::slotStateFork));
+            s2e()->getCorePlugin()->onStateFork.connect(
+                sigc::mem_fun(*this, &ExportPE::slotStateFork));
 
-    s2e()->getDebugStream() << "[ExportPE] Plugin initialized\n";
-}
+            s2e()->getDebugStream() << "[ExportPE] Plugin initialized\n";
+        }
 
-ExportPE::~ExportPE()
-{
-}
+        ExportPE::~ExportPE() {}
 
-void ExportPE::slotModuleLoad(S2EExecutionState *state,
-                              const ModuleDescriptor &module)
-{
-    initializeModule(module, m_baseDirs);
+        void ExportPE::slotModuleLoad(S2EExecutionState *state, const ModuleDescriptor &module)
+        {
+            initializeModule(module, m_baseDirs);
 
-    bool success = loadSections(state);
-    assert(success);
-}
+            bool success = loadSections(state);
+            assert(success);
+        }
 
-bool ExportPE::loadSections(S2EExecutionState *state)
-{
-    WindowsImage img(state, m_moduleDesc.LoadBase);
-    ModuleSections sections = img.GetSections(state);
+        bool ExportPE::loadSections(S2EExecutionState *state)
+        {
+            WindowsImage img(state, m_moduleDesc.LoadBase);
+            ModuleSections sections = img.GetSections(state);
 
-    LLVMContext &ctx = m_module->getContext();
-    NamedMDNode *meta = m_module->getOrInsertNamedMetadata("sections");
+            LLVMContext &ctx = m_module->getContext();
+            NamedMDNode *meta = m_module->getOrInsertNamedMetadata("sections");
 
-    foreach2(it, sections.begin(), sections.end()) {
-        const SectionDescriptor &section = *it;
-        Value *operands[] = {
-            MDString::get(ctx, section.name),
-            ConstantInt::get(Type::getInt32Ty(ctx), section.loadBase),
-            ConstantInt::get(Type::getInt32Ty(ctx), section.size),
-            ConstantInt::get(Type::getInt32Ty(ctx), 0), // file offset
-            NULL                                        // global
-        };
-        ArrayRef<Value*> opRef(operands);
-        meta->addOperand(MDNode::get(ctx, opRef));
-    }
+            foreach2(it, sections.begin(), sections.end())
+            {
+                const SectionDescriptor &section = *it;
+                Value *operands[] = {
+                    MDString::get(ctx, section.name),
+                    ConstantInt::get(Type::getInt32Ty(ctx), section.loadBase),
+                    ConstantInt::get(Type::getInt32Ty(ctx), section.size),
+                    ConstantInt::get(Type::getInt32Ty(ctx), 0), // file offset
+                    NULL                                        // global
+                };
+                ArrayRef<Value *> opRef(operands);
+                meta->addOperand(MDNode::get(ctx, opRef));
+            }
 
-    return true;
-}
+            return true;
+        }
 
-void ExportPE::slotModuleExecute(S2EExecutionState *state, uint64_t pc)
-{
-    DECLARE_PLUGINSTATE(ExportPEState, state);
-    exportBB(state, pc);
-    addSuccessor(plgState->prevPc, pc);
-    plgState->prevPc = pc;
-}
+        void ExportPE::slotModuleExecute(S2EExecutionState *state, uint64_t pc)
+        {
+            DECLARE_PLUGINSTATE(ExportPEState, state);
+            exportBB(state, pc);
+            addSuccessor(plgState->prevPc, pc);
+            plgState->prevPc = pc;
+        }
 
-void ExportPE::slotLibCall(S2EExecutionState *state,
-        const ModuleDescriptor &lib, const std::string &routine,
-        uint64_t pc, PELibCallMonitor::ReturnSignal &onReturn)
-{
-    LLVMContext &ctx = m_module->getContext();
-    MDNode *md = MDNode::get(ctx, MDString::get(ctx, routine));
-    getMetadataInst(pc)->setMetadata("extern_symbol", md);
-}
+        void ExportPE::slotLibCall(
+            S2EExecutionState *state,
+            const ModuleDescriptor &lib,
+            const std::string &routine,
+            uint64_t pc,
+            PELibCallMonitor::ReturnSignal &onReturn)
+        {
+            LLVMContext &ctx = m_module->getContext();
+            MDNode *md = MDNode::get(ctx, MDString::get(ctx, routine));
+            getMetadataInst(pc)->setMetadata("extern_symbol", md);
+        }
 
-void ExportPE::slotStateFork(S2EExecutionState *state,
-        const std::vector<S2EExecutionState*> &newStates,
-        const std::vector<klee::ref<klee::Expr> > &newCondition)
-{
-    stopRegeneratingBlocks();
-}
+        void ExportPE::slotStateFork(
+            S2EExecutionState *state,
+            const std::vector<S2EExecutionState *> &newStates,
+            const std::vector<klee::ref<klee::Expr>> &newCondition)
+        {
+            stopRegeneratingBlocks();
+        }
 
 #else
 
-void ExportPE::initialize()
-{
-    s2e()->getInfoStream() << "[ExportPE] This plugin is only suited for i386\n";
-}
+        void ExportPE::initialize()
+        {
+            s2e()->getInfoStream() << "[ExportPE] This plugin is only suited for i386\n";
+        }
 
 #endif
 
-ExportPEState::ExportPEState() : prevPc(0) {}
+        ExportPEState::ExportPEState() : prevPc(0) {}
 
-ExportPEState::~ExportPEState() {}
+        ExportPEState::~ExportPEState() {}
 
-} // namespace plugins
+    } // namespace plugins
 } // namespace s2e
