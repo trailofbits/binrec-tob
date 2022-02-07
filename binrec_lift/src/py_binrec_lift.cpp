@@ -5,6 +5,7 @@
 //#include <llvm/ADT/StringMap.h>
 #include "binrec_lift.hpp"
 #include "lift_context.hpp"
+#include "pass_utils.hpp"
 #include <llvm/Analysis/AliasAnalysis.h>
 
 
@@ -20,6 +21,9 @@ static void set_memssa_check_limit(int limit)
     llvm::StringMap<llvm::cl::Option *> &opts = llvm::cl::getRegisteredOptions();
     auto option = (llvm::cl::opt<unsigned> *)opts["memssa-check-limit"];
     option->setValue(limit);
+
+    auto log_opt = (llvm::cl::opt<logging::Level> *)opts["loglevel"];
+    log_opt->setValue(logging::DEBUG);
 }
 
 /**
@@ -30,6 +34,9 @@ static void reset_llvm_options()
     llvm::StringMap<llvm::cl::Option *> &opts = llvm::cl::getRegisteredOptions();
     auto option = (llvm::cl::opt<unsigned> *)opts["memssa-check-limit"];
     option->setValue(option->getDefault().getValue());
+
+    auto log_opt = (llvm::cl::opt<logging::Level> *)opts["loglevel"];
+    log_opt->setValue(logging::INFO);
 }
 
 /**
