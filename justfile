@@ -134,7 +134,8 @@ s2e-insert-binrec-plugins:
 
 # Create a new analysis project
 new-project name binary symargs *args:
-  pipenv run python -m binrec.project new --bin "{{binary}}" --sym-args "{{symargs}}" "{{name}}" {{args}}
+  pipenv run python -m binrec.project new "{{name}}" "{{binary}}" "{{symargs}}" {{args}}
+
 
 # Run an S2E analysis project. Override sample command line arguments by passing "--args ARGS ARGS"
 run project-name *args:
@@ -144,9 +145,11 @@ run project-name *args:
 set-args project-name *args:
   pipenv run python -m binrec.project --verbose set-args "$@"
 
-# Format code
-format: format-black format-isort
-  # TODO: Eventually format C++ code: clang-format -i DIRNAME
+# Format all code
+format: format-python format-clang
+
+# Format Python Code
+format-python: format-black format-isort
 
 # Format Python code with black
 format-black:
@@ -155,7 +158,6 @@ format-black:
 # Format Python import order with isort
 format-isort:
   pipenv run isort binrec
-
 
 # Runs clang-format linting on C++ code
 format-clang:
