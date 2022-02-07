@@ -61,6 +61,7 @@ typedef union {
     uint32_t _l[2];
     float32 _s[2];
     uint64_t q;
+    double _d;
 } __attribute__((aligned(8))) MMXReg;
 
 typedef struct {

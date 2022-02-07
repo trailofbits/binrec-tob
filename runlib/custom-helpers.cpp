@@ -192,7 +192,15 @@ void __attribute__((always_inline)) helper_extern_stub()
 // FIXME: pass float in argument
 void __attribute__((always_inline)) virtualize_return_float()
 {
+    // printf(">>> virtualize_return_float: (%f) <<<\n", 0.0);
     asm("fstpt %0" : "=m"(fpregs[fpstt].d)::);
+    fptags[fpstt] = 0;
+}
+
+// FIXME: pass float in argument
+void __attribute__((always_inline)) virtualize_return_double(double ret)
+{
+    fpregs[fpstt].mmx._d = ret;
     fptags[fpstt] = 0;
 }
 
@@ -217,6 +225,7 @@ void helper_break()
 
 uint64_t __attribute__((always_inline)) ldq_data(uint32_t ptr)
 {
+    printf(">>> ldq_data <<<\n");
     return helper_ldq_mmu(nullptr, ptr, 0, nullptr);
 }
 
