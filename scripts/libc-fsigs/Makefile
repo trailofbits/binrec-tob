@@ -1,3 +1,7 @@
+# Makefile for running helper scripts to generate argsizes file used in runlib component.
+# Will be needed to generate libc function signature information for different word sizes 
+# and perhaps different architectures.
+
 LIBC := /lib/i386-linux-gnu/libc.so.6
 
 all: gettypes argsizes

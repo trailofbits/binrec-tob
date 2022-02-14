@@ -264,16 +264,6 @@ erase-test-coverage:
 
 # BinRec Python API Commands
 
-# TODO: These interfaces are for old S2E - we should remove them once we get them working after merge.
-#       They are kept here in case we need them as we perform the merge.
-# Recursively merge all captures and traces for a binary (ex. hello)
-#merge-traces binary:
-#  pipenv run python -m binrec.merge --binary {{binary}} --verbose
-
-# Lift a recovered binary from a trace (ex. hello)
-#lift-trace binary:
-#  pipenv run python -m binrec.lift {{binary}} --verbose
-
 # Recursively merge all captures and traces for a project (ex. hello)
 merge-traces project:
   pipenv run python -m binrec.merge -vv "{{project}}"

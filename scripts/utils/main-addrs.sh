@@ -1,3 +1,5 @@
+# Helper Script to print the main entry and exit points for an input binary.
+
 #!/usr/bin/env bash
 fn() {
     d=`objdump -d "${@:2}"`

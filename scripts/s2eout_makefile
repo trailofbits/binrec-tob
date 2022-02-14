@@ -1,3 +1,7 @@
+# Makefile with handy commands for working with S2E outputs.
+# In the original this file was linked symbolically from 
+# each s2e-out-* directory.
+
 # this file must be used from an S2E output directory
 LLC := llc-12
 DIS := llvm-dis-12
@@ -37,16 +41,19 @@ symbols: binary
 	objdump -d $< | sed 's/^\([0-9a-f]\+\) <\(.\+\)@plt>:$$/\1 \2/;t;d' > $@
 
 main-addrs: binary
-	bash ${S2EDIR}/scripts/main-addrs.sh $^ > $@
+	bash ${S2EDIR}/scripts/utils/main-addrs.sh $^ > $@
 
 #relocs: binary
 #	readelf -r $< | sed -r 's/(.+) .+ R_386_COPY .+ ([^ ]+)/\1 \2/;t;d' > $@
 
 coverage: ExecutionTracer.dat
-	bash ${S2EDIR}/scripts/coverage.sh $(@D)
+	bash ${S2EDIR}/scripts/utils/coverage.sh $(@D)
 
-addrlog.txt: addrlog.dat
-	python ${S2EDIR}/cfg/show.py 2>$@ >/dev/null < $<
+# This recipe refers to files not created by s2e in the out directories. Perhaps they are created for symbolic or concolic inputs.
+# In either event this looks to support some old and uneeded CFG visualization code. Removing this. If we need it later its in the 
+# git history. (mdbrown)
+#addrlog.txt: addrlog.dat
+#	python ${S2EDIR}/cfg/show.py 2>$@ >/dev/null < $<
 
 testcases-uniq.txt: testcases.txt
 	sort $< | uniq - $@
