@@ -61,7 +61,6 @@ typedef union {
     uint32_t _l[2];
     float32 _s[2];
     uint64_t q;
-    double _d;
 } __attribute__((aligned(8))) MMXReg;
 
 typedef struct {
@@ -78,14 +77,19 @@ typedef union {
 } FPReg;
 
 typedef uint8_t flag;
+
 typedef struct float_status {
     signed char float_detect_tininess;
     signed char float_rounding_mode;
-    signed char float_exception_flags;
+    uint8_t     float_exception_flags;
     signed char floatx80_rounding_precision;
+    /* should denormalised results go to zero and set the inexact flag? */
     flag flush_to_zero;
+    /* should denormalised inputs go to zero and set the input_denormal flag? */
     flag flush_inputs_to_zero;
     flag default_nan_mode;
+    /* not always used -- see snan_bit_is_one() in softfloat-specialize.h */
+    flag snan_bit_is_one;
 } float_status;
 
 extern float_status fp_status;
