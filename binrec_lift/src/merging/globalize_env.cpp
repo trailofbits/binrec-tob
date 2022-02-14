@@ -111,7 +111,8 @@ namespace binrec {
     // NOLINTNEXTLINE
     auto GlobalizeEnvPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAnalyses
     {
-
+        // TODO: this appears to not be working for the env->fpregs field. custom-helpers.cpp
+        // has a different address of fpregs than the helper functions do.
         GlobalVariable *env = m.getNamedGlobal("env");
         failUnless(env != nullptr, "Missing global env pointer");
 
