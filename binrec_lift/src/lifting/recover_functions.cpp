@@ -1,5 +1,6 @@
 #include "recover_functions.hpp"
 #include "analysis/trace_info_analysis.hpp"
+#include "error.hpp"
 #include "meta_utils.hpp"
 #include "pass_utils.hpp"
 #include "pc_utils.hpp"
@@ -46,21 +47,22 @@ namespace {
             "R_EAX",
             true); // true is AllowInternalLinkage since registers are made internal
         if (!eax) {
-            errs() << "Failed to get a reference to R_EAX\n";
-            exit(1);
+            LLVM_ERROR(error) << "Failed to get a reference to R_EAX";
+            throw std::runtime_error{error};
         }
 
         std::vector<BasicBlock *> successors;
         auto block = &entrypoint->getEntryBlock();
         for (size_t i = 0; i < 2; i++) {
             if (!getBlockSuccs(block, successors)) {
-                errs() << "Failed to find successors for block:\n" << *block;
-                exit(1);
+                LLVM_ERROR(error) << "Failed to find successors for block:\n" << *block;
+                throw std::runtime_error{error};
             }
 
             if (successors.size() != 1) {
-                errs() << "Expected a single successor to block, got " << successors.size() << "\n";
-                exit(1);
+                LLVM_ERROR(error) << "Expected a single successor to block, got "
+                                  << successors.size();
+                throw std::runtime_error{error};
             }
             block = successors[0];
             successors.clear();
@@ -86,8 +88,8 @@ namespace {
     {
         auto mainpc = locate_main_addr(entrypoint, m);
         if (mainpc == 0) {
-            errs() << "Failed to located main via entrypoint\n";
-            exit(1);
+            LLVM_ERROR(error) << "Failed to located main via entrypoint";
+            throw std::runtime_error{error};
         }
 
         // Return the Func_xxxxxx
@@ -348,6 +350,7 @@ auto RecoverFunctionsPass::run(Module &m, ModuleAnalysisManager &am) -> Preserve
 
     unordered_map<Function *, DenseSet<Function *>> tb_map = fl.get_tbs_by_function_entry(m);
     multimap<Function *, BasicBlock *> tb_to_bb;
+    vector<pair<Function *, Function *>> merged_functions;
 
     // Handle parent information for BBs which are reached through tail calls
     // handle_info_for_tail_calls(tb_map, ti, fl);
@@ -357,6 +360,7 @@ auto RecoverFunctionsPass::run(Module &m, ModuleAnalysisManager &am) -> Preserve
             FunctionType::get(Type::getVoidTy(context), false),
             GlobalValue::InternalLinkage);
         m.getFunctionList().push_back(merged_function);
+        merged_functions.push_back(make_pair(merged_function, tbs.first));
 
         BasicBlock *entry = BasicBlock::Create(context, "", merged_function);
 
@@ -372,6 +376,14 @@ auto RecoverFunctionsPass::run(Module &m, ModuleAnalysisManager &am) -> Preserve
                 bb = BasicBlock::Create(context, bb_name, merged_function);
             }
 
+            if (bb_name == "BB") {
+                WARNING(
+                    "potentially invalid basic block for function "
+                    << (void *)tb << ". See issue #78, "
+                    << "https://github.com/trailofbits/binrec-prerelease/issues/78, "
+                    << "for more information.");
+            }
+
             Type *arg_type = tb->getArg(0)->getType();
             Value *null_arg = ConstantPointerNull::get(cast<PointerType>(arg_type));
             CallInst *inlining_call = CallInst::Create(tb, null_arg, "", bb);
@@ -385,8 +397,19 @@ auto RecoverFunctionsPass::run(Module &m, ModuleAnalysisManager &am) -> Preserve
 
             tb_to_bb.emplace(tb, bb);
         }
+    }
 
-        merged_function->takeName(tbs.first);
+    // We gather up all merged functions and set their name *after* processing every
+    // function. This is related to issue #78, where, if a key in tb_map is also the
+    // first value in the value set and is also referenced in another item of tb_map,
+    // the function name will be stripped. So, we do this operation afterwards to
+    // verify that the function name lives for the duration of the analysis.
+    //
+    // NOTE: initially this was changed to "item.first->setName()", however this always
+    // causes a segfault. So it appears that another part of binrec_lift relies on the
+    // function name being erased after merging.
+    for (auto item : merged_functions) {
+        item.first->takeName(item.second);
     }
 
     for (auto bb : tb_to_bb) {

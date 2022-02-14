@@ -1,10 +1,10 @@
+import errno
 import json
 import logging
 import os
 import re
 import shlex
 import subprocess
-import sys
 from pathlib import Path
 from typing import Iterable, List
 
@@ -50,7 +50,7 @@ def get_trace_dirs(project_name: str) -> List[Path]:
         if trace_dir.is_dir() and pattern.match(trace_dir.name):
             trace_dirs.append(trace_dir)
 
-    return trace_dirs
+    return sorted(trace_dirs)
 
 
 def listing() -> List[str]:
@@ -135,7 +135,7 @@ def set_project_args(project: str, args: List[str]) -> None:
         file.writelines(lines)
 
 
-def _run(project: str, args: List[str] = None) -> None:
+def run_project(project: str, args: List[str] = None) -> None:
     """
     Run a project. The ``args`` parameter is optional and, when specified, changes the
     project's command line arguments prior to running.
@@ -154,31 +154,45 @@ def _run(project: str, args: List[str] = None) -> None:
         raise BinRecError(f"s2e run failed for project: {project}")
 
 
-def _new(args):
-    project = _get_project_name(args)
-    if project in listing():
-        sys.stderr.write(
-            f"Project {project} already exists. Please select a different name.\n"
-        )
-        sys.exit(1)
+def new_project(
+    project_name: str,
+    binary_filename: Path,
+    sym_args: str = None,
+    args: List[str] = None,
+) -> Path:
+    """
+    Create a new S2E analysis project.
 
-    logger.info("Creating project: %s", project)
-    callargs = ["s2e", "new_project", "--name", project]
-    if args.sym_args:
-        callargs.extend(["--sym-args", args.sym_args])
-    callargs.append(args.bin)
-    callargs.extend(args.args)
+    :param project_name: the analysis project name
+    :param binary_filename: the path to binary being analyzed
+    :param sym_args: list of symbolic arguments in the form of ``"X Y Z"``
+    :param args: list of inital command line arguments for the binary, which can be
+        set later using :func:`set_project_args`
+    :returns: the path to the project directory
+    """
+    project_path = project_dir(project_name)
+    if project_path.is_dir():
+        raise FileExistsError(
+            errno.EEXIST, os.strerror(errno.EEXIST), str(project_path)
+        )
+
+    logger.info("Creating project: %s", project_name)
+    callargs = ["s2e", "new_project", "--name", project_name]
+    if sym_args:
+        callargs.extend(["--sym-args", sym_args])
+
+    callargs.append(str(binary_filename))
+
+    if args:
+        callargs.extend(args)
 
     try:
         subprocess.check_call(callargs)
     except subprocess.CalledProcessError:
-        raise BinRecError(f"s2e run failed for project: {project}")
+        raise BinRecError(f"s2e run failed for project: {project_name}")
 
-    projdir = project_dir(project)
-    cfgfile = _config_file(project)
-
-    with open(cfgfile, "a") as f:
-        f.write(
+    with open(_config_file(project_name), "a") as file:
+        file.write(
             f"""
 add_plugin(\"ELFSelector\")
 add_plugin(\"FunctionMonitor\")
@@ -189,12 +203,14 @@ pluginsConfig.FunctionLog = {{
 add_plugin(\"ExportELF\")
 pluginsConfig.ExportELF = {{
     baseDirs = {{
-        "{projdir}"
+        "{project_path}"
     }},
     exportInterval = 1000 -- export every 1000 basic blocks
 }}
 """
         )
+
+    return project_path
 
 
 def _debug_trace_info(trace_info: Path, doprint=True):
@@ -299,20 +315,16 @@ def main() -> None:
     subparsers = parser.add_subparsers(dest="current_parser")
 
     new_proj = subparsers.add_parser("new")
-    new_proj.add_argument("name", nargs=1, help="Name of new analysis project")
+    new_proj.add_argument("project", help="Name of new analysis project")
+    new_proj.add_argument("binary", help="Path to binary used in analysis")
     new_proj.add_argument(
-        "--bin", type=str, required=True, help="Path to binary used in analysis"
-    )
-    new_proj.add_argument(
-        "--sym-args",
-        type=str,
+        "sym_args",
         help='Symbolic args to pass to binary. E.g. "1 3" ensures makes arguments one '
         "and three symbolic.",
     )
     new_proj.add_argument(
         "args",
         nargs="*",
-        type=str,
         help="Arguments to pass to binary. Use @@ to indicate a file with symbolic "
         "content",
     )
@@ -354,9 +366,9 @@ def main() -> None:
         logging.getLogger("binrec").setLevel(logging.DEBUG)
 
     if args.current_parser == "run":
-        _run(args.project, args.args)
+        run_project(args.project, args.args)
     elif args.current_parser == "new":
-        _new(args)
+        new_project(args.project, args.binary, args=args.args, sym_args=args.sym_args)
     elif args.current_parser == "list":
         _list()
     elif args.current_parser == "list-traces":

@@ -86,3 +86,15 @@ class MockPath:
 
     def is_absolute(self) -> bool:
         return self.path.startswith(("/", "\\"))
+
+    def __lt__(self, other):
+        return isinstance(other, MockPath) and self.path < other.path
+
+    def __gt__(self, other):
+        return isinstance(other, MockPath) and self.path > other.path
+
+    def __eq__(self, other):
+        return isinstance(other, MockPath) and self.path == other.path
+
+    def __ne__(self, other):
+        return isinstance(other, MockPath) and self.path != other.path
