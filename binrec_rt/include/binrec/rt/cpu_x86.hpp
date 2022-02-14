@@ -81,7 +81,7 @@ typedef uint8_t flag;
 typedef struct float_status {
     signed char float_detect_tininess;
     signed char float_rounding_mode;
-    uint8_t     float_exception_flags;
+    uint8_t float_exception_flags;
     signed char floatx80_rounding_precision;
     /* should denormalised results go to zero and set the inexact flag? */
     flag flush_to_zero;
