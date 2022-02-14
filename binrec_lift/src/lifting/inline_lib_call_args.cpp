@@ -26,9 +26,14 @@ namespace {
         if (sig.isfloat) {
             // return Type::getVoidTy(ctx);
             switch (sig.retsize) {
-               case 4: return Type::getFloatTy(ctx);
-               case 8: return Type::getDoubleTy(ctx);
-               default: ERROR("invalid float retsize"); exit(1);
+            case 4:
+                return Type::getFloatTy(ctx);
+            case 8:
+                return Type::getDoubleTy(ctx);
+            default:
+                LLVM_ERROR(error) << "invalid float return size for function " << sig.name << ": "
+                                  << sig.retsize << ". Expected 4 (float) or 8 (double).";
+                throw std::runtime_error{error};
             }
         }
         if (sig.retsize == 0) {
@@ -124,13 +129,13 @@ namespace {
         // Copy return value to virtual registers
         if (sig.retsize > 0) {
             if (sig.isfloat) {
-                if(sig.retsize == 4) {
+                if (sig.retsize == 4) {
                     b.CreateCall(m.getFunction("virtualize_return_float"), ret);
-                } else if(sig.retsize == 8) {
+                } else if (sig.retsize == 8) {
                     b.CreateCall(m.getFunction("virtualize_return_double"), ret);
                 } else {
                     LLVM_ERROR(error) << "function " << sig.name
-                        << " has invalid floating-point return size: " << sig.retsize;
+                                      << " has invalid floating-point return size: " << sig.retsize;
                     throw std::runtime_error{error};
                 }
             } else if (sig.retsize <= 4) {
