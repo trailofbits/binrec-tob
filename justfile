@@ -95,8 +95,8 @@ build-s2e-image image="debian-9.2.1-i386":
 
 # This will trigger a rebuild of libs2e, which contains the plugins
 s2e-rebuild-plugins:
-  rm -f s2e/build/stamps/libs2e-release-make
-  just s2e-command build
+  rm -f ${S2EDIR}/build/stamps/libs2e-release-install
+  cd ${S2EDIR}/build && make -f ../source/s2e/Makefile stamps/libs2e-release-install
 
 s2e-insert-binrec-plugin name:
   # If we don't drop existing links it will overwrite with default plugin
