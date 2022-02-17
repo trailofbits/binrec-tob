@@ -23,6 +23,8 @@ extern void Func_wrapper(void);
 // This comes with captured.bc. Originially implemented in op_helper.c. op_helper.bc is already
 // linked with captured.bc in s2e.
 extern void helper_fninit(void);
+extern void helper_fldl_ST0(uint64_t);
+extern void helper_flds_ST0(uint32_t);
 
 typedef unsigned uint;
 
@@ -159,6 +161,7 @@ helper_stub_trampoline(const reg_t ecx, const reg_t edx, const reg_t esp, const 
     // put fpstt in local to avoid double memory load
     const unsigned int tmp_fpstt = fpstt;
 
+    // TODO(meilya) I think this can be changed to helper_*
     // copy return value fo library function to virtual environment, return
     // edx/eax by value so that we don't use pointers to virtual registers
     asm("fstpt   %0" : "=m"(fpregs[tmp_fpstt].d)::);
@@ -189,11 +192,16 @@ void __attribute__((always_inline)) helper_extern_stub()
     PC = retaddr;
 }
 
-// FIXME: pass float in argument
-void __attribute__((always_inline)) virtualize_return_float()
+void __attribute__((always_inline)) virtualize_return_float(float ret)
 {
-    asm("fstpt %0" : "=m"(fpregs[fpstt].d)::);
-    fptags[fpstt] = 0;
+    uint32_t *ret32 = (uint32_t*)&ret;
+    helper_flds_ST0(*ret32);
+}
+
+void __attribute__((always_inline)) virtualize_return_double(double ret)
+{
+    uint64_t *ret64 = (uint64_t*)&ret;
+    helper_fldl_ST0(*ret64);
 }
 
 void __attribute__((always_inline)) virtualize_return_i32(uint32_t ret)

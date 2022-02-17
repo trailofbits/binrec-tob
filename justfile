@@ -170,7 +170,7 @@ format-clang:
 
 # Run clang-format linting recursively on a directory
 _format-clang-dir dirname:
-  find {{dirname}} -iname *.cpp -or -iname *.hpp -or -iname *.h | xargs clang-format-12 -Werror -i
+  find {{dirname}} -iname \*.cpp -or -iname \*.hpp -or -iname \*.h | xargs -n1 clang-format-12 -Werror -i
 
 # Runs linting checks
 lint: lint-python lint-clang
@@ -205,7 +205,7 @@ lint-clang:
 
 # Run clang-format linting recursively on a directory
 _lint-clang-dir dirname:
-  find {{dirname}} -iname *.cpp -or -iname *.hpp -or -iname *.h | xargs clang-format-12 -Werror --dry-run
+  find {{dirname}} -iname \*.cpp -or -iname \*.hpp -or -iname \*.h | xargs -n1 clang-format-12 -Werror --dry-run
 
 # Build all documentation
 build-docs: build-python-docs build-cpp-docs
