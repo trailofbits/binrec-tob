@@ -2,8 +2,8 @@ LLC := llc-12
 LLVM_DIS := llvm-dis-12
 CLANG := clang-12
 CLANGXX := clang++-12
-BIN := custom-helpers.bc replacemain.so op_helper.bc softfloat.bc replaceFuncs.o
-SRC := softfloat.ll op_helper.ll custom-helpers.ll
+BIN := custom-helpers.bc replacemain.so op_helper.bc replaceFuncs.o
+SRC := op_helper.ll custom-helpers.ll
 QEMU_BUILD=../build/s2e/qemu
  # TODO (hbrodin): is this the correct path for config-host.h:
  # ../s2e/build/libs2e-release/i386-s2e-softmmu/libcpu/include
@@ -73,16 +73,6 @@ src: $(SRC)
 
 %.bc: %.c
 	$(CLANG) -c -emit-llvm -m32 $(CFLAGS) -o $@ $<
-
-softfloat.bc: ${S2ESRC}/libcpu/src/fpu/softfloat.c
-	$(CLANG) -m64 -c -emit-llvm ${INCLUDE_DIRS} -O0 -o $@ $<
-# $(CLANG) -m64 -c -emit-llvm -I$(QEMU_BUILD)/i386-s2e-softmmu/ \
-#-I$(QEMU_BUILD) -I../s2e/qemu -O0 -o $@ $<
-
-#softfloat.bc: ../s2e/qemu/fpu/softfloat.c
-#	$(CLANG) -c -emit-llvm -I$(QEMU_BUILD)/i386-s2e-softmmu/ \
-#		-I$(QEMU_BUILD)/ -I../s2e/qemu -O0 -o $@ $<
-		#-fpack-struct=1
 
 # TODO (hbrodin): Find better way of referencing the op_helper.c file.
 op_helper.bc: ${S2ESRC}/libcpu/src/target-i386/op_helper.c
