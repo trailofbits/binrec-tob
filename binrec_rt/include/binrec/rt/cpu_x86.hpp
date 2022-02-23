@@ -54,22 +54,23 @@ typedef struct SegmentCache {
     uint32_t flags;
 } SegmentCache;
 
+typedef uint16_t float16;
 typedef uint32_t float32;
+typedef uint64_t float64;
+
 typedef union {
-    uint8_t _b[8];
-    uint16_t _w[4];
-    uint32_t _l[2];
-    float32 _s[2];
-    uint64_t q;
-} __attribute__((aligned(8))) MMXReg;
+    uint8_t _b_MMXReg[8];
+    uint16_t _w_MMXReg[4];
+    uint32_t _l_MMXReg[2];
+    uint64_t _q_MMXReg;
+    float32 _s_MMXReg[2];
+    float64 _d_MMXReg;
+} MMXReg;
 
 typedef struct {
     uint64_t low;
     uint16_t high;
-    uint16_t padding1;
-    uint16_t padding2;
-    uint16_t padding3;
-} __attribute__((aligned(8))) floatx80;
+} floatx80;
 
 typedef union {
     floatx80 d __attribute__((aligned(16)));
@@ -96,6 +97,7 @@ extern float_status fp_status;
 extern unsigned int fpstt;
 extern FPReg fpregs[8];
 extern uint8_t fptags[8];
+extern floatx80 ft0;
 
 #define STACK_SIZE (1024 * 1024 * 16) / sizeof(stackword_t)
 extern stackword_t stack[STACK_SIZE] __attribute__((aligned(16)));

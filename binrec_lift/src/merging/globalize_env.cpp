@@ -67,10 +67,39 @@ namespace binrec {
 
         if (gep->getNumIndices() > 2) {
             // Replace the member access with access to the global variable
+            // A GEP instruction for a CPUX86State field has at least 2 indexes:
+            //
+            //   Index #1 - Always 0, dereference the CPUV86State pointer
+            //   Index #2 - The field index
+            //
+            // This pass will remove index #2, the field index, and replace it with a
+            // 0 (index #1) to dereference the field pointer directly.
+            //
+            // For example, here is the index list to get the 4th item in the fpregs
+            // array: (field #9)
+            //
+            //  i64 0, i32 9, i64 4, i32 0, i32 0
+            //
+            // This pass will replace this index list with:
+            //
+            //  i64 0, i64 4, i32 0, i32 0
+            //
+            // The first index is dereferencing fpregs and the second index is the
+            // fpregs item.
+            //
+            // See GitHub issue #116 for more information:
+            // https://github.com/trailofbits/binrec-prerelease/issues/116
             IRBuilder<> irb(gep);
             llvm::SmallVector<Value *, 5> indices;
+            auto start = gep->idx_begin();
+
+            // first index == 0 (dereference the field directly)
+            indices.push_back(*start);
+            // Move the index iterator up 2 to skip the field index
+            std::advance(start, 2);
+
             std::copy(
-                std::next(gep->idx_begin()),
+                start,
                 gep->idx_end(),
                 std::back_inserter(indices)); // Assuming at least one index
 
