@@ -32,16 +32,24 @@ auto UnimplementCustomHelpersPass::run(Module &m, ModuleAnalysisManager &am) -> 
 
     // The ldl_mmu functions have new names, some are suffixed with a number
     // TODO (hbrodin): What does the suffix mean?
-    std::regex re("^helper_(ld|st)[bwlq]_mmu(\\.\\d+)?$");
+    //
+    // We set these functions to external linkage because they are optimized to a
+    // direct "load" instruction during lifting (see add_mem_array.cpp).
+    std::regex mmu_re("^helper_(ld|st)[bwlq]_mmu(\\.\\d+)?$");
+    std::regex cpu_re("^cpu_(ld|st)[a-z]+_data$");
     for (Function &f : m) {
         if (!f.hasName())
             continue;
         auto name = f.getName();
 
-        if (std::regex_match(name.begin(), name.end(), re))
+        bool matches =
+            (std::regex_match(name.begin(), name.end(), mmu_re) ||
+             std::regex_match(name.begin(), name.end(), cpu_re));
+        if (matches) {
+            DBG("deleting helper body: " << name);
             f.deleteBody();
+        }
     }
-
 
     return PreservedAnalyses::none();
 }

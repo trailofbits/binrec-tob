@@ -222,7 +222,11 @@ void helper_break()
 
 // redefine the following functions to avoid cases that handle symbolic memory
 // in the default implementations
-
+//
+// TODO(meily) - I don't think these functions exist anywhere in the updated S2E. There
+// are "cpu_*_data" functions that I think these *could* replace. However, with the
+// work on issue #101, https://github.com/trailofbits/binrec-prerelease/issues/101,
+// I don't think these are actually necessary and can be removed.
 uint64_t __attribute__((always_inline)) ldq_data(uint32_t ptr)
 {
     return helper_ldq_mmu(nullptr, ptr, 0, nullptr);
