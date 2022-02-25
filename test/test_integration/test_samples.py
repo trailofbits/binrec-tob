@@ -1,6 +1,8 @@
+from codecs import ignore_errors
 import os
 import subprocess
 import json
+import shutil
 from typing import List, Optional, Tuple
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -152,10 +154,14 @@ def run_test(plan: TraceTestPlan) -> None:
     Run a test binary, merge results, and lift the results. The binary may be executed
     multiple times depending on how many items are in the ``plan.traces`` parameter.
 
-    :param binary: test binary name
     :param plan: trace test plan containing list of command line arguments and stdin
         input to use
     """
+    # Check for pre-existing project folder, remove if found
+    project_dir = project.project_dir(plan.project)
+    if os.path.isdir(project_dir):
+        shutil.rmtree(project_dir, ignore_errors=True)
+
     project_dir = project.new_project(plan.project, plan.binary)
 
     print(">> running", len(plan.traces), "traces")
