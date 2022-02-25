@@ -136,7 +136,6 @@ s2e-insert-binrec-plugins:
 new-project name binary symargs *args:
   pipenv run python -m binrec.project new "{{name}}" "{{binary}}" "{{symargs}}" {{args}}
 
-
 # Run an S2E analysis project. Override sample command line arguments by passing "--args ARGS ARGS"
 run project-name *args:
   pipenv run python -m binrec.project run "$@"
@@ -144,6 +143,10 @@ run project-name *args:
 # Set an S2E analysis project command line arguments.
 set-args project-name *args:
   pipenv run python -m binrec.project --verbose set-args "$@"
+
+# Validate a lifted binary against the original with respect to provided arguments
+validate project-name *args:
+  pipenv run python -m binrec.project validate "$@"
 
 # Format all code
 format: format-python format-clang
