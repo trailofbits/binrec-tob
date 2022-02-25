@@ -298,6 +298,10 @@ print-coverage-report:
 erase-test-coverage:
   pipenv run coverage erase
 
+# Unit test command for Github CI
+_ci-unit-tests: _unit-test-python print-coverage-report
+  
+
 ########## End: Testing Recipes ##########
 
 
