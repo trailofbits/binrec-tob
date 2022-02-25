@@ -60,13 +60,7 @@ class TraceTestPlan:
 
     @classmethod
     def load_plaintext(cls, binary: Path, filename: Path) -> 'TraceTestPlan':
-        with open(filename, 'r') as file:
-            # read command line invocations
-            invocations = [line.strip().split() for line in file]
-            if not invocations:
-                # no command line arguments specified, run the test once with no arguments
-                invocations = [[]]
-
+        invocations = project.parse_batch_file(filename)
         return TraceTestPlan(binary, [TraceParams(args) for args in invocations])
 
     @classmethod

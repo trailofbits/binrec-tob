@@ -140,6 +140,10 @@ new-project name binary symargs *args:
 run project-name *args:
   pipenv run python -m binrec.project run "$@"
 
+# Run an S2E analysis project multiple times with a batch of inputs
+run-batch project-name batch-file:
+  pipenv run python -m binrec.project run-batch "{{project-name}}" "{{batch-file}}"
+
 # Set an S2E analysis project command line arguments.
 set-args project-name *args:
   pipenv run python -m binrec.project --verbose set-args "$@"
@@ -147,6 +151,10 @@ set-args project-name *args:
 # Validate a lifted binary against the original with respect to provided arguments
 validate project-name *args:
   pipenv run python -m binrec.project validate "$@"
+
+# Validate a lifted binary against the original with respect to a bacth file of arguments
+validate-batch project-name batch-file:
+  pipenv run python -m binrec.project validate-batch "{{project-name}}" "{{batch-file}}"
 
 # Format all code
 format: format-python format-clang

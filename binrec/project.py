@@ -54,6 +54,16 @@ def get_trace_dirs(project_name: str) -> List[Path]:
     return sorted(trace_dirs)
 
 
+def parse_batch_file(filename: Path) -> List[List[str]]:
+    with open(filename, "r") as file:
+        # read command line invocations
+        invocations = [line.strip().split() for line in file]
+        if not invocations:
+            # no command line arguments specified, run the test once with no arguments
+            invocations = [[]]
+    return invocations
+
+
 def listing() -> List[str]:
     try:
         output = subprocess.check_output(["s2e", "info"])
@@ -206,6 +216,19 @@ def validate_project(project: str, args: List[str]) -> None:
     )
 
 
+def validate_batch_project(project: str, batch_file: Path) -> None:
+    """
+    Validate a project with a batch of inputs provided in a file.
+
+    :param project: project name
+    :param batch_file: file containing one or more set of command line arguments
+    """
+    invocations = parse_batch_file(batch_file)
+
+    for invocation in invocations:
+        validate_project(project, invocation)
+
+
 def run_project(project: str, args: List[str] = None) -> None:
     """
     Run a project. The ``args`` parameter is optional and, when specified, changes the
@@ -223,6 +246,19 @@ def run_project(project: str, args: List[str] = None) -> None:
         subprocess.check_call(["s2e", "run", "--no-tui", project])
     except subprocess.CalledProcessError:
         raise BinRecError(f"s2e run failed for project: {project}")
+
+
+def run_batch_project(project: str, batch_file: Path) -> None:
+    """
+    Run a project with a batch of inputs provided in a file.
+
+    :param project: project name
+    :param batch_file: file containing one or more set of command line arguments
+    """
+    invocations = parse_batch_file(batch_file)
+
+    for invocation in invocations:
+        run_project(project, invocation)
 
 
 def new_project(
@@ -416,6 +452,10 @@ def main() -> None:
     run.add_argument("--args", nargs="*", help="command line arguments", default=None)
     # TODO (hbrodin): Enable passing of additional parameters to s2e run
 
+    run_batch = subparsers.add_parser("run-batch")
+    run_batch.add_argument("project", help="project name")
+    run_batch.add_argument("batch_file", help="file containing inputs to run")
+
     dbg = subparsers.add_parser("debug-traceinfo")
     dbg.add_argument("path", nargs=1, type=Path, help="Path to traceinfo to debug")
 
@@ -435,6 +475,10 @@ def main() -> None:
     validate.add_argument("project", help="project name")
     validate.add_argument("args", nargs="*", help="command line arguments")
 
+    validate_batch = subparsers.add_parser("validate-batch")
+    validate_batch.add_argument("project", help="project name")
+    validate_batch.add_argument("batch_file", help="file containing inputs to validate")
+
     args = parser.parse_args()
 
     if args.verbose:
@@ -442,6 +486,8 @@ def main() -> None:
 
     if args.current_parser == "run":
         run_project(args.project, args.args)
+    elif args.current_parser == "run-batch":
+        run_batch_project(args.project, args.batch_file)
     elif args.current_parser == "new":
         new_project(args.project, args.binary, args=args.args, sym_args=args.sym_args)
     elif args.current_parser == "list":
@@ -458,6 +504,8 @@ def main() -> None:
         set_project_args(args.project, args.args or [])
     elif args.current_parser == "validate":
         validate_project(args.project, args.args or [])
+    elif args.current_parser == "validate-batch":
+        validate_batch_project(args.project, args.batch_file)
     else:
         parser.print_help()
 
