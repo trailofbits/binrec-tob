@@ -1,4 +1,3 @@
-
 import subprocess
 from unittest.mock import patch, mock_open, call
 
@@ -20,6 +19,12 @@ execute "${TARGET_PATH}" existing args
 BOOTSTRAP_NO_EXECUTE = '''
 line1
 line2'''
+
+BATCH_WITH_ARGS = '''Jack Jill
+0 1 2
+Jack 0 Jill 1 2'''
+
+BATCH_WITHOUT_ARGS = ""
 
 
 class TestProject:
@@ -43,6 +48,22 @@ class TestProject:
 
         assert project.get_trace_dirs("asdf") == [trace_dir_1, trace_dir_2]
         mock_project_dir.assert_called_once_with("asdf")
+
+    @patch.object(project, "open", new_callable=mock_open,
+                  read_data=BATCH_WITH_ARGS)
+    def test_parse_batch_file(self, mock_file):
+        invocations = project.parse_batch_file("myfile.txt")
+
+        assert mock_file.call_args_list == [ call("myfile.txt", "r")]
+        assert invocations == [ ["Jack", "Jill"], ["0", "1", "2"],
+                                ["Jack", "0", "Jill", "1", "2"] ]
+
+    @patch.object(project, "open", new_callable=mock_open,
+                  read_data=BATCH_WITHOUT_ARGS)
+    def test_parse_batch_file_no_args(self, mock_file):
+        invocations = project.parse_batch_file("myfile.txt")
+        assert mock_file.call_args_list == [ call("myfile.txt", "r")]
+        assert invocations == [[]]
 
     @patch.object(project, "open", new_callable=mock_open,
                   read_data=BOOTSTRAP_WITH_EXECUTE)
@@ -81,6 +102,27 @@ class TestProject:
             ]
         )
 
+    # Note this test is rather shallow since validation is really test code itself
+    @patch.object(project.os, "remove")
+    @patch.object(project.os, "link")
+    @patch.object(project.subprocess, "Popen")
+    def test_validate_project(self, mock_popen, mock_link, mock_remove):
+        args = ["Jack", "Jill"]
+        project.validate_project("asdf", args)
+        merged_tgt = str(BINREC_PROJECTS / "asdf" / "s2e-out" / "test-target")
+        mock_popen.assert_called_with([merged_tgt] + args,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    stdin=subprocess.PIPE)
+
+    @patch.object(project, "parse_batch_file", return_value=[line.strip().split() for line in BATCH_WITH_ARGS.split("\n")])
+    @patch.object(project, "validate_project")
+    def test_validate_batch_project(self, mock_validate_project, mock_parse_batch_file):
+        project.validate_batch_project("asdf", "./myfile.txt")
+        mock_parse_batch_file.assert_called_once_with("./myfile.txt")
+        calls = [call("asdf", ["Jack", "Jill"]), call("asdf", ["0", "1", "2"]), call("asdf", ["Jack", "0", "Jill", "1", "2"])]
+        mock_validate_project.assert_has_calls(calls, any_order=False)
+
     @patch.object(project.subprocess, "check_call")
     def test_run_project(self, mock_check_call):
         project.run_project("asdf")
@@ -91,12 +133,21 @@ class TestProject:
     def test_run_project_args(self, mock_set_args, mock_check_call):
         project.run_project("asdf", ["qwer"])
         mock_set_args.assert_called_once_with("asdf", ["qwer"])
+        mock_check_call.assert_called_once_with(["s2e", "run", "--no-tui", "asdf"])
 
     @patch.object(project.subprocess, "check_call")
     def test_run_project_error(self, mock_check_call):
         mock_check_call.side_effect = subprocess.CalledProcessError(1, "zxcv")
         with pytest.raises(BinRecError):
             project.run_project("asdf")
+
+    @patch.object(project, "parse_batch_file", return_value=[line.strip().split() for line in BATCH_WITH_ARGS.split("\n")])
+    @patch.object(project, "run_project")
+    def test_run_batch_project(self, mock_run_project, mock_parse_batch_file):
+        project.run_batch_project("asdf", "./myfile.txt")
+        mock_parse_batch_file.assert_called_once_with("./myfile.txt")
+        calls = [call("asdf", ["Jack", "Jill"]), call("asdf", ["0", "1", "2"]), call("asdf", ["Jack", "0", "Jill", "1", "2"])]
+        mock_run_project.assert_has_calls(calls, any_order=False)
 
     @patch.object(project, "project_dir")
     @patch.object(project.subprocess, "check_call")
