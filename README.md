@@ -153,9 +153,9 @@ project uses the following tools:
 These tools can be called through just using:
 
 - `just lint` - Run all code linters
-- `just lint-<toolname>` - Run a single code linter, Ex. `just lint-flake8`
+- `just _lint-<toolname>` - Run a single code linter, Ex. `just lint-flake8`
 - `just format` - Run all code formatters
-- `just format-<toolname>` - Run a single code formatter, ex. `just format-black`
+- `just _format-<toolname>` - Run a single code formatter, ex. `just format-black`
 
 ### Environment Variables
 
