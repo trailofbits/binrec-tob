@@ -116,17 +116,17 @@ This will create a `s2e-out` subdirectory in the project folder. It contains the
 Running Tests
 -------------
 
-Unit and integration tests are written in `pytest`. Running tests can be done through multiple just recipes.
+Unit and integration tests are written in `pytest` and `GoogleTest`. Running tests can be done through multiple `just` recipes.
 
    ```bash
-   just run-tests  # run all unit and integration tests
+   just run-all-tests  # run all unit and integration tests
    just run-unit-tests  # run only unit tests
    just run-integration-tests  # run only integration tests (this will take several minutes)
-   just run-test-coverage-report  # print the last pytest coverage report
+   just print-coverage-report  # print the last pytest coverage report
    ```
 
-The integration tests require a working Debian qemu image with a `cmd` snapshot already saved. Follow the instructions in this README through the `savevm` command. Integration tests use sample code and binaries provided by the
-[binrec-benchmark](https://github.com/trailofbits/binrec-benchmark) repository, which is a submodule of the binrec repo.
+Integration tests use sample code and binaries provided by the
+[binrec-benchmark](https://github.com/trailofbits/binrec-benchmark) repository, which is a submodule of the BinRec repo.
 Each integration test sample is run multiple times, depending on the test inputs, the runtime traces are merged, the
 merged trace is lifted, and then the recovered binary is compared against the original binary with the same test inputs
 used during the trace operations. The process exit code, stdout, and stderr are compared for each test input.
