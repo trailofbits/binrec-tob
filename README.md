@@ -142,13 +142,14 @@ The BinRec Python 3 API and module is located in the `binrec` directory.
 
 ### Linting and Formatting
 
-There are several just recipes to lint and format the Python source code for BinRec. In general, the
+There are several just recipes to lint and format the  source code for BinRec. In general, the
 project uses the following tools:
 
 - [black](https://github.com/psf/black) - Python code formatting and style
 - [flake8](https://flake8.pycqa.org/en/latest/) - Python static code analysis
 - [mypy](https://github.com/python/mypy) - Python type checking
 - [isort](https://github.com/PyCQA/isort) - Python import order formatting
+- [clang-format](https://clang.llvm.org/docs/ClangFormat.html) - C++ source code formatting and style
 
 These tools can be called through just using:
 
