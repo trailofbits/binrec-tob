@@ -1,6 +1,8 @@
+from codecs import ignore_errors
 import os
 import subprocess
 import json
+import shutil
 from typing import List, Optional, Tuple
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -9,11 +11,10 @@ from unittest.mock import MagicMock
 
 from _pytest.python import Metafunc
 
-from binrec.env import BINREC_ROOT, BINREC_SCRIPTS
+from binrec.env import BINREC_ROOT
 from binrec.merge import merge_traces
 from binrec import lift, project
 
-QEMU_DIR = BINREC_ROOT / "qemu"
 TEST_INPUT_DIR = BINREC_ROOT / "test" / "benchmark" / "samples" / "binrec" / "test_inputs"
 TEST_BUILD_DIR = BINREC_ROOT / "test" / "benchmark" / "samples" / "bin" / "x86" / "binrec"
 
@@ -59,13 +60,7 @@ class TraceTestPlan:
 
     @classmethod
     def load_plaintext(cls, binary: Path, filename: Path) -> 'TraceTestPlan':
-        with open(filename, 'r') as file:
-            # read command line invocations
-            invocations = [line.strip().split() for line in file]
-            if not invocations:
-                # no command line arguments specified, run the test once with no arguments
-                invocations = [[]]
-
+        invocations = project.parse_batch_file(filename)
         return TraceTestPlan(binary, [TraceParams(args) for args in invocations])
 
     @classmethod
@@ -143,54 +138,9 @@ def compare_lift(plan: TraceTestPlan) -> None:
 
     :param plan: test plan to execute and compare the original against the recovered
     """
-    merged_dir = project.merged_trace_dir(plan.project)
-    lifted = str(merged_dir / "recovered")
-    original = str(merged_dir / "binary")
-    target = str(merged_dir / "test-target")
 
     for trace in plan.traces:
-        # We link to the binary we are running to make sure argv[0] is the same for the original
-        # and the lifted program.
-        os.link(original, target)
-        print(">> running original sample with args:", trace.args)
-        original_proc = subprocess.Popen(
-            [target] + trace.args,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            stdin=subprocess.PIPE,
-        )
-        # stdin is not supported yet in the updated s2e integration
-        # if trace.stdin:
-        #     original_proc.stdin.write(trace.stdin.encode())
-
-        original_proc.stdin.close()
-        original_proc.wait()
-        os.remove(target)
-
-        original_stdout = original_proc.stdout.read()
-        original_stderr = original_proc.stderr.read()
-
-        os.link(lifted, target)
-        print(">> running recovered sample with args:", trace.args)
-        lifted_proc = subprocess.Popen(
-            [target] + trace.args,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            stdin=subprocess.PIPE,
-        )
-        if trace.stdin:
-            lifted_proc.stdin.write(trace.stdin.encode())
-
-        lifted_proc.stdin.close()
-        lifted_proc.wait()
-        os.remove(target)
-
-        lifted_stdout = lifted_proc.stdout.read()
-        lifted_stderr = lifted_proc.stderr.read()
-
-        assert original_proc.returncode == lifted_proc.returncode
-        assert original_stdout == lifted_stdout
-        assert original_stderr == lifted_stderr
+        project.validate_project(plan.project, trace.args)
 
 
 def run_test(plan: TraceTestPlan) -> None:
@@ -198,10 +148,14 @@ def run_test(plan: TraceTestPlan) -> None:
     Run a test binary, merge results, and lift the results. The binary may be executed
     multiple times depending on how many items are in the ``plan.traces`` parameter.
 
-    :param binary: test binary name
     :param plan: trace test plan containing list of command line arguments and stdin
         input to use
     """
+    # Check for pre-existing project folder, remove if found
+    project_dir = project.project_dir(plan.project)
+    if os.path.isdir(project_dir):
+        shutil.rmtree(project_dir, ignore_errors=True)
+
     project_dir = project.new_project(plan.project, plan.binary)
 
     print(">> running", len(plan.traces), "traces")

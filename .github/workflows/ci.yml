@@ -96,7 +96,7 @@ jobs:
 
       - name: 'Unit Tests'
         run: |
-          just run-unit-tests
+          just _ci-unit-tests
 
   #
   # Building Sphinx docs is disabled until we have the ability to compile binrec and

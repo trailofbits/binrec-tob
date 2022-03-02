@@ -26,7 +26,8 @@ def project_dir(project_name: str) -> Path:
 
 def merged_trace_dir(project_name: str) -> Path:
     """
-    :returns: the path to the merged trace output directory for the project
+    :returns: the path to the merged trace directory for the project. Contains
+    merged traces, IRs, and binaries, etc.
     """
     return project_dir(project_name) / "s2e-out"
 
@@ -51,6 +52,16 @@ def get_trace_dirs(project_name: str) -> List[Path]:
             trace_dirs.append(trace_dir)
 
     return sorted(trace_dirs)
+
+
+def parse_batch_file(filename: Path) -> List[List[str]]:
+    with open(filename, "r") as file:
+        # read command line invocations
+        invocations = [line.strip().split() for line in file]
+        if not invocations:
+            # no command line arguments specified, run the test once with no arguments
+            invocations = [[]]
+    return invocations
 
 
 def listing() -> List[str]:
@@ -135,6 +146,89 @@ def set_project_args(project: str, args: List[str]) -> None:
         file.writelines(lines)
 
 
+def validate_project(project: str, args: List[str]) -> None:
+    """
+    Compare the original binary against the lifted binary for a given sample of
+    command line arguments. This method runs the original and the lifted binary
+    and then compares the process return code, stdout, and stderr content. An
+    ``AssertionError`` is raised if any of the comparison criteria does not match
+    between the original and lifted sample.
+
+    :param project: project name
+    :param args: list of arguments
+    """
+
+    logger.info("Validating project: %s", project)
+
+    merged_dir = merged_trace_dir(project)
+    lifted = str(merged_dir / "recovered")
+    original = str(merged_dir / "binary")
+    target = str(merged_dir / "test-target")
+
+    # We link to the binary we are running to make sure argv[0] is the same
+    # for the original and the lifted program.
+    os.link(original, target)
+    logger.debug(">> running original sample with args:", args)
+    original_proc = subprocess.Popen(
+        [target] + args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdin=subprocess.PIPE,
+    )
+    # stdin is not supported yet in the updated s2e integration
+    # if trace.stdin:
+    #     original_proc.stdin.write(trace.stdin.encode())
+
+    original_proc.stdin.close()  # type: ignore
+    original_proc.wait()
+    os.remove(target)
+
+    original_stdout = original_proc.stdout.read()  # type: ignore
+    original_stderr = original_proc.stderr.read()  # type: ignore
+
+    os.link(lifted, target)
+    logger.debug(">> running recovered sample with args:", args)
+    lifted_proc = subprocess.Popen(
+        [target] + args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdin=subprocess.PIPE,
+    )
+    # stdin is not supported yet in the updated s2e integration
+    # if trace.stdin:
+    #    lifted_proc.stdin.write(trace.stdin.encode())
+
+    lifted_proc.stdin.close()  # type: ignore
+    lifted_proc.wait()
+    os.remove(target)
+
+    lifted_stdout = lifted_proc.stdout.read()  # type: ignore
+    lifted_stderr = lifted_proc.stderr.read()  # type: ignore
+
+    assert original_proc.returncode == lifted_proc.returncode
+    assert original_stdout == lifted_stdout
+    assert original_stderr == lifted_stderr
+
+    logger.info(
+        "Output from %s's original and lifted binaries match for args: %s",
+        project,
+        str(args),
+    )
+
+
+def validate_batch_project(project: str, batch_file: Path) -> None:
+    """
+    Validate a project with a batch of inputs provided in a file.
+
+    :param project: project name
+    :param batch_file: file containing one or more set of command line arguments
+    """
+    invocations = parse_batch_file(batch_file)
+
+    for invocation in invocations:
+        validate_project(project, invocation)
+
+
 def run_project(project: str, args: List[str] = None) -> None:
     """
     Run a project. The ``args`` parameter is optional and, when specified, changes the
@@ -152,6 +246,19 @@ def run_project(project: str, args: List[str] = None) -> None:
         subprocess.check_call(["s2e", "run", "--no-tui", project])
     except subprocess.CalledProcessError:
         raise BinRecError(f"s2e run failed for project: {project}")
+
+
+def run_batch_project(project: str, batch_file: Path) -> None:
+    """
+    Run a project with a batch of inputs provided in a file.
+
+    :param project: project name
+    :param batch_file: file containing one or more set of command line arguments
+    """
+    invocations = parse_batch_file(batch_file)
+
+    for invocation in invocations:
+        run_project(project, invocation)
 
 
 def new_project(
@@ -345,6 +452,10 @@ def main() -> None:
     run.add_argument("--args", nargs="*", help="command line arguments", default=None)
     # TODO (hbrodin): Enable passing of additional parameters to s2e run
 
+    run_batch = subparsers.add_parser("run-batch")
+    run_batch.add_argument("project", help="project name")
+    run_batch.add_argument("batch_file", help="file containing inputs to run")
+
     dbg = subparsers.add_parser("debug-traceinfo")
     dbg.add_argument("path", nargs=1, type=Path, help="Path to traceinfo to debug")
 
@@ -360,6 +471,14 @@ def main() -> None:
     set_args.add_argument("project", help="project name")
     set_args.add_argument("args", nargs="*", help="command line arguments")
 
+    validate = subparsers.add_parser("validate")
+    validate.add_argument("project", help="project name")
+    validate.add_argument("args", nargs="*", help="command line arguments")
+
+    validate_batch = subparsers.add_parser("validate-batch")
+    validate_batch.add_argument("project", help="project name")
+    validate_batch.add_argument("batch_file", help="file containing inputs to validate")
+
     args = parser.parse_args()
 
     if args.verbose:
@@ -367,6 +486,8 @@ def main() -> None:
 
     if args.current_parser == "run":
         run_project(args.project, args.args)
+    elif args.current_parser == "run-batch":
+        run_batch_project(args.project, args.batch_file)
     elif args.current_parser == "new":
         new_project(args.project, args.binary, args=args.args, sym_args=args.sym_args)
     elif args.current_parser == "list":
@@ -381,6 +502,10 @@ def main() -> None:
         _diff_trace_info(args.paths, args.show_common)
     elif args.current_parser == "set-args":
         set_project_args(args.project, args.args or [])
+    elif args.current_parser == "validate":
+        validate_project(args.project, args.args or [])
+    elif args.current_parser == "validate-batch":
+        validate_batch_project(args.project, args.batch_file)
     else:
         parser.print_help()
 
