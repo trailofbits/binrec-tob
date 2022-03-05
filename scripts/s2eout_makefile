@@ -1,5 +1,5 @@
 # Makefile with handy commands for working with S2E outputs.
-# In the original this file was linked symbolically from 
+# In the original this file was linked symbolically from
 # each s2e-out-* directory.
 
 # this file must be used from an S2E output directory
@@ -40,6 +40,9 @@ all:
 symbols: binary
 	objdump -d $< | sed 's/^\([0-9a-f]\+\) <\(.\+\)@plt>:$$/\1 \2/;t;d' > $@
 
+data_imports: binary
+	readelf --dyn-sym $< | grep OBJECT | grep @ | tr -s ' ' | cut -d' ' -f3,4,9 | cut -d@ -f1 > $@
+
 main-addrs: binary
 	bash ${S2EDIR}/scripts/utils/main-addrs.sh $^ > $@
 
@@ -50,7 +53,7 @@ coverage: ExecutionTracer.dat
 	bash ${S2EDIR}/scripts/utils/coverage.sh $(@D)
 
 # This recipe refers to files not created by s2e in the out directories. Perhaps they are created for symbolic or concolic inputs.
-# In either event this looks to support some old and uneeded CFG visualization code. Removing this. If we need it later its in the 
+# In either event this looks to support some old and uneeded CFG visualization code. Removing this. If we need it later its in the
 # git history. (mdbrown)
 #addrlog.txt: addrlog.dat
 #	python ${S2EDIR}/cfg/show.py 2>$@ >/dev/null < $<
