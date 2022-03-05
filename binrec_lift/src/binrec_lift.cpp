@@ -13,6 +13,7 @@
 #include "lifting/fix_cfg.hpp"
 #include "lifting/fix_overlaps.hpp"
 #include "lifting/global_env_to_alloca.hpp"
+#include "lifting/globalize_data_imports.hpp"
 #include "lifting/implement_lib_call_stubs.hpp"
 #include "lifting/implement_lib_calls_new_plt.hpp"
 #include "lifting/inline_lib_call_args.hpp"
@@ -144,6 +145,7 @@ namespace binrec {
             mpm.addPass(createModuleToFunctionPassAdaptor(DCEPass{}));
             mpm.addPass(IntrinsicCleanerPass{});
             mpm.addPass(FunctionRenamingPass{});
+            mpm.addPass(GlobalizeDataImportsPass{});
         }
 
         if (ctx.optimize) {
