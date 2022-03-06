@@ -18,41 +18,63 @@ static void globalize_data_import(
     uint64_t symbol_size,
     const string &symbol)
 {
-    auto address_type = IntegerType::get(m.getContext(), 32);
-    auto global_var =
-        new GlobalVariable(m, address_type, false, GlobalValue::ExternalLinkage, nullptr, symbol);
-
     INFO(
         "creating global variable: " << symbol << " at address 0x" << utohexstr(import_address)
                                      << ", size 0x" << utohexstr(symbol_size));
-    auto value = ConstantInt::get(address_type, import_address);
-    vector<ConstantExpr *> const_exprs;
-    vector<pair<Instruction *, unsigned>> instructions;
 
-    for (Use &use : value->uses()) {
-        DBG("Found reference to global symbol: " << *use);
-        if (auto *inst = dyn_cast<Instruction>(use.getUser())) {
-            // An instructions is referencing the symbol value. All globals are
-            // pointers, so we need to cast the pointer to an appropriate integer type,
-            // address_type.
-            instructions.emplace_back(inst, use.getOperandNo());
-        } else if (auto *expr = dyn_cast<ConstantExpr>(use.getUser())) {
-            // A constant expression using the symbol value, which will typically be a
-            // inttoptr expression. This will replace the expression with a dereference
-            // to the global value.
-            const_exprs.push_back(expr);
+    // unsigned pointer_size = m.getDataLayout().getPointerSizeInBits(0);
+    auto symbol_type = IntegerType::get(m.getContext(), symbol_size * 8);
+    auto value = ConstantInt::get(symbol_type, import_address);
+    auto global_var =
+        new GlobalVariable(m, symbol_type, false, GlobalValue::ExternalLinkage, nullptr, symbol);
+
+    std::vector<llvm::Use *> work_list;
+    for (auto &use : value->uses()) {
+        work_list.push_back(&use);
+    }
+
+    std::vector<llvm::Use *> instruction_uses;
+
+    // Recursively ascend the usage graph until we collect all transitive uses
+    // of this constant by instructions.
+    while (!work_list.empty()) {
+        auto use = work_list.back();
+        work_list.pop_back();
+
+        auto user = use->getUser();
+        if (llvm::isa<Instruction>(user)) {
+            instruction_uses.push_back(use);
+        } else if (auto c = llvm::dyn_cast<llvm::Constant>(user)) {
+            for (auto &cuse : c->uses()) {
+                work_list.push_back(&cuse);
+            }
+        } else if (llvm::isa<llvm::GlobalVariable>(user)) {
+            // This really shouldn't happen because of the way S2E captures bitcode.
         }
     }
 
-    for (auto expr : const_exprs) {
-        DBG("replacing constexpr: " << *expr << " with global variable " << symbol);
-        expr->replaceAllUsesWith(global_var);
-    }
+    for (auto use : instruction_uses) {
+        auto user = use->getUser();
+        auto inst = dyn_cast<Instruction>(user);
+        auto op_num = use->getOperandNo();
+        auto operand = inst->getOperand(op_num);
+        auto op_type = operand->getType();
 
-    for (auto item : instructions) {
-        auto ptrtoint = new PtrToIntInst(global_var, address_type, "", item.first);
-        DBG("replacing instruction: " << *item.first << " with global variable: " << symbol);
-        item.first->setOperand(item.second, ptrtoint);
+        if (op_type == global_var->getType()) {
+            // no conversion necessary, most likely a inttoptr cast
+            DBG("replacing pointer cast with global variable: " << *operand << " -> @" << symbol);
+            inst->setOperand(op_num, global_var);
+        } else if (op_type == symbol_type) {
+            // instruction uses the actual address of the symbol, such as "&stdout"
+            // Convert the global pointer to a int and update the instruction to use the
+            // result.
+            auto ptrtoint = new PtrToIntInst(global_var, symbol_type, "", inst);
+            DBG("replacing symbol address with global variable: " << *ptrtoint);
+            inst->setOperand(op_num, ptrtoint);
+        } else {
+            WARNING(
+                "unrecgonized destination operand type, may produce invalid bitcode: " << *inst);
+        }
     }
 }
 
