@@ -88,9 +88,13 @@ def _extract_binary_symbols(trace_dir: Path) -> None:
 
     logger.debug("extracting data imports from binary: %s", trace_dir.name)
     try:
-        subprocess.check_call(["make", "-f", makefile, "data_imports"], cwd=str(trace_dir))
+        subprocess.check_call(
+            ["make", "-f", makefile, "data_imports"], cwd=str(trace_dir)
+        )
     except subprocess.CalledProcessError:
-        raise BinRecError(f"failed to extract data imports from trace: {trace_dir.name}")
+        raise BinRecError(
+            f"failed to extract data imports from trace: {trace_dir.name}"
+        )
 
 
 def _clean_bitcode(trace_dir: Path) -> None:
