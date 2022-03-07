@@ -40,9 +40,6 @@ all:
 symbols: binary
 	objdump -d $< | sed 's/^\([0-9a-f]\+\) <\(.\+\)@plt>:$$/\1 \2/;t;d' > $@
 
-data_imports: binary
-	readelf --dyn-sym $< | grep OBJECT | grep @ | tr -s ' ' | cut -d' ' -f3,4,9 | cut -d@ -f1 > $@
-
 main-addrs: binary
 	bash ${S2EDIR}/scripts/utils/main-addrs.sh $^ > $@
 

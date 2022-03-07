@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -12,6 +13,18 @@ from .errors import BinRecError
 from .lib import binrec_lift, binrec_link
 
 logger = logging.getLogger("binrec.lift")
+
+DATA_IMPORT_PATTERN = re.compile(
+    r'^\s*\d+:\s+'  # symbol index
+    r'([0-9a-fA-F]+)\s+'  # import address (hex)
+    r'(\d+)\s+'  # symbol size (bytes)
+    r'OBJECT\s+'  # symbol type - we only handle OBJECT
+    r'GLOBAL\s+'  # binding - we only handle GLOBAL
+    r'[a-zA-Z_]+\s+'  # visibility
+    r'\d+\s+'  # section index
+    r'([a-zA-F_0-9]+)@',  # symbol name (@ library)
+    re.MULTILINE
+)
 
 
 def prep_bitcode_for_linkage(
@@ -86,15 +99,34 @@ def _extract_binary_symbols(trace_dir: Path) -> None:
     except subprocess.CalledProcessError:
         raise BinRecError(f"failed to extract symbols from trace: {trace_dir.name}")
 
+
+def _extract_data_imports(trace_dir: Path) -> None:
+    """
+    Extract the data imports from the original binary. This creates a text file
+    where each line is a data import in the following format::
+
+        <symbol_address_hex>  <symbol_size>  <symbol_name>
+
+    **Inputs:** trace_dir / "binary"
+
+    **Outputs:** trace_dir / "data_imports"
+
+    :param trace_dir: binrec binary trace directory
+    """
+    binary = trace_dir / "binary"
+    data_imports = trace_dir / "data_imports"
+
     logger.debug("extracting data imports from binary: %s", trace_dir.name)
+
     try:
-        subprocess.check_call(
-            ["make", "-f", makefile, "data_imports"], cwd=str(trace_dir)
-        )
+        readelf = subprocess.check_output(["readelf", "--dyn-sym", str(binary)])
     except subprocess.CalledProcessError:
         raise BinRecError(
-            f"failed to extract data imports from trace: {trace_dir.name}"
-        )
+            f"failed to extract data imports from binary: {trace_dir.name}")
+
+    with open(data_imports, "w") as file:
+        for match in DATA_IMPORT_PATTERN.finditer(readelf.decode()):
+            print(" ".join(match.groups()), file=file)
 
 
 def _clean_bitcode(trace_dir: Path) -> None:
@@ -317,8 +349,9 @@ def lift_trace(project_name: str) -> None:
             f"nothing to lift: directory does not exist: {merged_trace_dir}"
         )
 
-    # Step 1: extract symbols
+    # Step 1: extract symbols and data imports
     _extract_binary_symbols(merged_trace_dir)
+    _extract_data_imports(merged_trace_dir)
 
     # Step 2: clean captured LLVM bitcode
     _clean_bitcode(merged_trace_dir)
