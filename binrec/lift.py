@@ -15,15 +15,15 @@ from .lib import binrec_lift, binrec_link
 logger = logging.getLogger("binrec.lift")
 
 DATA_IMPORT_PATTERN = re.compile(
-    r'^\s*\d+:\s+'  # symbol index
-    r'([0-9a-fA-F]+)\s+'  # import address (hex)
-    r'(\d+)\s+'  # symbol size (bytes)
-    r'OBJECT\s+'  # symbol type - we only handle OBJECT
-    r'GLOBAL\s+'  # binding - we only handle GLOBAL
-    r'[a-zA-Z_]+\s+'  # visibility
-    r'\d+\s+'  # section index
-    r'([a-zA-F_0-9]+)@',  # symbol name (@ library)
-    re.MULTILINE
+    r"^\s*\d+:\s+"  # symbol index
+    r"([0-9a-fA-F]+)\s+"  # import address (hex)
+    r"(\d+)\s+"  # symbol size (bytes)
+    r"OBJECT\s+"  # symbol type - we only handle OBJECT
+    r"GLOBAL\s+"  # binding - we only handle GLOBAL
+    r"[a-zA-Z_]+\s+"  # visibility
+    r"\d+\s+"  # section index
+    r"([a-zA-F_0-9]+)@",  # symbol name (@ library)
+    re.MULTILINE,
 )
 
 
@@ -122,7 +122,8 @@ def _extract_data_imports(trace_dir: Path) -> None:
         readelf = subprocess.check_output(["readelf", "--dyn-sym", str(binary)])
     except subprocess.CalledProcessError:
         raise BinRecError(
-            f"failed to extract data imports from binary: {trace_dir.name}")
+            f"failed to extract data imports from binary: {trace_dir.name}"
+        )
 
     with open(data_imports, "w") as file:
         for match in DATA_IMPORT_PATTERN.finditer(readelf.decode()):
