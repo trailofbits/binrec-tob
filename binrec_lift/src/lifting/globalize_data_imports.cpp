@@ -48,32 +48,39 @@ static void globalize_data_import(
             for (auto &cuse : c->uses()) {
                 work_list.push_back(&cuse);
             }
-        } else if (llvm::isa<llvm::GlobalVariable>(user)) {
-            // This really shouldn't happen because of the way S2E captures bitcode.
         }
     }
 
-    for (auto use : instruction_uses) {
-        auto user = use->getUser();
-        auto inst = dyn_cast<Instruction>(user);
-        auto op_num = use->getOperandNo();
-        auto operand = inst->getOperand(op_num);
-        auto op_type = operand->getType();
+    while (!instruction_uses.empty()) {
+        Use *use = instruction_uses.back();
+        Value *operand = use->get();
 
-        if (op_type == global_var->getType()) {
-            // no conversion necessary, most likely a inttoptr cast
+        instruction_uses.pop_back();
+
+        if (operand == value) {
+            // If we've descended back down the def/use graph to a use of the
+            // actual integer, then replace it with a use of the external variable,
+            // casted to an integer.
+            auto inst = dyn_cast<Instruction>(use->getUser());
             DBG("replacing pointer cast with global variable: " << *operand << " -> @" << symbol);
-            inst->setOperand(op_num, global_var);
-        } else if (op_type == symbol_type) {
-            // instruction uses the actual address of the symbol, such as "&stdout"
-            // Convert the global pointer to a int and update the instruction to use the
-            // result.
-            auto ptrtoint = new PtrToIntInst(global_var, symbol_type, "", inst);
-            DBG("replacing symbol address with global variable: " << *ptrtoint);
-            inst->setOperand(op_num, ptrtoint);
-        } else {
-            WARNING(
-                "unrecgonized destination operand type, may produce invalid bitcode: " << *inst);
+            auto ptrtoint = ConstantExpr::getPtrToInt(global_var, operand->getType());
+            use->set(ptrtoint);
+        } else if (auto ce = dyn_cast<ConstantExpr>(operand)) {
+            // We've found a constant expression, so try to descend into it for
+            // replacement of the constant with the global var.
+            auto user = dyn_cast<Instruction>(use->getUser());
+            auto next_user = ce->getAsInstruction();
+
+            DBG("decomposing constexpr to replace global variable: " << *user);
+
+            next_user->insertBefore(user);
+            use->set(next_user);
+
+            // Let us descend down the operands of the constant
+            // expression that have now been converted to an instruction.
+            for (auto &next_use : next_user->operands()) {
+                instruction_uses.push_back(&next_use);
+            }
         }
     }
 }
