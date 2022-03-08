@@ -2,7 +2,7 @@
 default:
   @just --list --unsorted
 
-########## Section: Environment and Recipe Vairables ##########
+########## Section: Environment and Recipe Variables ##########
 
 # Environment Variables (Include in all justfiles that need them)
 set dotenv-load := true
@@ -15,7 +15,7 @@ plugins_root := justdir + "/s2e/source/s2e/libs2eplugins"
 plugins_dir := join(plugins_root, "src/s2e/Plugins")
 plugins_cmake := join(plugins_root, "src", "CMakeLists.txt")
 
-########## End: Environment and Recipe Vairables ##########
+########## End: Environment and Recipe Variables ##########
 
 
 ########## Section: Installation Recipes ##########
@@ -79,9 +79,8 @@ build-s2e-image image="debian-9.2.1-i386":
   just _s2e-command image_build -d \"{{image}}\"
 
 # This will trigger a rebuild of libs2e, which contains the plugins
-s2e-rebuild-plugins:
-  rm -f ${S2EDIR}/build/stamps/libs2e-release-install
-  cd ${S2EDIR}/build && make -f ../source/s2e/Makefile stamps/libs2e-release-install
+rebuild-s2e-plugins:
+  just _s2e-command build -r libs2e-release
 
 # Inserts a binrec plugin into the correct location within the S2E repository
 _s2e-insert-binrec-plugin name:
