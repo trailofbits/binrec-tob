@@ -14,6 +14,7 @@ add_library(binrec_lift_static STATIC
         src/lifting/fix_cfg.cpp src/lifting/fix_cfg.hpp
         src/lifting/fix_overlaps.cpp src/lifting/fix_overlaps.hpp
         src/lifting/global_env_to_alloca.cpp src/lifting/global_env_to_alloca.hpp
+        src/lifting/globalize_data_imports.cpp src/lifting/globalize_data_imports.hpp
         src/lifting/implement_lib_call_stubs.cpp src/lifting/implement_lib_call_stubs.hpp
         src/lifting/implement_lib_calls_new_plt.cpp src/lifting/implement_lib_calls_new_plt.hpp
         src/lifting/inline_lib_call_args.cpp src/lifting/inline_lib_call_args.hpp
@@ -91,8 +92,8 @@ target_compile_options(binrec_lift_static PUBLIC -fno-rtti -fpic)
 target_include_directories(binrec_lift_static PUBLIC ${LLVM_INCLUDE_DIRS} ${CMAKE_CURRENT_LIST_DIR}/src)
 llvm_map_components_to_libnames(llvm_libs CodeGen Core ipo IRReader Passes ScalarOpts Support TransformUtils)
 
-# NOTE (mdbrown) The original build process specified lld, which might not be on system (lld-13 is not 
-#                symlinked by default. Commenting this out does'nt seem to be a problem, but if we have issues 
+# NOTE (mdbrown) The original build process specified lld, which might not be on system (lld-13 is not
+#                symlinked by default. Commenting this out does'nt seem to be a problem, but if we have issues
 #                later then we will need to create a softlink for lld if it doesn't exist during install.
 #target_link_options(binrec_lift_static PUBLIC -fuse-ld=lld)
 
