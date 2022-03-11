@@ -16,7 +16,7 @@ Binrec has been developed for and tested against the following environments and 
 - Ubuntu: 20.04.03
 - LLVM (Clang): 12
 - Python 3.9
-- s2e-env @9d57362
+- s2e-env @778116b
 
 The limiting factor for both Linux environment and LLVM is s2e, which supports Ubuntu 20.04 LTS at a maximum.
 
