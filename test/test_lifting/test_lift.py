@@ -29,45 +29,47 @@ Symbol table '.dynsym' contains 9 entries:
 
 
 class TestLifting:
-
-    @patch.object(lift.subprocess, 'check_call')
+    @patch.object(lift.subprocess, "check_call")
     def test_extract_symbols(self, mock_check_call):
         trace_dir = MagicMock(name="asdf")
         makefile = str(BINREC_ROOT / "scripts" / "s2eout_makefile")
 
         lift._extract_binary_symbols(trace_dir)
 
-        mock_check_call.assert_called_once_with(["make", "-f", makefile, "symbols"], cwd=str(trace_dir))
+        mock_check_call.assert_called_once_with(
+            ["make", "-f", makefile, "symbols"], cwd=str(trace_dir)
+        )
 
-    @patch.object(lift.subprocess, 'check_call')
+    @patch.object(lift.subprocess, "check_call")
     def test_extract_symbols_error(self, mock_check_call):
-        mock_check_call.side_effect = CalledProcessError(0, 'asdf')
+        mock_check_call.side_effect = CalledProcessError(0, "asdf")
         with pytest.raises(BinRecError):
             lift._extract_binary_symbols(MagicMock(name="asdf"))
 
-    @patch.object(lift.subprocess, 'check_output')
-    @patch.object(lift, 'open', new_callable=mock_open)
+    @patch.object(lift.subprocess, "check_output")
+    @patch.object(lift, "open", new_callable=mock_open)
     def test_extract_data_imports(self, mock_file, mock_check_output):
         trace_dir = MagicMock(name="asdf")
         mock_check_output.return_value = READELF_OUTPUT.encode()
         lift._extract_data_imports(trace_dir)
 
-        mock_check_output.assert_called_once_with(["readelf", "--dyn-sym",
-                                                   str(trace_dir / "binary")])
+        mock_check_output.assert_called_once_with(
+            ["readelf", "--dyn-sym", str(trace_dir / "binary")]
+        )
         mock_file.assert_called_once_with(trace_dir / "data_imports", "w")
         handle = mock_file()
         assert handle.write.call_args_list == [
             call("0804c044 4 stdout"),
-            call('\n'),
+            call("\n"),
             call("0804c020 4 stderr"),
-            call('\n')
+            call("\n"),
         ]
 
-    @patch.object(lift.subprocess, 'check_output')
+    @patch.object(lift.subprocess, "check_output")
     def test_extract_data_imports_error(self, mock_check_output):
-        mock_check_output.side_effect = CalledProcessError(0, 'asdf')
+        mock_check_output.side_effect = CalledProcessError(0, "asdf")
         with pytest.raises(BinRecError):
-            lift._extract_data_imports(MagicMock(name='asdf'))
+            lift._extract_data_imports(MagicMock(name="asdf"))
 
     def test_clean_bitcode(self, mock_lib_module):
         trace_dir = MockPath("asdf")
@@ -77,7 +79,7 @@ class TestLifting:
         mock_lib_module.binrec_lift.clean.assert_called_once_with(
             trace_filename="captured.bc",
             destination="cleaned",
-            working_dir=str(trace_dir)
+            working_dir=str(trace_dir),
         )
 
     def test_clean_bitcode_error(self, mock_lib_module):
@@ -85,24 +87,29 @@ class TestLifting:
         with pytest.raises(BinRecError):
             lift._clean_bitcode(MockPath("asdf"))
 
-    @patch.object(lift.subprocess, 'check_call')
+    @patch.object(lift.subprocess, "check_call")
     def test_apply_fixups(self, mock_check_call):
         trace_dir = MagicMock(name="asdf")
 
         lift._apply_fixups(trace_dir)
 
-        mock_check_call.assert_called_once_with([
-                llvm_command("llvm-link"),
-                "-o",
-                "linked.bc",
-                "cleaned.bc",
-                str(BINREC_ROOT / "runlib" / "custom-helpers.bc"),
-            ],
-            cwd=str(trace_dir))
+        assert mock_check_call.call_args_list == [
+            call(
+                [
+                    llvm_command("llvm-link"),
+                    "-o",
+                    "linked.bc",
+                    "cleaned.bc",
+                    str(BINREC_ROOT / "runlib" / "custom-helpers.bc"),
+                ],
+                cwd=str(trace_dir),
+            ),
+            call([llvm_command("llvm-dis"), "linked.bc"], cwd=str(trace_dir)),
+        ]
 
-    @patch.object(lift.subprocess, 'check_call')
+    @patch.object(lift.subprocess, "check_call")
     def test_apply_fixups_error(self, mock_check_call):
-        mock_check_call.side_effect = CalledProcessError(0, 'asdf')
+        mock_check_call.side_effect = CalledProcessError(0, "asdf")
         with pytest.raises(BinRecError):
             lift._apply_fixups(MagicMock(name="asdf"))
 
@@ -115,7 +122,7 @@ class TestLifting:
             trace_filename="linked.bc",
             destination="lifted",
             clean_names=True,
-            working_dir=str(trace_dir)
+            working_dir=str(trace_dir),
         )
 
     def test_lift_bitcode_error(self, mock_lib_module):
@@ -132,7 +139,7 @@ class TestLifting:
             trace_filename="lifted.bc",
             destination="optimized",
             memssa_check_limit=100000,
-            working_dir=str(trace_dir)
+            working_dir=str(trace_dir),
         )
 
     def test_optimize_bitcode_error(self, mock_lib_module):
@@ -140,17 +147,19 @@ class TestLifting:
         with pytest.raises(BinRecError):
             lift._optimize_bitcode(MockPath("asdf"))
 
-    @patch.object(lift.subprocess, 'check_call')
+    @patch.object(lift.subprocess, "check_call")
     def test_disassemble_bitcode(self, mock_check_call):
         trace_dir = MagicMock(name="asdf")
 
         lift._disassemble_bitcode(trace_dir)
 
-        mock_check_call.assert_called_once_with([llvm_command("llvm-dis"), "optimized.bc"], cwd=str(trace_dir))
+        mock_check_call.assert_called_once_with(
+            [llvm_command("llvm-dis"), "optimized.bc"], cwd=str(trace_dir)
+        )
 
-    @patch.object(lift.subprocess, 'check_call')
+    @patch.object(lift.subprocess, "check_call")
     def test_disassemble_bitcode_error(self, mock_check_call):
-        mock_check_call.side_effect = CalledProcessError(0, 'asdf')
+        mock_check_call.side_effect = CalledProcessError(0, "asdf")
         with pytest.raises(BinRecError):
             lift._disassemble_bitcode(MagicMock(name="asdf"))
 
@@ -162,7 +171,7 @@ class TestLifting:
         mock_lib_module.binrec_lift.compile_prep.assert_called_once_with(
             trace_filename="optimized.bc",
             destination="recovered",
-            working_dir=str(trace_dir)
+            working_dir=str(trace_dir),
         )
 
     def test_recover_bitcode_error(self, mock_lib_module):
@@ -170,18 +179,20 @@ class TestLifting:
         with pytest.raises(BinRecError):
             lift._recover_bitcode(MockPath("asdf"))
 
-    @patch.object(lift.subprocess, 'check_call')
+    @patch.object(lift.subprocess, "check_call")
     def test_compile_bitcode(self, mock_check_call):
         trace_dir = MagicMock(name="asdf")
         makefile = str(BINREC_ROOT / "scripts" / "s2eout_makefile")
 
         lift._compile_bitcode(trace_dir)
 
-        mock_check_call.assert_called_once_with(["make", "-f", makefile, "-sr", "recovered.o"], cwd=str(trace_dir))
+        mock_check_call.assert_called_once_with(
+            ["make", "-f", makefile, "-sr", "recovered.o"], cwd=str(trace_dir)
+        )
 
-    @patch.object(lift.subprocess, 'check_call')
+    @patch.object(lift.subprocess, "check_call")
     def test_compile_bitcode_error(self, mock_check_call):
-        mock_check_call.side_effect = CalledProcessError(0, 'asdf')
+        mock_check_call.side_effect = CalledProcessError(0, "asdf")
         with pytest.raises(BinRecError):
             lift._compile_bitcode(MagicMock(name="asdf"))
 
@@ -197,28 +208,42 @@ class TestLifting:
             recovered_filename=str(trace_dir / "recovered.o"),
             runtime_library=libbinrec_rt,
             linker_script=i386_ld,
-            destination=str(trace_dir / "recovered")
+            destination=str(trace_dir / "recovered"),
         )
 
     def test_link_recovered_binary_error(self, mock_lib_module):
-        mock_lib_module.binrec_link.link.side_effect = CalledProcessError(0, 'asdf')
+        mock_lib_module.binrec_link.link.side_effect = CalledProcessError(0, "asdf")
         with pytest.raises(BinRecError):
             lift._link_recovered_binary(MagicMock(name="asdf"))
 
-    @patch.object(lift, '_extract_binary_symbols')
-    @patch.object(lift, '_extract_data_imports')
-    @patch.object(lift, '_clean_bitcode')
-    @patch.object(lift, '_apply_fixups')
-    @patch.object(lift, '_lift_bitcode')
-    @patch.object(lift, '_optimize_bitcode')
-    @patch.object(lift, '_disassemble_bitcode')
-    @patch.object(lift, '_recover_bitcode')
-    @patch.object(lift, '_compile_bitcode')
-    @patch.object(lift, '_link_recovered_binary')
-    @patch.object(lift, 'project')
-    def test_lift_trace(self, mock_project, mock_link, mock_compile, mock_recover, mock_disasm, mock_optimize,
-                        mock_lift, mock_apply, mock_clean, mock_data_imports, mock_extract):
-        mock_project.merged_trace_dir.return_value = trace_dir = MockPath("s2e-out", is_dir=True)
+    @patch.object(lift, "_extract_binary_symbols")
+    @patch.object(lift, "_extract_data_imports")
+    @patch.object(lift, "_clean_bitcode")
+    @patch.object(lift, "_apply_fixups")
+    @patch.object(lift, "_lift_bitcode")
+    @patch.object(lift, "_optimize_bitcode")
+    @patch.object(lift, "_disassemble_bitcode")
+    @patch.object(lift, "_recover_bitcode")
+    @patch.object(lift, "_compile_bitcode")
+    @patch.object(lift, "_link_recovered_binary")
+    @patch.object(lift, "project")
+    def test_lift_trace(
+        self,
+        mock_project,
+        mock_link,
+        mock_compile,
+        mock_recover,
+        mock_disasm,
+        mock_optimize,
+        mock_lift,
+        mock_apply,
+        mock_clean,
+        mock_data_imports,
+        mock_extract,
+    ):
+        mock_project.merged_trace_dir.return_value = trace_dir = MockPath(
+            "s2e-out", is_dir=True
+        )
         lift.lift_trace("hello")
         mock_extract.assert_called_once_with(trace_dir)
         mock_clean.assert_called_once_with(trace_dir)
@@ -231,18 +256,29 @@ class TestLifting:
         mock_link.assert_called_once_with(trace_dir)
         mock_data_imports.assert_called_once_with(trace_dir)
 
-    @patch.object(lift, '_extract_binary_symbols')
-    @patch.object(lift, '_clean_bitcode')
-    @patch.object(lift, '_apply_fixups')
-    @patch.object(lift, '_lift_bitcode')
-    @patch.object(lift, '_optimize_bitcode')
-    @patch.object(lift, '_disassemble_bitcode')
-    @patch.object(lift, '_recover_bitcode')
-    @patch.object(lift, '_compile_bitcode')
-    @patch.object(lift, '_link_recovered_binary')
-    @patch.object(lift, 'project')
-    def test_lift_trace_error(self, mock_project, mock_link, mock_compile, mock_recover, mock_disasm, mock_optimize,
-                        mock_lift, mock_apply, mock_clean, mock_extract):
+    @patch.object(lift, "_extract_binary_symbols")
+    @patch.object(lift, "_clean_bitcode")
+    @patch.object(lift, "_apply_fixups")
+    @patch.object(lift, "_lift_bitcode")
+    @patch.object(lift, "_optimize_bitcode")
+    @patch.object(lift, "_disassemble_bitcode")
+    @patch.object(lift, "_recover_bitcode")
+    @patch.object(lift, "_compile_bitcode")
+    @patch.object(lift, "_link_recovered_binary")
+    @patch.object(lift, "project")
+    def test_lift_trace_error(
+        self,
+        mock_project,
+        mock_link,
+        mock_compile,
+        mock_recover,
+        mock_disasm,
+        mock_optimize,
+        mock_lift,
+        mock_apply,
+        mock_clean,
+        mock_extract,
+    ):
         mock_project.merged_trace_dir.return_value = MockPath("s2e-out", exists=False)
         with pytest.raises(BinRecError):
             lift.lift_trace("hello")

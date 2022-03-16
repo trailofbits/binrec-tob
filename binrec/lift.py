@@ -163,7 +163,9 @@ def _apply_fixups(trace_dir: Path) -> None:
 
     **Inputs:** trace_dir / "cleaned.bc"
 
-    **Outputs:** trace_dir / "linked.bc"
+    **Outputs:**
+      - trace_dir / "linked.bc"
+      - trace_dir / "linked.ll"
 
     :param trace_dir: binrec binary trace directory
     """
@@ -183,6 +185,15 @@ def _apply_fixups(trace_dir: Path) -> None:
         raise BinRecError(
             f"failed to apply fixups to captured LLVM bitcode: {trace_dir.name}"
         )
+
+    try:
+        subprocess.check_call(
+            [llvm_command("llvm-dis"), "linked.bc"], cwd=str(trace_dir)
+        )
+    except subprocess.CalledProcessError:  # pragma: no cover
+        # we don't really care if this fail since we really only want the
+        # human-readable for debugging purposes.
+        pass
 
 
 def _lift_bitcode(trace_dir: Path) -> None:

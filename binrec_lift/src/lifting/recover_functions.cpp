@@ -29,6 +29,119 @@ namespace {
         uint32_t parent = 0;
     };
 
+    /*
+     * Locate the address of the main function within the _start() entrypoint. In some
+     * captures, _start will call __libc_start_main, passing in the actual address of
+     * main() as the first argument. This function iterates over _start() instructions
+     * and finds the signature of:
+     *
+     *     call void @helper_stl_mmu(%struct.CPUX86State* %0, i32 %[var], i32 [const],
+     *                               i32 33, i8* null)
+     *     store i32 %[var], i32* @R_ESP, align 4
+     *
+     * This sequence loads a constant into a variable and then stores the variable onto
+     * the stack (R_ESP). The constant int *might* be the address of main.
+     *
+     * The constant int is ignored if it is also referenced in a store instruction
+     * to the return_address global, indicating that the address is not the main
+     * function.
+     *
+     * Some captures reference the main address from a register, such as R_EAX, which
+     * we wouldn't have the value for at this point, which is why there is a second
+     * main locator function: locate_main_addr.
+     */
+    uint32_t locate_main_addr_in_start(Module &m, BasicBlock *start_bb)
+    {
+        auto esp = m.getGlobalVariable(
+            "R_ESP",
+            true); // true is AllowInternalLinkage since registers are made internal
+        if (!esp) {
+            WARNING("failed to find ESP register; falling back to previous main finder logic");
+            return 0;
+        }
+
+        auto return_address = m.getGlobalVariable("return_address", true);
+        if (!return_address) {
+            WARNING(
+                "failed to find return_address global; falling back to previous main finder logic");
+            return 0;
+        }
+
+        Function *helper_stl = m.getFunction("helper_stl_mmu");
+        if (!helper_stl) {
+            WARNING(
+                "failed to find helper_stl_mmu function; falling back to previous main finder logic");
+            return 0;
+        }
+
+        DBG("attempting to find main function address in _start()");
+
+        Value *main_addr_var = nullptr;
+        ConstantInt *main_addr_value = nullptr;
+        for (auto iter = start_bb->rbegin(); iter != start_bb->rend(); ++iter) {
+            Instruction *inst = &(*iter);
+            if (isInstStart(inst) && main_addr_value) {
+                // We found the previous instruction and have a constant main function
+                // address value. We are done.
+                break;
+            }
+
+            if (auto store = dyn_cast<StoreInst>(inst)) {
+                if (store->getPointerOperand() == esp) {
+                    // Store value to ESP. This will be a variable, not a constant, at
+                    // this point.
+                    DBG("found store to ESP, potentially main address variable: " << *store);
+                    main_addr_var = store->getValueOperand();
+                } else if (
+                    main_addr_value && store->getPointerOperand() == return_address &&
+                    store->getValueOperand() == main_addr_value)
+                {
+                    // We found a constant int that *might* be the address of the main
+                    // function. But, we just found it being used as the
+                    // return_address. So, the main address we have is not correct,
+                    // ignore it.
+                    DBG("ignoring return address: " << *main_addr_value);
+                    main_addr_var = nullptr;
+                    main_addr_value = nullptr;
+                }
+            } else if (auto call = dyn_cast<CallInst>(inst)) {
+                if (main_addr_var && call->getCalledFunction() == helper_stl &&
+                    call->getArgOperand(1) == main_addr_var)
+                {
+                    if (auto value = dyn_cast<ConstantInt>(call->getArgOperand(2))) {
+                        // We found a call to helper_stl_mmu, which is storing a
+                        // constant int to the variable that we *think* holds the
+                        // address of the main function. The constant int might be the
+                        // main address.
+                        //
+                        // We only consider the constant int if it is greater-than 0
+                        // and can be stored within a uint32_t.
+                        if (!value->isZero() && !value->isNegative() && value->getBitWidth() <= 32)
+                        {
+                            main_addr_value = value;
+                            DBG("found potential main address: " << *main_addr_value);
+                        }
+                    } else {
+                        // We found a store to the variable that we *think* holds the
+                        // main function address, but the value isn't a constant int.
+                        // So, this variable is not the address of main.
+                        DBG("ignore main address variable: " << *main_addr_var);
+                        main_addr_var = nullptr;
+                    }
+                }
+            }
+        }
+
+        if (main_addr_value) {
+            // We found a potential main function address, return it.
+            uint32_t main_addr = (uint32_t)main_addr_value->getZExtValue();
+            INFO("main function address referenced in _start: " << main_addr);
+            return main_addr;
+        }
+
+        return 0;
+    }
+
 
     // NOTE (hbrodin):
     // Previous implementation/versions of BinRec and S2E didn't instrument starting at the
@@ -53,6 +166,14 @@ namespace {
 
         std::vector<BasicBlock *> successors;
         auto block = &entrypoint->getEntryBlock();
+
+        // First attempt to get the main address by inspecting the instructions in
+        // _start, which eventually calls __libc_start_main with the address of the
+        // main function as the first argument.
+        if (auto main_addr = locate_main_addr_in_start(m, block)) {
+            return main_addr;
+        }
+
         for (size_t i = 0; i < 2; i++) {
             if (!getBlockSuccs(block, successors)) {
                 LLVM_ERROR(error) << "Failed to find successors for block:\n" << *block;
@@ -60,8 +181,9 @@ namespace {
             }
 
             if (successors.size() != 1) {
-                LLVM_ERROR(error) << "Expected a single successor to block, got "
-                                  << successors.size();
+                LLVM_ERROR(error) << "Expected a single successor for potential main block, "
+                                  << block->getName() << ": got " << successors.size()
+                                  << " successors";
                 throw std::runtime_error{error};
             }
             block = successors[0];
