@@ -199,16 +199,7 @@ Commits to pull requests in progress will be automatically checked to ensure the
 Other Notes
 -----------
 
-### Linking
-
-In the current implementation we reuse the entrypoint of the original binary. Different compiler and operating system
-combinations generate slightly different variants of this. Before `__libc_start_main` is called, the address of `main`
-needs to be patched to the new entrypoint. We cannot do that automatically yet, so open up your binary in your favorite
-disassembler, go to `_start` and count the bytes until you get to the address of `main`. Use this value
-in `binrec_link/src/Stitch.cpp:getStartPatch`.Notes
-
-Trace merging scripts deduplicated. Assumes you pass the s2e-max-processes flag for directory structure. See the
-Deinstrumenting and lowering bitcode section.
+### Callbacks
 
 Support for callbacks is currently work in progress. To enable it, set the lift and lower option `-f unfallback`. Note
 this does not actually enable the fallback, it will use whatever fallback option you have hardcoded. Later the option
