@@ -7,6 +7,7 @@
 #include <llvm/IR/Function.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Metadata.h>
+#include <llvm/Support/FileSystem.h>
 #include <s2e/Plugins/OSMonitors/Support/ModuleExecutionDetector.h>
 #include <s2e/S2E.h>
 #include <s2e/S2EExecutor.h>
