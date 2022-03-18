@@ -51,9 +51,6 @@ INCLUDE_DIRS := \
 .PHONY: all
 all: $(BIN)
 
-#mutator:
-#	$(MAKE) -C dyninst_mutator
-
 .PHONY: src
 src: $(SRC)
 
@@ -80,7 +77,7 @@ op_helper.bc: ${S2ESRC}/libcpu/src/target-i386/op_helper.c
 		# -fpack-struct=1
 
 clean:
-	rm -f $(BIN) $(SRC) dyninst_mutator/*.o *.o *.s
+	rm -f $(BIN) $(SRC) *.o *.s
 
 custom-helpers.bc: custom-helpers.cpp
 	$(CLANGXX) -std=c++17 -fno-rtti -fno-exceptions -c -emit-llvm -m32 $(INCLUDE_DIRS) -O3 -fno-builtin -o $@ $<
