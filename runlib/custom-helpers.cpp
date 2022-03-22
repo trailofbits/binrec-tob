@@ -215,6 +215,12 @@ void __attribute__((always_inline)) virtualize_return_i64(uint64_t ret)
     R_EDX = ret >> 32;
 }
 
+/* ABI for atexit() function. Binrec does not currently support callbacks, so we remove
+ * this functionality. */
+int __cxa_atexit(void *, void*, void*) {
+    return 0;
+}
+
 void helper_break()
 {
     asm("int $0x3");

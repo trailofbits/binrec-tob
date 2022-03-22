@@ -928,3 +928,9 @@ __vsprintf_chk 0 4 4 4 4 4 4
 __vsnprintf_chk 0 4 4 4 4 4 4 4
 __vprintf 0 4 4 4 4
 __vfprintf 0 4 4 4 4 4
+__cxa_atexit 0 4 4 4 4
+fread_unlocked 0 4 4 4 4 4
+posix_fadvise64 0 4 4 4 4 4
+fopen64 0 4 4 4
+fwrite_unlocked 0 4 4 4 4 4
+getopt_long 0 4 4 4 4 4 4
