@@ -15,8 +15,9 @@ from binrec.env import BINREC_ROOT
 from binrec.merge import merge_traces
 from binrec import lift, project
 
-TEST_INPUT_DIR = BINREC_ROOT / "test" / "benchmark" / "samples" / "binrec" / "test_inputs"
-TEST_BUILD_DIR = BINREC_ROOT / "test" / "benchmark" / "samples" / "bin" / "x86" / "binrec"
+TEST_SAMPLE_SOURCES = ("binrec", "coreutils")
+TEST_SAMPLES_DIR = BINREC_ROOT / "test" / "benchmark" / "samples"
+TEST_BUILD_DIR = BINREC_ROOT / "test" / "benchmark" / "samples" / "bin" / "x86"
 
 
 @contextmanager
@@ -78,19 +79,24 @@ def load_sample_test_cases(func: callable) -> callable:
     """
     test_plans: List[Tuple[Path, Path]] = []
 
-    if not TEST_INPUT_DIR.is_dir() or not TEST_BUILD_DIR.is_dir():
-        func.sample_names = []
-        return func
-
-    for filename in sorted(os.listdir(TEST_INPUT_DIR)):
-        binary = TEST_BUILD_DIR / filename
-        if binary.suffix.lower() == ".json":
-            binary = binary.with_suffix('')
-
-        if not binary.is_file():
+    for source in TEST_SAMPLE_SOURCES:
+        input_dir = TEST_SAMPLES_DIR / source / "test_inputs"
+        if not input_dir.is_dir():
             continue
 
-        test_plans.append((binary, TEST_INPUT_DIR / filename))
+        build_dir = TEST_BUILD_DIR / source
+        if not build_dir.is_dir():
+            continue
+
+        for filename in sorted(os.listdir(input_dir)):
+            binary = build_dir / filename
+            if binary.suffix.lower() == ".json":
+                binary = binary.with_suffix('')
+
+            if not binary.is_file():
+                continue
+
+            test_plans.append((binary, input_dir / filename))
 
     func.test_plans = test_plans
     return func
@@ -102,7 +108,8 @@ def pytest_generate_tests(metafunc: Metafunc):
     """
     test_plans: Optional[List[Tuple[Path, Path]]] = getattr(metafunc.function, "test_plans", None)
     if test_plans:
-        metafunc.parametrize("binary,test_plan_file", test_plans, ids=[binary.name for binary, _ in test_plans])
+        metafunc.parametrize("binary,test_plan_file", test_plans,
+                             ids=['_'.join(binary.parts[-2:]) for binary, _ in test_plans])
 
 
 @load_sample_test_cases
