@@ -93,8 +93,7 @@ _s2e-insert-binrec-plugin name:
 
 #  Adds the binrec-plugins to the s2e-plugins structure
 s2e-insert-binrec-plugins:
-  # "Regular plugins"
-  just _s2e-insert-binrec-plugin "binrec_plugins/BBExport"
+  # Regular plugins
   just _s2e-insert-binrec-plugin "binrec_plugins/ELFSelector"
   just _s2e-insert-binrec-plugin "binrec_plugins/Export"
   just _s2e-insert-binrec-plugin "binrec_plugins/ExportELF"
