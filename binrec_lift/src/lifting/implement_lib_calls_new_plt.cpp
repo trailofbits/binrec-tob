@@ -16,17 +16,25 @@ auto ImplementLibCallsNewPLTPass::run(Module &m, ModuleAnalysisManager &am) -> P
                 f.getName().drop_front(7),
                 f.getFunctionType(),
                 f.getAttributes());
-            for (User *use : f.users()) {
-                if (auto *call = dyn_cast<CallInst>(use)) {
-                    std::vector<Value *> args;
-                    for (auto &arg : call->args()) {
-                        args.push_back(arg);
-                    }
-                    IRBuilder<> b(call);
-                    Value *ret = b.CreateCall(new_fc, args);
-                    call->replaceAllUsesWith(ret);
-                    call->eraseFromParent();
+
+            INFO("replacing calls to stub: " << f.getName());
+            vector<CallInst *> work_list;
+            for (User *user : f.users()) {
+                auto call = dyn_cast<CallInst>(user);
+                if (call) {
+                    work_list.push_back(call);
                 }
+            }
+
+            for (CallInst *call : work_list) {
+                std::vector<Value *> args;
+                for (auto &arg : call->args()) {
+                    args.push_back(arg);
+                }
+                IRBuilder<> b(call);
+                Value *ret = b.CreateCall(new_fc, args);
+                call->replaceAllUsesWith(ret);
+                call->eraseFromParent();
             }
         }
     }
