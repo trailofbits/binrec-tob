@@ -80,19 +80,9 @@ static auto remove_plt_succs(Function *f, set<Function *> &erase_list) -> bool
         return false;
     }
 
-    if (getBlockMeta(ft, "extern_symbol")) {
-        INFO("!! external symbol fallthrough !!");
-        // return false;
-    }
-
     // linking part of stub should do a durect jump to linking code at the
     // start of the PLT
     getBlockSuccs(ft, succs);
-    if (succs.size() != 1) {
-        INFO(
-            "assert will fail for function: " << ft->getName() << " [" << f->getName()
-                                              << "]: " << succs.size());
-    }
     assert(succs.size() == 1);
     Function *plt = succs[0];
 
