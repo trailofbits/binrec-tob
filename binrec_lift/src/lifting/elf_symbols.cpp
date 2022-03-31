@@ -29,17 +29,29 @@ static void annotate_symbol(Function *f, const string &symbol)
 static auto get_fall_through_succ(Function *f) -> Function *
 {
     Function *next = nullptr;
-    unsigned lowest_pc = -1, block_pc = getBlockAddress(f);
-
+    unsigned lowest_pc = -1;
+    unsigned block_pc = getBlockAddress(f);
     vector<Function *> succs;
+
     getBlockSuccs(f, succs);
 
     // If the PLT was not resolved there might not be any successors,
     // otherwise it should be the first.
     // NOTE (hbrodin): Can we assume the order is preserved???
-    if (succs.empty())
+    // NOTE (meily): no, the order is not guaranteed and we canot
+    //               assume that the first successor is the nearest.
+    if (succs.empty()) {
         return nullptr;
-    return succs[0];
+    }
+
+    for (Function *succ : succs) {
+        unsigned succ_pc = getBlockAddress(succ);
+        if (succ_pc > block_pc && succ_pc < lowest_pc) {
+            next = succ;
+            lowest_pc = succ_pc;
+        }
+    }
+    return next;
 }
 
 static auto remove_plt_succs(Function *f, set<Function *> &erase_list) -> bool
