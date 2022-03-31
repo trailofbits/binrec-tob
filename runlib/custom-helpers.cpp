@@ -39,6 +39,11 @@ void raise_interrupt(int intno, int is_int, int error_code, int next_eip_addend)
     exit(-1);
 }
 
+void raise_interrupt2(int intno, int is_int, int error_code, int next_eip_addend)
+{
+    raise_interrupt(intno, is_int, error_code, next_eip_addend);
+}
+
 void __attribute__((noinline)) helper_raise_exception(uint32_t index)
 {
     printf("exception %d raised\n", index);
