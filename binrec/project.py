@@ -6,7 +6,7 @@ import re
 import shlex
 import subprocess
 from pathlib import Path
-from typing import Iterable, List
+from typing import Iterable, List, Union
 
 from binrec.env import BINREC_PROJECTS
 
@@ -146,7 +146,12 @@ def set_project_args(project: str, args: List[str]) -> None:
         file.writelines(lines)
 
 
-def validate_project(project: str, args: List[str]) -> None:
+def validate_project(
+    project: str,
+    args: List[str],
+    match_stdout: Union[bool, str] = True,
+    match_stderr: Union[bool, str] = True,
+) -> None:
     """
     Compare the original binary against the lifted binary for a given sample of
     command line arguments. This method runs the original and the lifted binary
@@ -156,6 +161,8 @@ def validate_project(project: str, args: List[str]) -> None:
 
     :param project: project name
     :param args: list of arguments
+    :param match_stdout: how to validate stdout content
+    :param match_stderr: how to validate stderr content
     """
 
     logger.info("Validating project: %s", project)
@@ -205,9 +212,27 @@ def validate_project(project: str, args: List[str]) -> None:
     lifted_stdout = lifted_proc.stdout.read()  # type: ignore
     lifted_stderr = lifted_proc.stderr.read()  # type: ignore
 
-    assert original_proc.returncode == lifted_proc.returncode
-    assert original_stdout == lifted_stdout
-    assert original_stderr == lifted_stderr
+    assert (
+        original_proc.returncode == lifted_proc.returncode
+    ), "recovered exit code does not match original"
+
+    if match_stdout is True:
+        assert (
+            original_stdout == lifted_stdout
+        ), "recovered stdout content does not match original"
+    elif isinstance(match_stdout, str):
+        assert (
+            re.match(match_stdout, lifted_stdout.decode(errors="replace")) is not None
+        ), "regex pattern for stdout content does not match"
+
+    if match_stderr is True:
+        assert (
+            original_stderr == lifted_stderr
+        ), "recovered stderr content does not match original"
+    elif isinstance(match_stderr, str):
+        assert (
+            re.match(match_stderr, lifted_stderr.decode(errors="replace")) is not None
+        ), "regex pattern for stderr content does not match"
 
     logger.info(
         "Output from %s's original and lifted binaries match for args: %s",

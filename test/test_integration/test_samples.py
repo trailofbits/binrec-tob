@@ -3,7 +3,7 @@ import os
 import subprocess
 import json
 import shutil
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 from dataclasses import dataclass, field
 from pathlib import Path
 from contextlib import contextmanager
@@ -40,14 +40,20 @@ def load_real_lib():
 @dataclass
 class TraceParams:
     args: List[str] = field(default_factory=list)
-    stdin: str = ''
+    stdin: str = ""
+    match_stdout: Union[bool, str] = True
+    match_stderr: Union[bool, str] = True
 
     @classmethod
     def load_dict(cls, item: dict) -> "TraceParams":
         args = item.get("args") or []
         stdin = item.get("stdin") or None
+        match_stdout = item.get("match_stdout", True)
+        match_stderr = item.get("match_stderr", True)
 
-        return cls(args=args, stdin=stdin)
+        return cls(
+            args=args, stdin=stdin, match_stdout=match_stdout, match_stderr=match_stderr
+        )
 
 
 @dataclass
@@ -60,17 +66,18 @@ class TraceTestPlan:
         return self.binary.name
 
     @classmethod
-    def load_plaintext(cls, binary: Path, filename: Path) -> 'TraceTestPlan':
+    def load_plaintext(cls, binary: Path, filename: Path) -> "TraceTestPlan":
         invocations = project.parse_batch_file(filename)
         return TraceTestPlan(binary, [TraceParams(args) for args in invocations])
 
     @classmethod
-    def load_json(cls, binary: Path, filename: Path) -> 'TraceTestPlan':
-        with open(filename, 'r') as file:
+    def load_json(cls, binary: Path, filename: Path) -> "TraceTestPlan":
+        with open(filename, "r") as file:
             body = json.loads(file.read().strip())
 
-        return TraceTestPlan(binary, [TraceParams.load_dict(item)
-                                      for item in body["runs"]])
+        return TraceTestPlan(
+            binary, [TraceParams.load_dict(item) for item in body["runs"]]
+        )
 
 
 def load_sample_test_cases(func: callable) -> callable:
@@ -91,7 +98,7 @@ def load_sample_test_cases(func: callable) -> callable:
         for filename in sorted(os.listdir(input_dir)):
             binary = build_dir / filename
             if binary.suffix.lower() == ".json":
-                binary = binary.with_suffix('')
+                binary = binary.with_suffix("")
 
             if not binary.is_file():
                 continue
@@ -106,10 +113,15 @@ def pytest_generate_tests(metafunc: Metafunc):
     """
     This method is called by pytest to generate test cases for this module.
     """
-    test_plans: Optional[List[Tuple[Path, Path]]] = getattr(metafunc.function, "test_plans", None)
+    test_plans: Optional[List[Tuple[Path, Path]]] = getattr(
+        metafunc.function, "test_plans", None
+    )
     if test_plans:
-        metafunc.parametrize("binary,test_plan_file", test_plans,
-                             ids=['_'.join(binary.parts[-2:]) for binary, _ in test_plans])
+        metafunc.parametrize(
+            "binary,test_plan_file",
+            test_plans,
+            ids=["_".join(binary.parts[-2:]) for binary, _ in test_plans],
+        )
 
 
 @load_sample_test_cases
@@ -147,7 +159,9 @@ def compare_lift(plan: TraceTestPlan) -> None:
     """
 
     for trace in plan.traces:
-        project.validate_project(plan.project, trace.args)
+        project.validate_project(
+            plan.project, trace.args, trace.match_stdout, trace.match_stderr
+        )
 
 
 def run_test(plan: TraceTestPlan) -> None:

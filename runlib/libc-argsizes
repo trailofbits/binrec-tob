@@ -934,3 +934,10 @@ posix_fadvise64 0 4 4 4 4 4
 fopen64 0 4 4 4
 fwrite_unlocked 0 4 4 4 4 4
 getopt_long 0 4 4 4 4 4 4
+strftime 0 4 4 4 4 4
+time 0 4 4
+utmpxname 0 4 4
+__ctype_tolower_loc 0 4
+dcngettext 0 4 4 4 4
+dcgettext 0 4 4 4 4
+kill 0 4 4 4
