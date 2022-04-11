@@ -1,6 +1,7 @@
 from unittest import mock
 from unittest.mock import patch, MagicMock, mock_open, call
 from subprocess import CalledProcessError
+import subprocess
 import logging
 import sys
 
@@ -28,21 +29,32 @@ Symbol table '.dynsym' contains 9 entries:
 """
 
 
+OBJDUMP_OUTPUT = b"""
+abc12340 <foo@plt>:
+    retl 0
+"""
+
 class TestLifting:
-    @patch.object(lift.subprocess, "check_call")
-    def test_extract_symbols(self, mock_check_call):
+
+    @patch("builtins.open", new_callable=mock.mock_open)
+    @patch.object(lift.subprocess, 'run')
+    def test_extract_symbols(self, mock_run, mock_symbols):
         trace_dir = MagicMock(name="asdf")
-        makefile = str(BINREC_ROOT / "scripts" / "s2eout_makefile")
+
+        symbols_path = trace_dir / "symbols"
+
+        mock_run.return_value.stdout = OBJDUMP_OUTPUT
 
         lift._extract_binary_symbols(trace_dir)
 
-        mock_check_call.assert_called_once_with(
-            ["make", "-f", makefile, "symbols"], cwd=str(trace_dir)
-        )
+        mock_symbols.assert_called_once_with(symbols_path, "w")
+        mock_run.assert_called_once_with(["objdump", "-d", "binary"],
+            cwd=str(trace_dir), stdout=subprocess.PIPE)
 
-    @patch.object(lift.subprocess, "check_call")
-    def test_extract_symbols_error(self, mock_check_call):
-        mock_check_call.side_effect = CalledProcessError(0, "asdf")
+    @patch.object(lift.subprocess, 'run')
+    @patch.object(lift.subprocess, 'Popen')
+    def test_extract_symbols_error(self, mock_popen, mock_run):
+        mock_run.side_effect = CalledProcessError(0, 'asdf')
         with pytest.raises(BinRecError):
             lift._extract_binary_symbols(MagicMock(name="asdf"))
 
@@ -182,13 +194,13 @@ class TestLifting:
     @patch.object(lift.subprocess, "check_call")
     def test_compile_bitcode(self, mock_check_call):
         trace_dir = MagicMock(name="asdf")
-        makefile = str(BINREC_ROOT / "scripts" / "s2eout_makefile")
-
         lift._compile_bitcode(trace_dir)
 
         mock_check_call.assert_called_once_with(
-            ["make", "-f", makefile, "-sr", "recovered.o"], cwd=str(trace_dir)
-        )
+            [
+                llvm_command("llc"), "-filetype", "obj", "-o", "recovered.o",
+                "recovered.bc"
+            ], cwd=str(trace_dir))
 
     @patch.object(lift.subprocess, "check_call")
     def test_compile_bitcode_error(self, mock_check_call):

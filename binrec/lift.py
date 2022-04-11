@@ -8,7 +8,7 @@ from contextlib import suppress
 from pathlib import Path
 
 from . import project
-from .env import BINREC_LIB, BINREC_LINK_LD, BINREC_RUNLIB, BINREC_SCRIPTS, llvm_command
+from .env import BINREC_LIB, BINREC_LINK_LD, BINREC_RUNLIB, llvm_command
 from .errors import BinRecError
 from .lib import binrec_lift, binrec_link
 
@@ -92,10 +92,28 @@ def _extract_binary_symbols(trace_dir: Path) -> None:
 
     :param trace_dir: binrec binary trace directory
     """
-    makefile = str(BINREC_SCRIPTS / "s2eout_makefile")
+    plt_entry_re = r"^([0-9a-f]+) <(.+)@plt>:$"
+    output_file = trace_dir / "symbols"
     logger.debug("extracting symbols from binary: %s", trace_dir.name)
+    # TODO(artem): Objdump should be parametrized by target file architecture.
+    # e.g.: i686-linux-gnu-objdump. We will need it for multiarch support
     try:
-        subprocess.check_call(["make", "-f", makefile, "symbols"], cwd=str(trace_dir))
+        with open(output_file, "w") as symbols:
+            # capture disassembly of file according to objdump
+            objdump_proc = subprocess.run(
+                ["objdump", "-d", "binary"], cwd=str(trace_dir), stdout=subprocess.PIPE
+            )
+            objdump_proc.check_returncode()
+            objdump_data = objdump_proc.stdout.decode("utf-8")
+            # find every line that look like:
+            # abc12345 <foo@plt>:
+            # and extract out 'abc12345' and 'foo'
+            # and then save these into the 'symbols' file
+            plt_matches = re.findall(plt_entry_re, objdump_data, re.MULTILINE)
+            for plt_match in plt_matches:
+                plt_addr, plt_name = plt_match
+                symbols.write(f"{plt_addr} {plt_name}\n")
+
     except subprocess.CalledProcessError:
         raise BinRecError(f"failed to extract symbols from trace: {trace_dir.name}")
 
@@ -311,11 +329,18 @@ def _compile_bitcode(trace_dir: Path) -> None:
 
     :param trace_dir: binrec binary trace directory
     """
-    makefile = str(BINREC_SCRIPTS / "s2eout_makefile")
     logger.debug("compiling recovered LLVM bitcode: %s", trace_dir.name)
     try:
         subprocess.check_call(
-            ["make", "-f", makefile, "-sr", "recovered.o"], cwd=str(trace_dir)
+            [
+                llvm_command("llc"),
+                "-filetype",
+                "obj",
+                "-o",
+                "recovered.o",
+                "recovered.bc",
+            ],
+            cwd=str(trace_dir),
         )
     except subprocess.CalledProcessError:
         raise BinRecError(f"failed to compile recovered LLVM bitcode: {trace_dir.name}")

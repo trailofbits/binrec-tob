@@ -115,4 +115,4 @@ class TestLiftingPrepBitcode:
         with pytest.raises(BinRecError):
             lift.prep_bitcode_for_linkage(MockPath("/"), MockPath("source"), MockPath("/dest", exists=True))
 
-        assert mock_os.remove.call_args_list == [call(Path("tempfile.bc")), call("tempfile")]
+        assert list(sorted(mock_os.remove.call_args_list, key=str)) == list(sorted([call(Path("tempfile.bc")), call("tempfile")], key=str))

@@ -35,7 +35,7 @@ _install-dependencies:
 
 # Initialize BinRec, S2E, LFS, pipenv, submodules. Required once before build. Requires super user privileges.
 _binrec-init:
-    sudo chmod ugo+r /boot/vmlinu*
+    -sudo chmod ugo+r /boot/vmlinu*
     test -f Pipfile.lock || pipenv lock --dev
     pipenv sync --dev
     git submodule update --recursive --init
@@ -302,6 +302,17 @@ _ci-unit-tests: _unit-test-python print-coverage-report
 
 ########## End: Testing Recipes ##########
 
+
+########## Section: s2eout Recipes ##########
+########## For working with s2eout outputs, as a replacement for the old s2eout_makefile
+
+_s2eout_main_addrs binary:
+  bash ${S2EDIR}/scripts/utils/main-addrs.sh "{{binary}}" > main_addrs
+
+_s2eout_coverage:
+  bash ${S2EDIR}/scripts/utils/coverage.sh .
+
+########## End: s2eout Recipes ##########
 
 ########## Section: Deprecated Recipes ##########
 
