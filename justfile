@@ -158,9 +158,9 @@ set-args project-name *args:
 validate project-name *args:
   pipenv run python -m binrec.project validate "$@"
 
-# Validate a lifted binary against the original with respect to a bacth file of arguments
-validate-batch project-name batch-file:
-  pipenv run python -m binrec.project validate-batch "{{project-name}}" "{{batch-file}}"
+# Validate a lifted binary against the original with respect to a bacth file of arguments (add --skip_first if you are using the tracing batch file for validation)
+validate-batch project-name batch-file *flags:
+  pipenv run python -m binrec.project validate-batch "{{project-name}}" "{{batch-file}}" {{flags}}
 
 # Recursively merge all captures and traces for a project (ex. hello)
 merge-traces project:
@@ -301,6 +301,19 @@ _ci-unit-tests: _unit-test-python print-coverage-report
   
 
 ########## End: Testing Recipes ##########
+
+########## Section: Dev/Debug Recipes ##########
+
+# Creates debug version of trace info (address values in hex like they are in LLVM IR)
+_debug-trace-info ti-file:
+  pipenv run python -m binrec.project debug-traceinfo "{{ti-file}}"
+
+# Finds the differences in two trace info files (add --show_common to see common values)
+_diff-trace-info ti-file-1 ti-file-2 *flags:
+  pipenv run python -m binrec.project diff-traceinfo "{{ti-file-1}}" "{{ti-file-1}}" {{flags}}
+
+########## Section: Dev/Debug Recipes ##########
+
 
 
 ########## Section: s2eout Recipes ##########

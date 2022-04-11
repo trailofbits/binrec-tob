@@ -160,7 +160,7 @@ def compare_lift(plan: TraceTestPlan) -> None:
 
     for trace in plan.traces:
         project.validate_project(
-            plan.project, trace.args, trace.match_stdout, trace.match_stderr
+            plan.project, trace.args, trace.match_stdout, trace.match_stderr, skip_first=True
         )
 
 

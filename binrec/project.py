@@ -13,6 +13,10 @@ from binrec.env import BINREC_PROJECTS
 from .errors import BinRecError
 
 BOOTSTRAP_EXECUTE_COMMAND = 'execute "${TARGET_PATH}"'
+BOOTSTRAP_SYM_ARGS_START = "S2E_SYM_ARGS="
+BOOTSTRAP_SYM_ARGS_END = (
+    'LD_PRELOAD="${S2E_SO}" "${TARGET}" "$@" > /dev/null 2> /dev/null'
+)
 
 logger = logging.getLogger("binrec.project")
 
@@ -116,32 +120,55 @@ def set_project_args(project: str, args: List[str]) -> None:
     within the qemu image.
 
     :param project: project name
-    :param args: list of arguments
+    :param args: list of arguments, the first of which indicates symbolic arguments
     """
+    # Check for no arguments provided or empty quotes from batch files
+    if len(args) == 0:
+        args.append("")
+    elif args[0] == '""':
+        args[0] = ""
+
     bootstrap = project_dir(project) / "bootstrap.sh"
-    logger.debug("setting command line arguments in %s to %s", bootstrap, args)
+    logger.debug("setting symbolic arguments in %s to %s", bootstrap, args[0])
+    logger.debug("setting command line arguments in %s to %s", bootstrap, args[1:])
 
     with open(bootstrap, "r") as file:
         lines = file.readlines()
 
-    for i, line in enumerate(lines):
-        # Find what line contains the command line arguments
-        if not line.lstrip().startswith(BOOTSTRAP_EXECUTE_COMMAND):
-            continue
+    found_cli = None
+    found_sym = None
 
-        found = i
-        break
-    else:
+    for i, line in enumerate(lines):
+        # Find what lines contain the concrete and symbolic arguments
+        stripped = line.lstrip()
+        if stripped.startswith(BOOTSTRAP_EXECUTE_COMMAND):
+            found_cli = i
+        elif stripped.startswith(BOOTSTRAP_SYM_ARGS_START):
+            found_sym = i
+
+    if found_cli is None:
         # We didn't find the line, append it to the end of the file. This shouldn't
         # happen under normal circumstances.
         #
         # We make sure that there is a newline separating the original last line and
         # the new execute call.
         lines.extend(["\n", ""])
-        found = len(lines) - 1
+        found_cli = len(lines) - 1
 
-    # Change the actual call to the sample with the new command line arguments.
-    lines[found] = f"{BOOTSTRAP_EXECUTE_COMMAND} {shlex.join(args)}\n"
+    if found_sym is None:
+        # If we didn't find this line, then there is probably a big problem
+        # with the bootsrap script, as this line is the code that actually
+        # executes the target.
+        raise BinRecError(f"Could not set symbolic args for project: {project}")
+
+    # Change the call to execute the sample with the new concrete arguments
+    lines[found_cli] = f"{BOOTSTRAP_EXECUTE_COMMAND} {shlex.join(args[1:])}\n"
+
+    # Change the call to execute the sample with the new symbolic arguments
+    lines[
+        found_sym
+    ] = f'    {BOOTSTRAP_SYM_ARGS_START}"{args[0]}" {BOOTSTRAP_SYM_ARGS_END}\n'
+
     with open(bootstrap, "w") as file:
         file.writelines(lines)
 
@@ -151,6 +178,7 @@ def validate_project(
     args: List[str],
     match_stdout: Union[bool, str] = True,
     match_stderr: Union[bool, str] = True,
+    skip_first: bool = False,
 ) -> None:
     """
     Compare the original binary against the lifted binary for a given sample of
@@ -163,7 +191,11 @@ def validate_project(
     :param args: list of arguments
     :param match_stdout: how to validate stdout content
     :param match_stderr: how to validate stderr content
+    :param skip_first: ignore first argument (lets batch files be used for
+                       tracing and validation)
     """
+    if skip_first:
+        args.pop(0)
 
     logger.info("Validating project: %s", project)
 
@@ -241,7 +273,7 @@ def validate_project(
     )
 
 
-def validate_batch_project(project: str, batch_file: Path) -> None:
+def validate_batch_project(project: str, batch_file: Path, skip_first: bool) -> None:
     """
     Validate a project with a batch of inputs provided in a file.
 
@@ -251,7 +283,7 @@ def validate_batch_project(project: str, batch_file: Path) -> None:
     invocations = parse_batch_file(batch_file)
 
     for invocation in invocations:
-        validate_project(project, invocation)
+        validate_project(project, invocation, skip_first)
 
 
 def run_project(project: str, args: List[str] = None) -> None:
@@ -329,9 +361,6 @@ def new_project(
 add_plugin(\"ELFSelector\")
 add_plugin(\"FunctionMonitor\")
 add_plugin(\"FunctionLog\")
-pluginsConfig.FunctionLog = {{
-    logFile = 'function-log.txt'
-}}
 add_plugin(\"ExportELF\")
 pluginsConfig.ExportELF = {{
     baseDirs = {{
@@ -398,7 +427,9 @@ def _diff_trace_info(paths: List[Path], show_common=False):
 
     ta = _debug_trace_info(paths[0], False)
     tb = _debug_trace_info(paths[1], False)
-    print(f"Show com{show_common}")
+
+    if show_common:
+        print("Showing common elements...")
     # Compare entries (entrypoints)
     ea = set(ta["functionLog"]["entries"])
     eb = set(tb["functionLog"]["entries"])
@@ -493,16 +524,21 @@ def main() -> None:
     )
 
     set_args = subparsers.add_parser("set-args")
-    set_args.add_argument("project", help="project name")
+    set_args.add_argument("project", type=str, help="project name")
     set_args.add_argument("args", nargs="*", help="command line arguments")
 
     validate = subparsers.add_parser("validate")
-    validate.add_argument("project", help="project name")
+    validate.add_argument("project", type=str, help="project name")
     validate.add_argument("args", nargs="*", help="command line arguments")
 
     validate_batch = subparsers.add_parser("validate-batch")
-    validate_batch.add_argument("project", help="project name")
-    validate_batch.add_argument("batch_file", help="file containing inputs to validate")
+    validate_batch.add_argument("project", type=str, help="project name")
+    validate_batch.add_argument(
+        "batch_file", type=Path, help="file containing inputs to validate"
+    )
+    validate_batch.add_argument(
+        "--skip_first", help="ignore first argument in invocations", action="store_true"
+    )
 
     args = parser.parse_args()
 
@@ -530,7 +566,7 @@ def main() -> None:
     elif args.current_parser == "validate":
         validate_project(args.project, args.args or [])
     elif args.current_parser == "validate-batch":
-        validate_batch_project(args.project, args.batch_file)
+        validate_batch_project(args.project, args.batch_file, args.skip_first)
     else:
         parser.print_help()
 

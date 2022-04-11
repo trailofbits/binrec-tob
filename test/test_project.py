@@ -9,6 +9,24 @@ from binrec.errors import BinRecError
 from helpers.mock_path import MockPath
 
 
+BOOTSTRAP_WITH_EXECUTE_AND_SYM = '''
+line1
+line2
+
+    S2E_SYM_ARGS="1" LD_PRELOAD="${S2E_SO}" "${TARGET}" "$@" > /dev/null 2> /dev/null
+
+execute "${TARGET_PATH}" existing args
+'''
+
+BOOTSTRAP_NO_ARGS = '''
+line1
+line2
+
+    S2E_SYM_ARGS="" LD_PRELOAD="${S2E_SO}" "${TARGET}" "$@" > /dev/null 2> /dev/null
+
+execute "${TARGET_PATH}" 
+'''
+
 BOOTSTRAP_WITH_EXECUTE = '''
 line1
 line2
@@ -18,7 +36,19 @@ execute "${TARGET_PATH}" existing args
 
 BOOTSTRAP_NO_EXECUTE = '''
 line1
-line2'''
+line2
+
+    S2E_SYM_ARGS="1" LD_PRELOAD="${S2E_SO}" "${TARGET}" "$@" > /dev/null 2> /dev/null
+'''
+
+BOOTSTRAP_EXPECTED = '''
+line1
+line2
+
+    S2E_SYM_ARGS="" LD_PRELOAD="${S2E_SO}" "${TARGET}" "$@" > /dev/null 2> /dev/null
+
+execute "${TARGET_PATH}" \'hello world\' goodbye
+'''
 
 BATCH_WITH_ARGS = '''Jack Jill
 0 1 2
@@ -66,10 +96,10 @@ class TestProject:
         assert invocations == [[]]
 
     @patch.object(project, "open", new_callable=mock_open,
-                  read_data=BOOTSTRAP_WITH_EXECUTE)
+                  read_data=BOOTSTRAP_WITH_EXECUTE_AND_SYM)
     def test_set_project_args(self, mock_file):
         bootstrap = BINREC_PROJECTS / "my_project" / "bootstrap.sh"
-        project.set_project_args("my_project", ["hello world", "goodbye"])
+        project.set_project_args("my_project", ["", "hello world", "goodbye"])
         assert mock_file.call_args_list == [
             call(bootstrap, "r"),
             call(bootstrap, "w")
@@ -77,17 +107,41 @@ class TestProject:
 
         handle = mock_file()
         handle.readlines.assert_called_once()
-        handle.writelines.assert_called_once_with(
-            BOOTSTRAP_WITH_EXECUTE.splitlines(keepends=True)[:-1] + [
-                'execute "${TARGET_PATH}" \'hello world\' goodbye\n'
-            ]
-        )
+        handle.writelines.assert_called_once_with(BOOTSTRAP_EXPECTED.splitlines(keepends=True))
+
+    @patch.object(project, "open", new_callable=mock_open,
+                read_data=BOOTSTRAP_WITH_EXECUTE_AND_SYM)
+    def test_set_project_args_no_args(self, mock_file):
+        bootstrap = BINREC_PROJECTS / "my_project" / "bootstrap.sh"
+        project.set_project_args("my_project", [])
+        assert mock_file.call_args_list == [
+            call(bootstrap, "r"),
+            call(bootstrap, "w")
+        ]
+
+        handle = mock_file()
+        handle.readlines.assert_called_once()
+        handle.writelines.assert_called_once_with(BOOTSTRAP_NO_ARGS.splitlines(keepends=True))
+
+    @patch.object(project, "open", new_callable=mock_open,
+                read_data=BOOTSTRAP_WITH_EXECUTE_AND_SYM)
+    def test_set_project_args_empty_quotes(self, mock_file):
+        bootstrap = BINREC_PROJECTS / "my_project" / "bootstrap.sh"
+        project.set_project_args("my_project", ['""'])
+        assert mock_file.call_args_list == [
+            call(bootstrap, "r"),
+            call(bootstrap, "w")
+        ]
+
+        handle = mock_file()
+        handle.readlines.assert_called_once()
+        handle.writelines.assert_called_once_with(BOOTSTRAP_NO_ARGS.splitlines(keepends=True))
 
     @patch.object(project, "open", new_callable=mock_open,
                   read_data=BOOTSTRAP_NO_EXECUTE)
     def test_set_project_args_no_existing_command(self, mock_file):
         bootstrap = BINREC_PROJECTS / "my_project" / "bootstrap.sh"
-        project.set_project_args("my_project", ["hello world", "goodbye"])
+        project.set_project_args("my_project", ["", "hello world", "goodbye"])
         assert mock_file.call_args_list == [
             call(bootstrap, "r"),
             call(bootstrap, "w")
@@ -95,14 +149,15 @@ class TestProject:
 
         handle = mock_file()
         handle.readlines.assert_called_once()
-        handle.writelines.assert_called_once_with(
-            BOOTSTRAP_NO_EXECUTE.splitlines(keepends=True) + [
-                "\n",
-                'execute "${TARGET_PATH}" \'hello world\' goodbye\n'
-            ]
-        )
+        handle.writelines.assert_called_once_with(BOOTSTRAP_EXPECTED.splitlines(keepends=True))
 
-    # Note this test is rather shallow since validation is really test code itself
+    @patch.object(project, "open", new_callable=mock_open,
+                  read_data=BOOTSTRAP_WITH_EXECUTE)
+    def test_set_project_args_no_sym_args(self, mock_file):
+        with pytest.raises(BinRecError):
+            project.set_project_args("my_project", ["", "hello world", "goodbye"])
+
+    # Note: validate project tests are rather shallow since validation is really test code itself
     @patch.object(project.os, "remove")
     @patch.object(project.os, "link")
     @patch.object(project.subprocess, "Popen")
@@ -115,12 +170,24 @@ class TestProject:
                                     stderr=subprocess.PIPE,
                                     stdin=subprocess.PIPE)
 
+    @patch.object(project.os, "remove")
+    @patch.object(project.os, "link")
+    @patch.object(project.subprocess, "Popen")
+    def test_validate_project_skip_first(self, mock_popen, mock_link, mock_remove):
+        args = ["", "Jack", "Jill"]
+        project.validate_project("asdf", args, skip_first=True)
+        merged_tgt = str(BINREC_PROJECTS / "asdf" / "s2e-out" / "test-target")
+        mock_popen.assert_called_with([merged_tgt] + args,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    stdin=subprocess.PIPE)
+
     @patch.object(project, "parse_batch_file", return_value=[line.strip().split() for line in BATCH_WITH_ARGS.split("\n")])
     @patch.object(project, "validate_project")
     def test_validate_batch_project(self, mock_validate_project, mock_parse_batch_file):
-        project.validate_batch_project("asdf", "./myfile.txt")
+        project.validate_batch_project("asdf", "./myfile.txt", False)
         mock_parse_batch_file.assert_called_once_with("./myfile.txt")
-        calls = [call("asdf", ["Jack", "Jill"]), call("asdf", ["0", "1", "2"]), call("asdf", ["Jack", "0", "Jill", "1", "2"])]
+        calls = [call("asdf", ["Jack", "Jill"], False), call("asdf", ["0", "1", "2"], False), call("asdf", ["Jack", "0", "Jill", "1", "2"], False)]
         mock_validate_project.assert_has_calls(calls, any_order=False)
 
     @patch.object(project.subprocess, "check_call")
@@ -162,9 +229,6 @@ class TestProject:
 add_plugin(\"ELFSelector\")
 add_plugin(\"FunctionMonitor\")
 add_plugin(\"FunctionLog\")
-pluginsConfig.FunctionLog = {{
-    logFile = 'function-log.txt'
-}}
 add_plugin(\"ExportELF\")
 pluginsConfig.ExportELF = {{
     baseDirs = {{

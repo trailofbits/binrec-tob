@@ -1,3 +1,0 @@
-#!/bin/bash
-s2ecmd wait
-LD_PRELOAD=$HOME/lib/init_env.so exec "$@"

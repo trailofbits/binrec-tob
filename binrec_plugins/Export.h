@@ -33,6 +33,7 @@ namespace s2e::plugins {
         initializeModule(const ModuleDescriptor &module, const ConfigFile::string_list &baseDirs);
         auto exportBB(S2EExecutionState *state, uint64_t pc) -> bool;
         void saveLLVMModule(bool intermediate);
+        void saveLLVMModule(bool intermediate, int stateNum);
         auto addSuccessor(uint64_t predPc, uint64_t pc) -> bool;
         auto getMetadataInst(uint64_t pc) -> llvm::Instruction *;
         auto getBB(uint64_t pc) -> llvm::Function *;
@@ -56,7 +57,6 @@ namespace s2e::plugins {
             llvm::Function *oldFunc,
             bool *aIsValid,
             bool *bIsValid);
-        auto getExportFilename(bool intermediate) -> std::string;
         auto forceCodeGen(S2EExecutionState *state) -> llvm::Function *;
         auto regenCode(S2EExecutionState *state, llvm::Function *old) -> llvm::Function *;
         auto getFirstStoredPc(llvm::Function *f) -> uint64_t;

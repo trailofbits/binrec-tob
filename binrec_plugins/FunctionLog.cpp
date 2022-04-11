@@ -19,7 +19,7 @@ using namespace binrec;
 namespace s2e::plugins {
     S2E_DEFINE_PLUGIN(
         FunctionLog,
-        "Log register values at basic block start (don't use with symbolic execution)",
+        "Log register values at basic block start.",
         "FunctionLog",
         S2E_NOOP("ModuleSelector", "FunctionMonitor"));
 
@@ -30,9 +30,15 @@ namespace s2e::plugins {
         ModuleSelector *selector = (ModuleSelector *)(s2e()->getPlugin("ModuleSelector"));
         selector->onModuleLoad.connect(sigc::mem_fun(*this, &FunctionLog::slotModuleLoad));
         selector->onModuleExecute.connect(sigc::mem_fun(*this, &FunctionLog::slotModuleExecute));
+
+        s2e()->getCorePlugin()->onStateFork.connect(
+            sigc::mem_fun(*this, &FunctionLog::slotStateFork));
+        s2e()->getCorePlugin()->onStateSwitch.connect(
+            sigc::mem_fun(*this, &FunctionLog::slotStateSwitch));
+
         m_functionMonitor = s2e()->getPlugin<FunctionMonitor>();
 
-        s2e()->getDebugStream() << "FunctionLog: Plugin initialized\n";
+        s2e()->getDebugStream() << "[FunctionLog] Plugin initialized. \n";
         m_callerPc = 0;
         ti->functionLog.entries.push_back(0);
     }
@@ -43,18 +49,30 @@ namespace s2e::plugins {
             ti->functionLog.entries.pop_back();
         }
 
-        if (ti.use_count() == 1) {
-            std::ofstream traceInfoOut(
-                s2e()->getOutputFilename(TraceInfo::defaultFilename).c_str(),
-                std::ios::out | std::ios::trunc);
-            traceInfoOut << *ti;
+        saveTraceInfo(-1);
+    }
+
+    void FunctionLog::saveTraceInfo(int stateNum)
+    {
+        s2e()->getDebugStream() << "[FunctionLog] Saving Trace Info... \n";
+
+        std::string fileName = TraceInfo::defaultName;
+        std::string suffix = ".json";
+
+        if (stateNum >= 0) {
+            fileName += "_" + std::to_string(stateNum);
         }
+
+        std::ofstream traceInfoOut(
+            s2e()->getOutputFilename(fileName + suffix).c_str(),
+            std::ios::out | std::ios::trunc);
+        traceInfoOut << *ti;
     }
 
     uint64_t entrypoint;
     void FunctionLog::slotModuleLoad(S2EExecutionState *state, const ModuleDescriptor &module)
     {
-        s2e()->getDebugStream(state) << "FunctionLog: ==> ModulePid: " << module.Pid << '\n';
+        s2e()->getDebugStream(state) << "[FunctionLog] ==> ModulePid: " << module.Pid << '\n';
         m_functionMonitor->onCall.connect(sigc::mem_fun(*this, &FunctionLog::onFunctionCall));
         m_moduleEntryPoint = module.EntryPoint;
     }
@@ -62,7 +80,7 @@ namespace s2e::plugins {
     void FunctionLog::slotModuleExecute(S2EExecutionState *state, uint64_t pc)
     {
         if (!ti->functionLog.entries.back()) {
-            s2e()->getDebugStream(state) << "FunctionLog: new entry " << hexval(pc) << '\n';
+            s2e()->getDebugStream(state) << "[FunctionLog] New entry " << hexval(pc) << '\n';
             ti->functionLog.entries.back() = pc;
             // NOTE (hbrodin): Push the top-level entry onto the call stack to track it's translated
             // blocks as well
@@ -81,7 +99,7 @@ namespace s2e::plugins {
             }
         } else {
             s2e()->getWarningsStream(state)
-                << "FunctionLog: callStack is empty: " << hexval(pc) << "\n";
+                << "[FunctionLog] Call stack is empty: " << hexval(pc) << "\n";
         }
     }
 
@@ -119,7 +137,7 @@ namespace s2e::plugins {
         uint64_t func_begin)
     {
         if (m_callStack.empty()) {
-            s2e()->getWarningsStream() << "FunctionLog: Returning from func: " << func_begin
+            s2e()->getWarningsStream() << "[FunctionLog] Returning from func: " << func_begin
                                        << ", but call stack is empty.\n";
         }
 
@@ -131,7 +149,7 @@ namespace s2e::plugins {
             // Investigate...
             if (m_callStack.empty()) {
                 s2e()->getWarningsStream()
-                    << "FunctionLog: Couldn't match caller func: " << top
+                    << "[FunctionLog] Couldn't match caller func: " << top
                     << " with returned func: " << func_begin << " and call stack is empty now.\n";
                 if (source)
                     s2e()->getWarningsStream() << "\tSource: " << source->Name << " \n";
@@ -141,7 +159,7 @@ namespace s2e::plugins {
 
                 m_callStack.push(top);
             } else if (func_begin != m_callStack.top()) {
-                s2e()->getWarningsStream() << "FunctionLog: Couldn't match caller func: " << top
+                s2e()->getWarningsStream() << "[FunctionLog] Couldn't match caller func: " << top
                                            << " with returned func: " << func_begin << "\n";
                 if (source)
                     s2e()->getWarningsStream() << "\tSource: " << source->Name << " \n";
@@ -169,7 +187,7 @@ namespace s2e::plugins {
             // __libc_start_main). So when we return from the first entry pc, reset this so we can
             // record the next "entry", too.
             ti->functionLog.entries.push_back(0);
-            s2e()->getDebugStream(state) << "FunctionLog: return from entry " << hexval(func_begin)
+            s2e()->getDebugStream(state) << "[FunctionLog] Return from entry " << hexval(func_begin)
                                          << " at " << hexval(state->regs()->getPc()) << '\n';
         }
 
@@ -179,4 +197,65 @@ namespace s2e::plugins {
         ti->functionLog.entryToCaller.insert(entryToCaller);
         ti->functionLog.entryToReturn.insert(entryToReturn);
     }
+
+    void FunctionLog::slotStateFork(
+        S2EExecutionState *state,
+        const std::vector<S2EExecutionState *> &newStates,
+        const std::vector<klee::ref<klee::Expr>> &newCondition)
+    {
+        // Store a copy the current private vars for each new state for eventual state switch
+        for (auto newState : newStates) {
+            int newStateID = newState->getID();
+
+            s2e()->getDebugStream()
+                << "[FunctionLog] Storing copy of tracing vars for state: " << newState->getID()
+                << "\n";
+            m_tracesByState.emplace(std::make_pair(newStateID, ti->getCopy()));
+
+            std::stack<uint32_t> stackCopy(m_callStack);
+            m_stacksByState.emplace(std::make_pair(newStateID, stackCopy));
+
+            m_execPcByState.emplace(std::make_pair(newStateID, m_executedBBPc));
+            m_callerPcByState.emplace(std::make_pair(newStateID, m_callerPc));
+        }
+    }
+
+    void FunctionLog::slotStateSwitch(S2EExecutionState *state, S2EExecutionState *newState)
+    {
+        int curStateID = state->getID();
+        int newStateID = newState->getID();
+
+        saveTraceInfo(curStateID);
+
+        // Restore the private vars we have from the fork point
+        s2e()->getDebugStream() << "[FunctionLog] Restoring tracing vars for state: " << newStateID
+                                << "\n";
+        assert(
+            m_tracesByState.find(newStateID) != m_tracesByState.end() &&
+            " Could not restore traceinfo state!");
+
+        TraceInfo *copyTi = m_tracesByState.at(newStateID);
+        ti->restoreFromCopy(copyTi);
+        m_callStack = m_stacksByState.at(newStateID);
+        m_executedBBPc = m_execPcByState.at(newStateID);
+        m_callerPc = m_callerPcByState.at(newStateID);
+
+        // Delete the copies we just restored
+        m_tracesByState.erase(newStateID);
+        delete copyTi;
+        m_stacksByState.erase(newStateID);
+        m_execPcByState.erase(newStateID);
+        m_callerPcByState.erase(newStateID);
+
+        // Also check if we need to remove the previous state's copies
+        if (m_tracesByState.find(curStateID) != m_tracesByState.end()) {
+            TraceInfo *prevTi = m_tracesByState.at(curStateID);
+            delete prevTi;
+        }
+        m_tracesByState.erase(curStateID);
+        m_stacksByState.erase(curStateID);
+        m_execPcByState.erase(curStateID);
+        m_callerPcByState.erase(curStateID);
+    }
+
 } // namespace s2e::plugins

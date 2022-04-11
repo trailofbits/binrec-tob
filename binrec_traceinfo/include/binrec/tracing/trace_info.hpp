@@ -46,6 +46,8 @@ namespace binrec {
 
     struct TraceInfo {
         static constexpr const char *defaultFilename = "traceInfo.json";
+        static constexpr const char *defaultName = "traceInfo";
+        static constexpr const char *defaultSuffix = ".json";
         static auto get() -> std::shared_ptr<TraceInfo>;
 
         std::unordered_map<std::string, std::uint32_t> stackFrameSizes;
@@ -54,6 +56,8 @@ namespace binrec {
         std::set<Successor> successors;
         FunctionLog functionLog;
 
+        void restoreFromCopy(TraceInfo *copyTi);
+        auto getCopy() -> TraceInfo *;
         void add(const TraceInfo &ti);
     };
     void to_json(nlohmann::json &j, const TraceInfo &s);

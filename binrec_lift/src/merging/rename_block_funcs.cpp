@@ -16,8 +16,19 @@ auto RenameBlockFuncsPass::run(Module &m, ModuleAnalysisManager &am) -> Preserve
     // Find all distinct basic block addresses that should be in the CFG
     TraceInfo ti;
     {
+        // Can't use the default traceinfo filename here as this pass runs pre-link.
+        // Symbolic traces that are numbered have correspondingly name trace info files.
+        std::string modId = m.getModuleIdentifier();
+        std::string filename;
+        std::size_t pos = modId.find("_", modId.find_last_of("/"));
+        if (pos == std::string::npos) {
+            filename = TraceInfo::defaultFilename;
+        } else {
+            filename = TraceInfo::defaultName + modId.substr(pos, 2) + TraceInfo::defaultSuffix;
+        }
+
         std::ifstream f;
-        s2eOpen(f, TraceInfo::defaultFilename);
+        s2eOpen(f, filename);
         f >> ti;
     }
     std::set<uint32_t> known_pcs;
@@ -26,7 +37,7 @@ auto RenameBlockFuncsPass::run(Module &m, ModuleAnalysisManager &am) -> Preserve
         known_pcs.insert(successor.successor);
     }
 
-    DBG("read " << known_pcs.size() << " block addresses from traceInfo.json");
+    DBG("read " << known_pcs.size() << " block addresses from Trace Info file.");
 
     // To support runs that did renaming at runtime, ignore any PCs that
     // already have a function with a Func_ prefix

@@ -74,8 +74,11 @@ def merge_bitcode(capture_dirs: List[Path], destination: Path) -> None:
     :param outdidestindestinationationr: output directory
     """
     logger.debug("merging captures %s to %s", capture_dirs, destination)
-    SOURCE_BITCODE = Path("captured.bc")
-    DESTINATION_BITCODE = Path("captured-link-ready.bc")
+    SOURCE_BITCODE_NAME = "captured"
+    DESTINATION_SUFFIX = "-link-ready"
+    BITCODE_SUFFIX = ".bc"
+    TRACE_INFO_NAME = "traceInfo"
+    TRACE_SUFFIX = ".json"
 
     # Verify that the output directory (destination) is empty.
     if destination.exists():
@@ -83,22 +86,38 @@ def merge_bitcode(capture_dirs: List[Path], destination: Path) -> None:
 
     destination.mkdir(exist_ok=True)
 
-    # prepare each captured bitcode (captured.bc) for linking
+    # Check each capture folder for captured bitcode files and prepare each for linking
+    # There may be multiple files per capture: symex tracing produces one file per state
+    linked_paths = []
+    trace_info_files = []
     for capture in capture_dirs:
-        prep_bitcode_for_linkage(capture, SOURCE_BITCODE, DESTINATION_BITCODE)
+        for capfile in os.listdir(capture):
+            if capfile.startswith(SOURCE_BITCODE_NAME) and capfile.endswith(
+                BITCODE_SUFFIX
+            ):
+                linked_name = (
+                    capfile[: capfile.find(BITCODE_SUFFIX)]
+                    + DESTINATION_SUFFIX
+                    + BITCODE_SUFFIX
+                )
+                linked_paths.append(capture / linked_name)
+                prep_bitcode_for_linkage(capture, Path(capfile), Path(linked_name))
+
+            elif capfile.startswith(TRACE_INFO_NAME) and capfile.endswith(TRACE_SUFFIX):
+                trace_info_files.append(capture / capfile)
 
     # copy the first captured-link-ready.bc to {destination}/captured.bc
-    outfile = destination / SOURCE_BITCODE
-    shutil.copy(capture_dirs[0] / DESTINATION_BITCODE, outfile)
+    outfile = destination / (SOURCE_BITCODE_NAME + BITCODE_SUFFIX)
+    shutil.copy(linked_paths[0], outfile)
 
-    fd, tmp = tempfile.mkstemp(suffix=".bc")
+    fd, tmp = tempfile.mkstemp(suffix=BITCODE_SUFFIX)
     os.close(fd)
 
-    for capture_dir in capture_dirs[1:]:
+    for linked_path in linked_paths[1:]:
         # Link each captured-link-ready.bc to the {destination}/captured.bc
         _link_bitcode(
             base=outfile,
-            source=capture_dir / DESTINATION_BITCODE,
+            source=linked_path,
             destination=Path(tmp),
         )
         shutil.move(tmp, outfile)
@@ -110,8 +129,8 @@ def merge_bitcode(capture_dirs: List[Path], destination: Path) -> None:
     except subprocess.CalledProcessError:
         raise BinRecError(f"llvm-dis failed on linked bitcode: {outfile}")
 
-    trace_info_files = [capture / "traceInfo.json" for capture in capture_dirs]
-    _merge_trace_info(trace_info_files, destination / "traceInfo.json")
+    # merge all found trace info files
+    _merge_trace_info(trace_info_files, destination / (TRACE_INFO_NAME + TRACE_SUFFIX))
 
 
 def merge_traces(project_name: str) -> None:

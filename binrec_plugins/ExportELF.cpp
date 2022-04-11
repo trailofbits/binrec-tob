@@ -33,8 +33,10 @@ namespace s2e {
 
             s2e()->getCorePlugin()->onStateFork.connect(
                 sigc::mem_fun(*this, &ExportELF::slotStateFork));
+            s2e()->getCorePlugin()->onStateSwitch.connect(
+                sigc::mem_fun(*this, &ExportELF::slotStateSwitch));
 
-            s2e()->getDebugStream() << "[ExportELF] Plugin initialized\n";
+            s2e()->getDebugStream() << "[ExportELF] Plugin initialized. \n";
         }
 
         void ExportELF::slotModuleLoad(S2EExecutionState *state, const ModuleDescriptor &module)
@@ -60,6 +62,11 @@ namespace s2e {
             const std::vector<klee::ref<klee::Expr>> &newCondition)
         {
             stopRegeneratingBlocks();
+        }
+
+        void ExportELF::slotStateSwitch(S2EExecutionState *state, S2EExecutionState *newState)
+        {
+            saveLLVMModule(false, state->getID());
         }
 
         ExportELFState::ExportELFState() : prevPc(0), doExport(true) {}

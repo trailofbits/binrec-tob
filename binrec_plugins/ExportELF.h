@@ -30,6 +30,7 @@ namespace s2e {
                 S2EExecutionState *state,
                 const std::vector<S2EExecutionState *> &newStates,
                 const std::vector<klee::ref<klee::Expr>> &newCondition);
+            void slotStateSwitch(S2EExecutionState *state, S2EExecutionState *newState);
 
         private:
             ConfigFile::string_list m_baseDirs;

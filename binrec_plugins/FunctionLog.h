@@ -25,6 +25,9 @@ namespace s2e::plugins {
         void initialize();
         ~FunctionLog();
 
+    protected:
+        void saveTraceInfo(int stateNum);
+
     private:
         void slotModuleLoad(S2EExecutionState *state, const ModuleDescriptor &module);
         void slotModuleExecute(S2EExecutionState *state, uint64_t pc);
@@ -44,6 +47,12 @@ namespace s2e::plugins {
             uint64_t func_caller,
             uint64_t func_begin);
 
+        void slotStateFork(
+            S2EExecutionState *state,
+            const std::vector<S2EExecutionState *> &newStates,
+            const std::vector<klee::ref<klee::Expr>> &newCondition);
+        void slotStateSwitch(S2EExecutionState *state, S2EExecutionState *newState);
+
     private:
         FunctionMonitor *m_functionMonitor;
         std::shared_ptr<binrec::TraceInfo> ti;
@@ -52,6 +61,11 @@ namespace s2e::plugins {
         uint64_t m_moduleEntryPoint;
         std::set<uint32_t> m_modulePcs;
         std::stack<uint32_t> m_callStack;
+
+        std::map<int, binrec::TraceInfo *> m_tracesByState;
+        std::map<int, uint32_t> m_execPcByState;
+        std::map<int, uint32_t> m_callerPcByState;
+        std::map<int, std::stack<uint32_t>> m_stacksByState;
     };
 
 } // namespace s2e::plugins

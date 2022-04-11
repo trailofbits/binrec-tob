@@ -44,14 +44,25 @@ Simple BinRec Project
 In this short walkthrough, we take you through a sample BinRec project: debloating a program binary. Our goal in the walkthrough is to exercise the target binary with a set of concrete inputs. BinRec will trace the execution of the program on these inputs,
 merge the traces, lift the merged trace to LLVM IR, and then recompile the IR to a debloated program. 
 
-1. Create a new analysis project by specifying the target binary and the first set of concrete inputs: 
+1. Create a new analysis project by specifying the target binary, arguments to treat as symbolic, and the first set of concrete inputs:
 
    ```bash
    # just new-project <project_name> <path_to_target_binary> <sym_args> <concrete_args_list>
-   $ just new-project eqproj test/benchmark/samples/bin/x86/binrec/eq "" 1 2
-   ```
    
-   **NOTE:** Currently there is no support for symbolic arguments, this should be left as `""`.
+   # Concrete arguments only (sym_args = "")
+   $ just new-project eqproj test/benchmark/samples/bin/x86/binrec/eq "" 3 2
+
+   # OR
+
+   # First argument (3) is a symbolic argument
+   $ just new-project eqproj test/benchmark/samples/bin/x86/binrec/eq "1" 3 2
+
+   # OR
+
+   # Both arguments (3 and 2) are symbolic argument
+   $ just new-project eqproj test/benchmark/samples/bin/x86/binrec/eq "1 2" 3 2
+
+   ```
  
    This will create a project folder located at `s2e/projects/eqproj/` where traces and output associated with this project will be kept.
 
@@ -62,18 +73,18 @@ merge the traces, lift the merged trace to LLVM IR, and then recompile the IR to
    $ just run eqproj
    ```
 
-3. For each additional set of concrete inputs to trace, re-run the project with new arguments:
+3. For each additional set of concrete or symbolic inputs to trace, re-run the project with new arguments:
 
    ```bash
    # just set-args <project_name> <concrete_args_list>
    # just run <project_name>
-   $ just set-args eqproj 2 2
+   $ just set-args eqproj  "" 2 2
    $ just run eqproj
    
-   # OR 
+   # OR
 
    # just run <project_name> --args <concrete_args_list>
-   just run eqproj --args 0 10
+   just run eqproj --args "" 0 10
    ```
 
 4. Next, merge the traces, optionally specifying the specific trace numbers to merge:
@@ -91,26 +102,31 @@ merge the traces, lift the merged trace to LLVM IR, and then recompile the IR to
    $ just lift-trace eqproj
    ```
 
-This will create a `s2e-out` subdirectory in the project folder. It contains the debloated program binary (`recovered`) as well the binary's associated LLVM IR (`recovered.bc` and `recovered.ll`).
+   This will create a `s2e-out` subdirectory in the project folder. It contains the debloated program binary (`recovered`) as well the binary's associated LLVM IR (`recovered.bc` and `recovered.ll`).
 
-6. To verify the debloated program behaves as intended, it can be compared by running it with the traced inputs and verifying it produces the same output as the original binary (`binary`).
+6. To validate the debloated program outputs match the original:
 
    ```bash
-   $ cd s2e/projects/eqproj/s2e-out
+   # just validate <project_name> <concrete_args>
+   $ just validate eqproj 3 2
 
-   $ ./binary 1 2
-   # arguments are NOT equal
-   $ ./binary 2 2
-   # arguments are equal
-   $ ./binary 0 10
-   # arguments are NOT equal
+   $ just validate eqproj 2 2
 
-   $ ./recovered 1 2 
-   # arguments are NOT equal 
-   $ ./recovered 2 2
-   # arguments are equal
-   $ ./recovered 0 10
-   # arguments are NOT equal
+   $ just validate eqproj 0 10
+   ```
+
+   **NOTE:** At this time, validation only supports equivalence checks for `stdout`, `stderrr`, and the return code.
+
+7. To validate program behaviors other than outputs to `stdout`, `stderr`, and the return code (e.g., performance, file outputs), manually compare the behaviors of programs in the `s2e-out` project folder:
+
+   ```bash
+      $ cd s2e/projects/eqproj/s2e-out
+
+      # Observe original behavior
+      $ ./binary 1 2
+
+      # Manually ensure recovered binary behavior matches
+      $ ./recovered 1 2
    ```
 
 Running Tests

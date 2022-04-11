@@ -70,6 +70,7 @@ class TestMerge:
         dest = MockPath() / "does" / "not" / "exist"
         dest.exists.return_value = False
         mock_mkstemp.return_value = (100, "temp")
+        mock_os.listdir.return_value = ["captured.bc", "captured_0.bc", "traceInfo.json", "traceInfo_0.json"]
         outfile = dest / "captured.bc"
         capture_dirs = [
             Path("/") / "i" / "don't" / "exist",
@@ -83,7 +84,9 @@ class TestMerge:
 
         assert mock_prep_bitcode.call_args_list == [
             call(capture_dirs[0], Path("captured.bc"), Path("captured-link-ready.bc")),
+            call(capture_dirs[0], Path("captured_0.bc"), Path("captured_0-link-ready.bc")),
             call(capture_dirs[1], Path("captured.bc"), Path("captured-link-ready.bc")),
+            call(capture_dirs[1], Path("captured_0.bc"), Path("captured_0-link-ready.bc"))
         ]
 
         mock_shutil.copy.assert_called_once_with(
@@ -93,18 +96,22 @@ class TestMerge:
         mock_mkstemp.assert_called_once_with(suffix=".bc")
         mock_os.close.assert_called_once_with(100)
 
-        mock_link.assert_called_once_with(
-            base=outfile,
-            source=capture_dirs[1] / "captured-link-ready.bc",
-            destination=Path("temp"),
-        )
-        mock_shutil.move.assert_called_once_with("temp", outfile)
+        assert mock_link.call_args_list == [
+            call(base=outfile, source=capture_dirs[0] / "captured_0-link-ready.bc", destination = Path("temp")),
+            call(base=outfile, source=capture_dirs[1] / "captured-link-ready.bc", destination = Path("temp")),
+            call(base=outfile, source=capture_dirs[1] / "captured_0-link-ready.bc", destination = Path("temp"))
+        ]
+
+        assert mock_shutil.move.call_args_list == [
+            call("temp", outfile), call("temp", outfile), call("temp", outfile)
+        ]
 
         mock_check_call.assert_called_once_with(
             [llvm_command("llvm-dis"), str(outfile)]
         )
         mock_merge.assert_called_once_with(
-            [capture_dirs[0] / "traceInfo.json", capture_dirs[1] / "traceInfo.json"],
+            [capture_dirs[0] / "traceInfo.json", capture_dirs[0] / "traceInfo_0.json",
+             capture_dirs[1] / "traceInfo.json", capture_dirs[1] / "traceInfo_0.json"],
             dest / "traceInfo.json",
         )
 
@@ -128,6 +135,7 @@ class TestMerge:
         dest = MockPath("/") / "does" / "not" / "exist"
         dest._exists = True
         mock_mkstemp.return_value = (100, "temp")
+        mock_os.listdir.return_value = ["captured.bc"]
         capture_dirs = [
             Path("/") / "i" / "don't" / "exist",
             Path("/") / "I" / "don't" / "either",
@@ -156,6 +164,7 @@ class TestMerge:
         dest = MockPath("/") / "does" / "not" / "exist"
         dest.exists.return_value = True
         mock_mkstemp.return_value = (100, "temp")
+        mock_os.listdir.return_value = ["captured.bc"]
         capture_dirs = [
             Path("/") / "i" / "don't" / "exist",
             Path("/") / "I" / "don't" / "either",

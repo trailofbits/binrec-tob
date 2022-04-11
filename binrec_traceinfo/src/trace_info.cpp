@@ -113,6 +113,74 @@ auto TraceInfo::get() -> std::shared_ptr<TraceInfo>
     return sptr;
 }
 
+// Create a deep copy of the current trace info
+auto TraceInfo::getCopy() -> TraceInfo *
+{
+    TraceInfo *tiCopy = new TraceInfo();
+
+    std::copy(
+        stackFrameSizes.begin(),
+        stackFrameSizes.end(),
+        std::inserter(tiCopy->stackFrameSizes, tiCopy->stackFrameSizes.begin()));
+    std::copy(
+        stackDifference.begin(),
+        stackDifference.end(),
+        std::inserter(tiCopy->stackDifference, tiCopy->stackDifference.begin()));
+    std::copy(
+        memoryAccesses.begin(),
+        memoryAccesses.end(),
+        std::inserter(tiCopy->memoryAccesses, tiCopy->memoryAccesses.begin()));
+    std::copy(
+        successors.begin(),
+        successors.end(),
+        std::inserter(tiCopy->successors, tiCopy->successors.begin()));
+    std::copy(
+        functionLog.entries.begin(),
+        functionLog.entries.end(),
+        std::inserter(tiCopy->functionLog.entries, tiCopy->functionLog.entries.begin()));
+    std::copy(
+        functionLog.entryToCaller.begin(),
+        functionLog.entryToCaller.end(),
+        std::inserter(
+            tiCopy->functionLog.entryToCaller,
+            tiCopy->functionLog.entryToCaller.begin()));
+    std::copy(
+        functionLog.entryToReturn.begin(),
+        functionLog.entryToReturn.end(),
+        std::inserter(
+            tiCopy->functionLog.entryToReturn,
+            tiCopy->functionLog.entryToReturn.begin()));
+    std::copy(
+        functionLog.callerToFollowUp.begin(),
+        functionLog.callerToFollowUp.end(),
+        std::inserter(
+            tiCopy->functionLog.callerToFollowUp,
+            tiCopy->functionLog.callerToFollowUp.begin()));
+    std::copy(
+        functionLog.entryToTbs.begin(),
+        functionLog.entryToTbs.end(),
+        std::inserter(tiCopy->functionLog.entryToTbs, tiCopy->functionLog.entryToTbs.begin()));
+
+    return tiCopy;
+}
+
+void TraceInfo::restoreFromCopy(TraceInfo *copyTi)
+{
+    stackFrameSizes.clear();
+    stackDifference.clear();
+    memoryAccesses.clear();
+    successors.clear();
+    functionLog.entries.clear();
+    functionLog.entryToCaller.clear();
+    functionLog.entryToReturn.clear();
+    functionLog.callerToFollowUp.clear();
+    functionLog.entryToTbs.clear();
+
+    add(*copyTi);
+
+    return;
+}
+
 void TraceInfo::add(const TraceInfo &ti)
 {
     for (auto &[function, size] : ti.stackFrameSizes) {

@@ -43,13 +43,6 @@ namespace s2e::plugins {
     Export::~Export()
     {
         saveLLVMModule(false);
-
-        if (ti.use_count() == 1) {
-            ofstream traceInfoOut(
-                s2e()->getOutputFilename(TraceInfo::defaultFilename).c_str(),
-                ios::out | ios::trunc);
-            traceInfoOut << *ti;
-        }
     }
 
     void Export::initialize()
@@ -115,7 +108,7 @@ namespace s2e::plugins {
         // only export a block twice (the second time, check for differences and
         // use the second version)
         if (npassed == 0) {
-            s2e()->getDebugStream(state) << "ExportELF: Export block " << hexval(pc) << ".\n";
+            s2e()->getDebugStream(state) << "[ExportELF] Export block " << hexval(pc) << ".\n";
             f = forceCodeGen(state);
 
             // regenerating BBS breaks symbex, so don't regen and assume the
@@ -124,13 +117,13 @@ namespace s2e::plugins {
             m_bbFinalized[pc] = false;
             //} else if (npassed == 1 && m_regenerateBlocks) {
         } else if (m_regenerateBlocks && !m_bbFinalized[pc]) {
-            s2e()->getDebugStream(state) << "ExportELF: Regen block " << hexval(pc) << ".\n";
+            s2e()->getDebugStream(state) << "[ExportELF] Regen block " << hexval(pc) << ".\n";
             f = regenCode(state, m_bbFuns[pc]);
             m_bbCounts[pc] += 1;
         }
 
         if (!f) {
-            s2e()->getDebugStream(state) << "ExportELF: nullptr f " << hexval(pc) << ".\n";
+            s2e()->getDebugStream(state) << "[ExportELF] nullptr f " << hexval(pc) << ".\n";
             return false;
         }
 
@@ -144,47 +137,45 @@ namespace s2e::plugins {
             assert(m_module == f->getParent() && "LLVM basic blocks saved to different modules");
 
         if (m_exportInterval && ++m_exportCounter % m_exportInterval == 0)
-            saveLLVMModule(true);
+            saveLLVMModule(true, state->getID());
 
         return true;
     }
 
-    auto Export::getExportFilename(bool intermediate) -> string
-    {
-        return "captured";
-    }
-
     void Export::saveLLVMModule(bool intermediate)
     {
-        string dir = s2e()->getOutputFilename("/");
-        std::error_code error;
+        saveLLVMModule(intermediate, -1);
+    }
 
-        s2e()->getInfoStream() << "Saving LLVM module... ";
+    void Export::saveLLVMModule(bool intermediate, int stateNum)
+    {
+        s2e()->getDebugStream() << "[Export] Saving LLVM module...\n";
 
         if (!m_module) {
-            s2e()->getWarningsStream()
-                << "error: module is uninitialized. Many errors may occur here";
+            s2e()->getWarningsStream() << "[Export] Error: module is uninitialized, cannot save.";
             return;
         }
 
-        string basename = getExportFilename(intermediate);
+        string dir = s2e()->getOutputFilename("/");
+        string baseName = "captured";
+
+        if (stateNum >= 0) {
+            baseName += "_" + std::to_string(stateNum);
+        }
+
+        std::error_code error;
 
         raw_fd_ostream bitcodeOstream(
-            (dir + basename + ".bc").c_str(),
+            (dir + baseName + ".bc").c_str(),
             error,
             sys::fs::CreationDisposition::CD_CreateAlways);
         WriteBitcodeToFile(*m_module, bitcodeOstream);
         bitcodeOstream.close();
 
-        ofstream traceInfoOut(
-            s2e()->getOutputFilename(TraceInfo::defaultFilename).c_str(),
-            ios::out | ios::trunc);
-        traceInfoOut << *ti;
-
 #if WRITE_LLVM_SRC
         if (!intermediate) {
             raw_fd_ostream llvmOstream(
-                (dir + basename + ".ll").c_str(),
+                (dir + baseName + ".ll").c_str(),
                 error,
                 sys::fs::CreationDisposition::CD_CreateAlways);
             llvmOstream << *m_module;
