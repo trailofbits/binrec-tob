@@ -374,95 +374,6 @@ pluginsConfig.ExportELF = {{
     return project_path
 
 
-def _debug_trace_info(trace_info: Path, doprint=True):
-    with open(trace_info, "r") as f:
-        ti = json.load(f)
-
-        # TODO (hbrodin): There is probably a more clever way of doing this...
-        def remap(a1, a2):
-            ctfup = ti[a1][a2]
-            ti[a1][a2] = list(map(lambda x: [hex(x[0]), hex(x[1])], ctfup))
-
-        remap("functionLog", "callerToFollowUp")
-        remap("functionLog", "entryToCaller")
-        remap("functionLog", "entryToReturn")
-        # remap("functionLog", "entryToTbs")
-
-        ti["functionLog"]["entryToTbs"] = list(
-            map(
-                lambda x: [hex(x[0]), list(map(hex, x[1]))],
-                ti["functionLog"]["entryToTbs"],
-            )
-        )
-
-        ti["successors"] = list(
-            map(
-                lambda x: {"pc": hex(x["pc"]), "successor": hex(x["successor"])},
-                ti["successors"],
-            )
-        )
-
-        ti["functionLog"]["entries"] = list(map(hex, ti["functionLog"]["entries"]))
-
-        if doprint:
-            print(json.dumps(ti, indent=4))
-        return ti
-
-
-def _diff_trace_info(paths: List[Path], show_common=False):
-    def _do_compare(etype, a, b):
-        if a == b:
-            print(f"\n{etype} are equal")
-            return
-        diff = ea.difference(eb)
-        if diff:
-            print(f"\n{etype} only in a: {diff}")
-        diff = eb.difference(ea)
-        if diff:
-            print(f"\n{etype} only in b: {diff}")
-        if show_common:
-            intersection = ea.intersection(eb)
-            if intersection:
-                print(f"\n{etype} common to both a and b {intersection}")
-
-    ta = _debug_trace_info(paths[0], False)
-    tb = _debug_trace_info(paths[1], False)
-
-    if show_common:
-        print("Showing common elements...")
-    # Compare entries (entrypoints)
-    ea = set(ta["functionLog"]["entries"])
-    eb = set(tb["functionLog"]["entries"])
-    _do_compare("Entries", ea, eb)
-
-    # Compare successors
-    dict2tuple = lambda x: (x["pc"], x["successor"])  # noqa: E731
-    ea = set(map(dict2tuple, ta["successors"]))
-    eb = set(map(dict2tuple, tb["successors"]))
-    _do_compare("Successors", ea, eb)
-
-    # Compare callerToFollowup
-    ea = set(map(tuple, ta["functionLog"]["callerToFollowUp"]))
-    eb = set(map(tuple, tb["functionLog"]["callerToFollowUp"]))
-    _do_compare("callerToFollowUp", ea, eb)
-
-    # Compare entryToCaller
-    ea = set(map(tuple, ta["functionLog"]["entryToCaller"]))
-    eb = set(map(tuple, tb["functionLog"]["entryToCaller"]))
-    _do_compare("entryToCaller", ea, eb)
-
-    # Compare entryToReturn
-    ea = set(map(tuple, ta["functionLog"]["entryToReturn"]))
-    eb = set(map(tuple, tb["functionLog"]["entryToReturn"]))
-    _do_compare("entryToReturn", ea, eb)
-
-    # compare entryToTbs
-    etbs2tuple = lambda x: (x[0], tuple(sorted(x[1])))  # noqa: E731
-    ea = set(map(etbs2tuple, ta["functionLog"]["entryToTbs"]))
-    eb = set(map(etbs2tuple, tb["functionLog"]["entryToTbs"]))
-    _do_compare("entryToTbs", ea, eb)
-
-
 def main() -> None:
     import argparse
 
@@ -512,17 +423,6 @@ def main() -> None:
     run_batch.add_argument("project", help="project name")
     run_batch.add_argument("batch_file", help="file containing inputs to run")
 
-    dbg = subparsers.add_parser("debug-traceinfo")
-    dbg.add_argument("path", nargs=1, type=Path, help="Path to traceinfo to debug")
-
-    dbg = subparsers.add_parser("diff-traceinfo")
-    dbg.add_argument(
-        "paths", nargs=2, type=Path, help="Diff of two traceInfo.json files"
-    )
-    dbg.add_argument(
-        "--show_common", help="Show entries common to both files", action="store_true"
-    )
-
     set_args = subparsers.add_parser("set-args")
     set_args.add_argument("project", type=str, help="project name")
     set_args.add_argument("args", nargs="*", help="command line arguments")
@@ -557,10 +457,6 @@ def main() -> None:
         _list_traces(args)
     elif args.current_parser == "list-merged":
         _list_merge_dirs(args)
-    elif args.current_parser == "debug-traceinfo":
-        _debug_trace_info(args.path[0])
-    elif args.current_parser == "diff-traceinfo":
-        _diff_trace_info(args.paths, args.show_common)
     elif args.current_parser == "set-args":
         set_project_args(args.project, args.args or [])
     elif args.current_parser == "validate":

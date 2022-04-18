@@ -15,6 +15,14 @@ plugins_root := justdir + "/s2e/source/s2e/libs2eplugins"
 plugins_dir := join(plugins_root, "src/s2e/Plugins")
 plugins_cmake := join(plugins_root, "src", "CMakeLists.txt")
 
+# S2E repos that need to be pinned to a specific commit (see issue #164)
+repo_s2e_commit               := "31565a75563e07d38de31349fd69c124b5124804"
+repo_s2e_linux_kernel_commit  := "1e2dfecfc6a3e70e7dea478184aa1f13653dcbe1"
+repo_decree_commit            := "a523ec2ec1ca1e1369b33db755bed135af57e09c"
+repo_guest_images_commit      := "2afd9e4853936c3c38088272e90a927f62c9c58c"
+repo_qemu_commit              := "11032a68e0eb898a5d85af9dd6e284ad2e1b533d"
+repo_scripts_commit           := "3e6e6cbffcfe2ea7f5b823d2d5509838a54b89c9"
+
 ########## End: Environment and Recipe Variables ##########
 
 
@@ -31,7 +39,7 @@ _install-dependencies:
         pipenv git-lfs doxygen graphviz clang-format-12 \
         python3.9-dev python3.9-venv # For s2e-env (and compatibility with Python 3.9 from Pipfile): http://s2e.systems/docs/s2e-env.html#id2
 
-    git lfs install   
+    git lfs install
 
 # Initialize BinRec, S2E, LFS, pipenv, submodules. Required once before build. Requires super user privileges.
 _binrec-init:
@@ -42,7 +50,19 @@ _binrec-init:
     cd ./test/benchmark && git lfs pull
     cd ./s2e-env && pipenv run pip install .
     pipenv run s2e init --non-interactive {{justdir}}/s2e
+    #just _freeze-s2e
     just s2e-insert-binrec-plugins
+
+# Freeze all S2E repositories to commits that have been tested against
+_freeze-s2e:
+    git -C "{{justdir}}/s2e/source/s2e" checkout {{repo_s2e_commit}}
+    git -C "{{justdir}}/s2e/source/s2e-linux-kernel" checkout {{repo_s2e_linux_kernel_commit}}
+    git -C "{{justdir}}/s2e/source/decree" checkout {{repo_decree_commit}}
+    git -C "{{justdir}}/s2e/source/guest-images" checkout {{repo_guest_images_commit}}
+    git -C "{{justdir}}/s2e/source/qemu" checkout {{repo_qemu_commit}}
+    git -C "{{justdir}}/s2e/source/qemu" submodule update
+    git -C "{{justdir}}/s2e/source/scripts" checkout {{repo_scripts_commit}}
+
 
 ########## End: Installation Recipes ##########
 
@@ -298,19 +318,19 @@ erase-test-coverage:
 
 # Unit test command for Github CI
 _ci-unit-tests: _unit-test-python print-coverage-report
-  
+
 
 ########## End: Testing Recipes ##########
 
 ########## Section: Dev/Debug Recipes ##########
 
-# Creates debug version of trace info (address values in hex like they are in LLVM IR)
-_debug-trace-info ti-file:
-  pipenv run python -m binrec.project debug-traceinfo "{{ti-file}}"
+# Pretty print a trace info file 
+_pretty-print-trace-info ti-file *flags:
+  pipenv run python -m binrec.trace_info pretty "{{ti-file}}" {{flags}}
 
-# Finds the differences in two trace info files (add --show_common to see common values)
+# Finds the differences in two trace info files (add --hex or -x to print address in hex)
 _diff-trace-info ti-file-1 ti-file-2 *flags:
-  pipenv run python -m binrec.project diff-traceinfo "{{ti-file-1}}" "{{ti-file-1}}" {{flags}}
+  pipenv run python -m binrec.trace_info diff "{{ti-file-1}}" "{{ti-file-2}}" {{flags}}
 
 ########## Section: Dev/Debug Recipes ##########
 
