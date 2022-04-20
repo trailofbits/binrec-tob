@@ -45,7 +45,8 @@ static auto get_plt_lookup_function(Function *f, const elf_section &plt_section)
 
     getBlockSuccs(f, succs);
 
-    // If the PLT was not resolved there might not be any successors, however this should not be the case.
+    // If the PLT was not resolved there might not be any successors, however this should not be the
+    // case.
     if (succs.empty()) {
         return nullptr;
     }
