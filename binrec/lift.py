@@ -28,7 +28,7 @@ DATA_IMPORT_PATTERN = re.compile(
 
 ELF_SECTION_PATTERN = re.compile(
     r"^\s*\[\s*\d+\]\s+"  # section index
-    r"([a-zA-Z0-9._]+)\s+"  # section name (capture group 1)
+    r"([a-zA-Z0-9._\-]+)\s+"  # section name (capture group 1)
     r"[A-Za-z]+\s+"  # section type
     r"([a-fA-F0-9]+)\s+"  # section start address (capture group 2)
     r"[a-fA-F0-9]+\s+"  # section file offset
@@ -177,7 +177,7 @@ def _extract_sections(trace_dir: Path) -> None:
     logger.debug("extracting sections from binary: %s", trace_dir.name)
 
     try:
-        readelf = subprocess.check_output(["readelf", "-S", str(binary)])
+        readelf = subprocess.check_output(["readelf", "--section-headers", str(binary)])
     except subprocess.CalledProcessError:
         raise BinRecError(
             f"failed to extract sections from binary: {trace_dir.name}"
