@@ -122,6 +122,12 @@ class TestLifting:
             call("\n")
         ]
 
+    @patch.object(lift.subprocess, "check_output")
+    def test_extract_sections_error(self, mock_check_output):
+        mock_check_output.side_effect = CalledProcessError(0, "asdf")
+        with pytest.raises(BinRecError):
+            lift._extract_sections(MagicMock(name="asdf"))
+
     def test_clean_bitcode(self, mock_lib_module):
         trace_dir = MockPath("asdf")
 
