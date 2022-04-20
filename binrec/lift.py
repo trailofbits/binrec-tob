@@ -33,7 +33,7 @@ ELF_SECTION_PATTERN = re.compile(
     r"([a-fA-F0-9]+)\s+"  # section start address (capture group 2)
     r"[a-fA-F0-9]+\s+"  # section file offset
     r"([a-fA-F0-9]+)\s+",  # section size (capture group 3)
-    re.MULTILINE
+    re.MULTILINE,
 )
 
 
@@ -179,9 +179,7 @@ def _extract_sections(trace_dir: Path) -> None:
     try:
         readelf = subprocess.check_output(["readelf", "--section-headers", str(binary)])
     except subprocess.CalledProcessError:
-        raise BinRecError(
-            f"failed to extract sections from binary: {trace_dir.name}"
-        )
+        raise BinRecError(f"failed to extract sections from binary: {trace_dir.name}")
 
     with open(sections, "w") as file:
         for match in ELF_SECTION_PATTERN.finditer(readelf.decode()):
