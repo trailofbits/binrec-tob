@@ -18,6 +18,15 @@ using namespace binrec;
 using namespace llvm;
 using namespace std;
 
+
+namespace {
+    struct elf_section {
+        string name;
+        unsigned address;
+        unsigned size;
+    };
+} // namespace
+
 static void annotate_symbol(Function *f, const string &symbol)
 {
     assert(!f->empty() && "stub function is empty");
@@ -26,12 +35,12 @@ static void annotate_symbol(Function *f, const string &symbol)
     setBlockMeta(f, "extern_symbol", md);
 }
 
-static auto get_fall_through_succ(Function *f) -> Function *
+static auto get_fall_through_function(Function *f, const elf_section &plt_section) -> Function *
 {
     Function *next = nullptr;
-    unsigned lowest_pc = -1;
     unsigned block_pc = getBlockAddress(f);
     vector<Function *> succs;
+    unsigned plt_end = plt_section.address + plt_section.size;
 
     getBlockSuccs(f, succs);
 
@@ -45,22 +54,45 @@ static auto get_fall_through_succ(Function *f) -> Function *
     }
 
     for (Function *succ : succs) {
+        // Filter to only successors that are located within the .plt section and ignore
+        // self-referential successors. See Github issue #168 for more information,
+        // https://github.com/trailofbits/binrec-prerelease/issues/168
         unsigned succ_pc = getBlockAddress(succ);
-        if (succ_pc > block_pc && succ_pc < lowest_pc) {
+        if (succ_pc >= plt_section.address && succ_pc < plt_end && succ_pc != block_pc) {
+            if (next) {
+                errs() << "[ElfSymbols] Unable to determine successor of PLT " << f->getName()
+                       << " because ther are multiple successors located within the .plt section\n";
+                return nullptr;
+            }
+
             next = succ;
-            lowest_pc = succ_pc;
         }
     }
     return next;
 }
 
-static auto remove_plt_succs(Function *f, set<Function *> &erase_list) -> bool
+// This method removes the two successors from a library function call via the
+// procedure load table (PLT). The first time a library function is called, the
+// successor call chain will look like the following:
+//
+//   - Function: Func_80490C0 (printf@plt)
+//     - Fallthrough Function: Func_8049040
+//       - PLT Entry: Func_8049030
+//         - Function: printf in libc
+//
+// This method removes the fallthrough and PLT entry functions, both of which are
+// located within the ELF ".plt" section.
+//
+// Subsequent calls into the library function call directly into the library
+// because the address is cached in the PLT.
+static auto
+remove_plt_succs(Function *f, set<Function *> &erase_list, const elf_section &plt_section) -> bool
 {
     vector<Function *> succs;
     unsigned nsuccs = getBlockMeta(f, "succs")->getNumOperands();
 
     assert(nsuccs >= 1);
-    Function *ft = get_fall_through_succ(f);
+    Function *ft = get_fall_through_function(f, plt_section);
 
     if (!ft) {
         if (logLevel >= logging::DEBUG) {
@@ -121,6 +153,7 @@ auto ELFSymbolsPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAnaly
     s2eOpen(f, "symbols");
     DBG("called ELFSYMBOLS");
     uint64_t addr = 0;
+    unsigned size = 0;
     string symbol;
     while (f >> hex >> addr >> symbol) {
         if (Function *f2 = m.getFunction("Func_" + utohexstr(addr))) {
@@ -128,11 +161,26 @@ auto ELFSymbolsPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAnaly
             changed = true;
         }
     }
+    f.close();
+
+    // load the .plt section info
+    elf_section plt_section{".plt", 0, 0};
+    s2eOpen(f, "sections");
+    while (f >> hex >> addr >> hex >> size >> symbol) {
+        if (symbol == ".plt") {
+            plt_section.address = addr;
+            plt_section.size = size;
+        }
+    }
+    f.close();
+
+    // bail early if there are external functions but no .plt section.
+    assert((!changed || plt_section.address) && "binary does not contain .plt section");
 
     set<Function *> erase_list;
     for (Function &f3 : LiftedFunctions{m}) {
         if (getBlockMeta(&f3, "extern_symbol"))
-            remove_plt_succs(&f3, erase_list);
+            remove_plt_succs(&f3, erase_list, plt_section);
     }
 
     for (auto &it : erase_list)
