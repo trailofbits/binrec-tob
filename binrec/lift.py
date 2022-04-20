@@ -161,7 +161,7 @@ def _extract_data_imports(trace_dir: Path) -> None:
 def _extract_sections(trace_dir: Path) -> None:
     """
     Extract the sections from the original binary. This creates a text file
-    where each line is a data import in the following format::
+    where each line is an ELF section in the following format::
 
         <section_address_hex>  <section_size_hex>  <section_name>
 
