@@ -15,7 +15,7 @@ from binrec import audit
 from helpers.mock_path import MockPath
 
 
-READELF_OUTPUT = """
+READELF_DYNSYM_OUTPUT = """
 Symbol table '.dynsym' contains 9 entries:
    Num:    Value  Size Type    Bind   Vis      Ndx Name
      0: 00000000     0 NOTYPE  LOCAL  DEFAULT  UND
@@ -26,6 +26,22 @@ Symbol table '.dynsym' contains 9 entries:
      5: 0804c044     4 OBJECT  GLOBAL DEFAULT   26 stdout@GLIBC_2.0 (2)
      6: 0804c020     4 OBJECT  GLOBAL DEFAULT   26 stderr@GLIBC_2.0 (2)
      7: 0804a004     4 OBJECT  GLOBAL DEFAULT   17 _IO_stdin_used
+"""
+
+READELF_SECTIONS_OUTPUT = """
+There are 36 section headers, starting at offset 0x39e8:
+
+Section Headers:
+  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+  [ 0]                   NULL            00000000 000000 000000 00      0   0  0
+  [ 1] .interp           PROGBITS        080481b4 0001b4 000013 00   A  0   0  1
+  [ 2] .note.gnu.build-i NOTE            080481c8 0001c8 000024 00   A  0   0  4
+  [10] .rel              REL             0804830c 00030c 000008 08   A  6   0  4
+Key to Flags:
+  W (write), A (alloc), X (execute), M (merge), S (strings), I (info),
+  L (link order), O (extra OS processing required), G (group), T (TLS),
+  C (compressed), x (unknown), o (OS specific), E (exclude),
+  p (processor specific)
 """
 
 
@@ -62,7 +78,7 @@ class TestLifting:
     @patch.object(lift, "open", new_callable=mock_open)
     def test_extract_data_imports(self, mock_file, mock_check_output):
         trace_dir = MagicMock(name="asdf")
-        mock_check_output.return_value = READELF_OUTPUT.encode()
+        mock_check_output.return_value = READELF_DYNSYM_OUTPUT.encode()
         lift._extract_data_imports(trace_dir)
 
         mock_check_output.assert_called_once_with(
@@ -82,6 +98,35 @@ class TestLifting:
         mock_check_output.side_effect = CalledProcessError(0, "asdf")
         with pytest.raises(BinRecError):
             lift._extract_data_imports(MagicMock(name="asdf"))
+
+    @patch.object(lift.subprocess, "check_output")
+    @patch.object(lift, "open", new_callable=mock_open)
+    def test_extract_sections(self, mock_file, mock_check_output):
+        trace_dir = MagicMock(name="asdf")
+        mock_check_output.return_value = READELF_SECTIONS_OUTPUT.encode()
+
+        lift._extract_sections(trace_dir)
+
+        mock_check_output.assert_called_once_with(
+            ["readelf", "--section-headers", str(trace_dir / "binary")]
+        )
+
+        mock_file.assert_called_once_with(trace_dir / "sections", "w")
+        handle = mock_file()
+        assert handle.write.call_args_list == [
+            call("080481b4 000013 .interp"),
+            call("\n"),
+            call("080481c8 000024 .note.gnu.build-i"),
+            call("\n"),
+            call("0804830c 000008 .rel"),
+            call("\n")
+        ]
+
+    @patch.object(lift.subprocess, "check_output")
+    def test_extract_sections_error(self, mock_check_output):
+        mock_check_output.side_effect = CalledProcessError(0, "asdf")
+        with pytest.raises(BinRecError):
+            lift._extract_sections(MagicMock(name="asdf"))
 
     def test_clean_bitcode(self, mock_lib_module):
         trace_dir = MockPath("asdf")
@@ -230,6 +275,7 @@ class TestLifting:
 
     @patch.object(lift, "_extract_binary_symbols")
     @patch.object(lift, "_extract_data_imports")
+    @patch.object(lift, "_extract_sections")
     @patch.object(lift, "_clean_bitcode")
     @patch.object(lift, "_apply_fixups")
     @patch.object(lift, "_lift_bitcode")
@@ -250,6 +296,7 @@ class TestLifting:
         mock_lift,
         mock_apply,
         mock_clean,
+        mock_sections,
         mock_data_imports,
         mock_extract,
     ):
@@ -267,8 +314,10 @@ class TestLifting:
         mock_compile.assert_called_once_with(trace_dir)
         mock_link.assert_called_once_with(trace_dir)
         mock_data_imports.assert_called_once_with(trace_dir)
+        mock_sections.assert_called_once_with(trace_dir)
 
     @patch.object(lift, "_extract_binary_symbols")
+    @patch.object(lift, "_extract_sections")
     @patch.object(lift, "_clean_bitcode")
     @patch.object(lift, "_apply_fixups")
     @patch.object(lift, "_lift_bitcode")
@@ -289,6 +338,7 @@ class TestLifting:
         mock_lift,
         mock_apply,
         mock_clean,
+        mock_sections,
         mock_extract,
     ):
         mock_project.merged_trace_dir.return_value = MockPath("s2e-out", exists=False)
@@ -304,6 +354,7 @@ class TestLifting:
         mock_recover.assert_not_called()
         mock_compile.assert_not_called()
         mock_link.assert_not_called()
+        mock_sections.assert_not_called()
 
     @patch("sys.argv", ["merge", "hello"])
     @patch.object(sys, "exit")

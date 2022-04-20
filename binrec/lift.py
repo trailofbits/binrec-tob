@@ -26,6 +26,16 @@ DATA_IMPORT_PATTERN = re.compile(
     re.MULTILINE,
 )
 
+ELF_SECTION_PATTERN = re.compile(
+    r"^\s*\[\s*\d+\]\s+"  # section index
+    r"([a-zA-Z0-9._\-]+)\s+"  # section name (capture group 1)
+    r"[A-Za-z]+\s+"  # section type
+    r"([a-fA-F0-9]+)\s+"  # section start address (capture group 2)
+    r"[a-fA-F0-9]+\s+"  # section file offset
+    r"([a-fA-F0-9]+)\s+",  # section size (capture group 3)
+    re.MULTILINE,
+)
+
 
 def prep_bitcode_for_linkage(
     working_dir: Path, source: Path, destination: Path
@@ -146,6 +156,36 @@ def _extract_data_imports(trace_dir: Path) -> None:
     with open(data_imports, "w") as file:
         for match in DATA_IMPORT_PATTERN.finditer(readelf.decode()):
             print(" ".join(match.groups()), file=file)
+
+
+def _extract_sections(trace_dir: Path) -> None:
+    """
+    Extract the sections from the original binary. This creates a text file
+    where each line is an ELF section in the following format::
+
+        <section_address_hex>  <section_size_hex>  <section_name>
+
+    **Inputs:** trace_dir / "binary"
+
+    **Outputs:** trace_dir / "sections"
+
+    :param trace_dir: binrec binary trace directory
+    """
+    binary = trace_dir / "binary"
+    sections = trace_dir / "sections"
+
+    logger.debug("extracting sections from binary: %s", trace_dir.name)
+
+    try:
+        readelf = subprocess.check_output(["readelf", "--section-headers", str(binary)])
+    except subprocess.CalledProcessError:
+        raise BinRecError(f"failed to extract sections from binary: {trace_dir.name}")
+
+    with open(sections, "w") as file:
+        for match in ELF_SECTION_PATTERN.finditer(readelf.decode()):
+            line = list(match.groups())
+            line.append(line.pop(0))  # move the symbol name to the end
+            print(" ".join(line), file=file)
 
 
 def _clean_bitcode(trace_dir: Path) -> None:
@@ -389,6 +429,7 @@ def lift_trace(project_name: str) -> None:
     # Step 1: extract symbols and data imports
     _extract_binary_symbols(merged_trace_dir)
     _extract_data_imports(merged_trace_dir)
+    _extract_sections(merged_trace_dir)
 
     # Step 2: clean captured LLVM bitcode
     _clean_bitcode(merged_trace_dir)
