@@ -2,8 +2,9 @@
  * for each stub address in the symbols file:
  * 1. find the corresponding function and annotate its entry block with
  *    "extern_symbol" metadata
- * 2. remove the first successor and its successor, which are PLT code, copying
- *    the successors of the latter to the stub block and remove both BBs.
+ * 2. remove the first successor (lookup block) and its successor (entry resolution),
+ *    which are PLT code, copying the successors of the latter to the lookup block
+ *    and remove both BBs.
  */
 
 #include "elf_symbols.hpp"
@@ -35,7 +36,7 @@ static void annotate_symbol(Function *f, const string &symbol)
     setBlockMeta(f, "extern_symbol", md);
 }
 
-static auto get_fall_through_function(Function *f, const elf_section &plt_section) -> Function *
+static auto get_plt_lookup_function(Function *f, const elf_section &plt_section) -> Function *
 {
     Function *next = nullptr;
     unsigned block_pc = getBlockAddress(f);
@@ -44,11 +45,7 @@ static auto get_fall_through_function(Function *f, const elf_section &plt_sectio
 
     getBlockSuccs(f, succs);
 
-    // If the PLT was not resolved there might not be any successors,
-    // otherwise it should be the first.
-    // NOTE (hbrodin): Can we assume the order is preserved???
-    // NOTE (meily): no, the order is not guaranteed and we canot
-    //               assume that the first successor is the nearest.
+    // If the PLT was not resolved there might not be any successors, however this should not be the case.
     if (succs.empty()) {
         return nullptr;
     }
@@ -76,11 +73,11 @@ static auto get_fall_through_function(Function *f, const elf_section &plt_sectio
 // successor call chain will look like the following:
 //
 //   - Function: Func_80490C0 (printf@plt)
-//     - Fallthrough Function: Func_8049040
+//     - PLT lookup Function: Func_8049040
 //       - PLT Entry: Func_8049030
 //         - Function: printf in libc
 //
-// This method removes the fallthrough and PLT entry functions, both of which are
+// This method removes the lookup and PLT entry functions, both of which are
 // located within the ELF ".plt" section.
 //
 // Subsequent calls into the library function call directly into the library
@@ -92,12 +89,12 @@ remove_plt_succs(Function *f, set<Function *> &erase_list, const elf_section &pl
     unsigned nsuccs = getBlockMeta(f, "succs")->getNumOperands();
 
     assert(nsuccs >= 1);
-    Function *ft = get_fall_through_function(f, plt_section);
+    Function *lookup = get_plt_lookup_function(f, plt_section);
 
-    if (!ft) {
+    if (!lookup) {
         if (logLevel >= logging::DEBUG) {
             raw_ostream &log = logging::getStream(logging::DEBUG);
-            log << "no fallthrough successor: " << utohexstr(getBlockAddress(f)) << " -> ";
+            log << "no plt successor: " << utohexstr(getBlockAddress(f)) << " -> ";
             getBlockSuccs(f, succs);
             bool first = true;
             for (Function *succ : succs) {
@@ -112,23 +109,23 @@ remove_plt_succs(Function *f, set<Function *> &erase_list, const elf_section &pl
         return false;
     }
 
-    // linking part of stub should do a durect jump to linking code at the
+    // linking part of stub should do a direct jump to linking code at the
     // start of the PLT
-    getBlockSuccs(ft, succs);
+    getBlockSuccs(lookup, succs);
     assert(succs.size() == 1);
     Function *plt = succs[0];
 
-    DBG("removing PLT code " << ft->getName() << " and " << plt->getName() << " for stub "
+    DBG("removing PLT code " << lookup->getName() << " and " << plt->getName() << " for stub "
                              << f->getName());
 
-    // ignore `ft` because it will be removed, and append all successors of
+    // ignore `lookup` because it will be removed, and append all successors of
     // `plt` instead
     failUnless(getBlockSuccs(f, succs));
-    assert(vectorContains(succs, ft));
+    assert(vectorContains(succs, lookup));
 
     vector<Function *> merged;
     for (Function *s : succs) {
-        if (s != ft)
+        if (s != lookup)
             merged.push_back(s);
     }
     failUnless(getBlockSuccs(plt, succs));
@@ -139,7 +136,7 @@ remove_plt_succs(Function *f, set<Function *> &erase_list, const elf_section &pl
     setBlockSuccs(f, merged);
 
     erase_list.insert(plt);
-    erase_list.insert(ft);
+    erase_list.insert(lookup);
 
     return true;
 }
@@ -147,11 +144,12 @@ remove_plt_succs(Function *f, set<Function *> &erase_list, const elf_section &pl
 // NOLINTNEXTLINE
 auto ELFSymbolsPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAnalyses
 {
+    DBG("Running ELF Symbols pass");
     bool changed = false;
 
+    // load the external symbols
     ifstream f;
     s2eOpen(f, "symbols");
-    DBG("called ELFSYMBOLS");
     uint64_t addr = 0;
     unsigned size = 0;
     string symbol;
