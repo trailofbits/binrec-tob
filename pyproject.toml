@@ -3,3 +3,4 @@ profile = "black"
 
 [tool.pytest.ini_options]
 testpaths = "test"
+addopts = "--show-capture=no"

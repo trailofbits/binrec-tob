@@ -6,7 +6,7 @@ import re
 import shlex
 import subprocess
 from pathlib import Path
-from typing import Iterable, List, Union
+from typing import Iterable, List, Optional, Union
 
 from binrec.env import BINREC_PROJECTS
 
@@ -61,10 +61,10 @@ def get_trace_dirs(project_name: str) -> List[Path]:
 def parse_batch_file(filename: Path) -> List[List[str]]:
     with open(filename, "r") as file:
         # read command line invocations
-        invocations = [line.strip().split() for line in file]
+        invocations = [shlex.split(line.strip()) for line in file]
         if not invocations:
             # no command line arguments specified, run the test once with no arguments
-            invocations = [[]]
+            invocations = [[""]]
     return invocations
 
 
@@ -123,10 +123,10 @@ def set_project_args(project: str, args: List[str]) -> None:
     :param args: list of arguments, the first of which indicates symbolic arguments
     """
     # Check for no arguments provided or empty quotes from batch files
-    if len(args) == 0:
-        args.append("")
-    elif args[0] == '""':
-        args[0] = ""
+    if not args:
+        args = [""]
+    elif args[0] in ('""', "''"):
+        args = [""] + args[1:]
 
     bootstrap = project_dir(project) / "bootstrap.sh"
     logger.debug("setting symbolic arguments in %s to %s", bootstrap, args[0])
@@ -179,6 +179,7 @@ def validate_project(
     match_stdout: Union[bool, str] = True,
     match_stderr: Union[bool, str] = True,
     skip_first: bool = False,
+    stdin: Union[bool, str] = False,
 ) -> None:
     """
     Compare the original binary against the lifted binary for a given sample of
@@ -195,7 +196,7 @@ def validate_project(
                        tracing and validation)
     """
     if skip_first:
-        args.pop(0)
+        args = args[1:]
 
     logger.info("Validating project: %s", project)
 
@@ -207,18 +208,29 @@ def validate_project(
     # We link to the binary we are running to make sure argv[0] is the same
     # for the original and the lifted program.
     os.link(original, target)
-    logger.debug(">> running original sample with args:", args)
+    logger.debug(">> running original sample with args: %s", args)
+
+    if stdin is False or stdin is None:
+        # /dev/null
+        stdin_file: Optional[int] = subprocess.DEVNULL
+    elif stdin is True:
+        # pass through stdin
+        stdin_file = None
+    else:
+        raise NotImplementedError("stdin content is not currently supported")
+
     original_proc = subprocess.Popen(
         [target] + args,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        stdin=subprocess.PIPE,
+        stdin=stdin_file,
     )
     # stdin is not supported yet in the updated s2e integration
     # if trace.stdin:
     #     original_proc.stdin.write(trace.stdin.encode())
 
-    original_proc.stdin.close()  # type: ignore
+    # Only close if stdin is a file / pipe (unsupported at this time)
+    # original_proc.stdin.close()  # type: ignore
     original_proc.wait()
     os.remove(target)
 
@@ -226,18 +238,19 @@ def validate_project(
     original_stderr = original_proc.stderr.read()  # type: ignore
 
     os.link(lifted, target)
-    logger.debug(">> running recovered sample with args:", args)
+    logger.debug(">> running recovered sample with args: %s", args)
     lifted_proc = subprocess.Popen(
         [target] + args,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        stdin=subprocess.PIPE,
+        stdin=stdin_file,
     )
     # stdin is not supported yet in the updated s2e integration
     # if trace.stdin:
     #    lifted_proc.stdin.write(trace.stdin.encode())
 
-    lifted_proc.stdin.close()  # type: ignore
+    # Only close if stdin is a file / pipe (unsupported at this time)
+    # lifted_proc.stdin.close()  # type: ignore
     lifted_proc.wait()
     os.remove(target)
 
@@ -283,7 +296,7 @@ def validate_batch_project(project: str, batch_file: Path, skip_first: bool) -> 
     invocations = parse_batch_file(batch_file)
 
     for invocation in invocations:
-        validate_project(project, invocation, skip_first)
+        validate_project(project, invocation, skip_first=skip_first)
 
 
 def run_project(project: str, args: List[str] = None) -> None:

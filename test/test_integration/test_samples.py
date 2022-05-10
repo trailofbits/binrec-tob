@@ -40,19 +40,20 @@ def load_real_lib():
 @dataclass
 class TraceParams:
     args: List[str] = field(default_factory=list)
-    stdin: str = ""
+    stdin: Union[bool, str] = False
     match_stdout: Union[bool, str] = True
     match_stderr: Union[bool, str] = True
 
     @classmethod
     def load_dict(cls, item: dict) -> "TraceParams":
         args = item.get("args") or []
-        stdin = item.get("stdin") or None
+        stdin = item.get("stdin") or False
         match_stdout = item.get("match_stdout", True)
         match_stderr = item.get("match_stderr", True)
 
         return cls(
-            args=args, stdin=stdin, match_stdout=match_stdout, match_stderr=match_stderr
+            args=args, stdin=stdin, match_stdout=match_stdout,
+            match_stderr=match_stderr,
         )
 
 

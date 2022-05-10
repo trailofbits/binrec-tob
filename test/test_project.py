@@ -24,7 +24,7 @@ line2
 
     S2E_SYM_ARGS="" LD_PRELOAD="${S2E_SO}" "${TARGET}" "$@" > /dev/null 2> /dev/null
 
-execute "${TARGET_PATH}" 
+execute "${TARGET_PATH}"\x20
 '''
 
 BOOTSTRAP_WITH_EXECUTE = '''
@@ -93,7 +93,7 @@ class TestProject:
     def test_parse_batch_file_no_args(self, mock_file):
         invocations = project.parse_batch_file("myfile.txt")
         assert mock_file.call_args_list == [ call("myfile.txt", "r")]
-        assert invocations == [[]]
+        assert invocations == [[""]]
 
     @patch.object(project, "open", new_callable=mock_open,
                   read_data=BOOTSTRAP_WITH_EXECUTE_AND_SYM)
@@ -168,7 +168,7 @@ class TestProject:
         mock_popen.assert_called_with([merged_tgt] + args,
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE,
-                                    stdin=subprocess.PIPE)
+                                    stdin=subprocess.DEVNULL)
 
     @patch.object(project.os, "remove")
     @patch.object(project.os, "link")
@@ -177,17 +177,17 @@ class TestProject:
         args = ["", "Jack", "Jill"]
         project.validate_project("asdf", args, skip_first=True)
         merged_tgt = str(BINREC_PROJECTS / "asdf" / "s2e-out" / "test-target")
-        mock_popen.assert_called_with([merged_tgt] + args,
+        mock_popen.assert_called_with([merged_tgt] + args[1:],
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE,
-                                    stdin=subprocess.PIPE)
+                                    stdin=subprocess.DEVNULL)
 
     @patch.object(project, "parse_batch_file", return_value=[line.strip().split() for line in BATCH_WITH_ARGS.split("\n")])
     @patch.object(project, "validate_project")
     def test_validate_batch_project(self, mock_validate_project, mock_parse_batch_file):
         project.validate_batch_project("asdf", "./myfile.txt", False)
         mock_parse_batch_file.assert_called_once_with("./myfile.txt")
-        calls = [call("asdf", ["Jack", "Jill"], False), call("asdf", ["0", "1", "2"], False), call("asdf", ["Jack", "0", "Jill", "1", "2"], False)]
+        calls = [call("asdf", ["Jack", "Jill"], skip_first=False), call("asdf", ["0", "1", "2"], skip_first=False), call("asdf", ["Jack", "0", "Jill", "1", "2"], skip_first=False)]
         mock_validate_project.assert_has_calls(calls, any_order=False)
 
     @patch.object(project.subprocess, "check_call")
