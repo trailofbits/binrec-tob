@@ -29,7 +29,7 @@ repo_scripts_commit           := "3e6e6cbffcfe2ea7f5b823d2d5509838a54b89c9"
 ########## Section: Installation Recipes ##########
 
 # Install BinRec from a clean clone of repository
-install-binrec: _install-dependencies _binrec-init build-all build-s2e-image
+install-binrec: _install-dependencies _binrec-init build-all build-s2e-image build-docs
 
 # Install apt packages and git LFS. Required once before build. Requires super user privileges.
 _install-dependencies:

@@ -16,11 +16,15 @@ the :data:`sys.path` so that these modules can be imported.
 ``binrec_link`` Module
 ^^^^^^^^^^^^^^^^^^^^^^^
 
+Code level documentation for the underlying C++ module can be found here: `binrec_link <../../../build/binrec_link/html/index.html>`_.
+
 .. autofunction:: binrec.lib.binrec_link.link
 
 
 ``binrec_lift`` Module
 ^^^^^^^^^^^^^^^^^^^^^^^
+
+Code level documentation for the underlying C++ module can be found here `binrec_lift <../../../build/binrec_lift/html/index.html>`_.
 
 .. autofunction:: binrec.lib.binrec_lift.link_prep_1
 

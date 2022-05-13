@@ -31,7 +31,7 @@ def project_dir(project_name: str) -> Path:
 def merged_trace_dir(project_name: str) -> Path:
     """
     :returns: the path to the merged trace directory for the project. Contains
-    merged traces, IRs, and binaries, etc.
+        merged traces, IRs, and binaries, etc.
     """
     return project_dir(project_name) / "s2e-out"
 
