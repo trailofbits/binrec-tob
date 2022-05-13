@@ -36,17 +36,13 @@ _install-dependencies:
     sudo apt-get update
     sudo apt-get install -y bison clang-14 cmake flex g++ g++-multilib gcc gcc-multilib git libglib2.0-dev liblua5.1-dev \
         libsigc++-2.0-dev lld-14 llvm-14-dev lua5.3 nasm nlohmann-json3-dev pkg-config subversion net-tools curl git-lfs \
-        doxygen graphviz clang-format-14 binutils python3-dev python3-venv
+        doxygen graphviz clang-format-14 binutils python3-dev python3-venv python3-pip
     
-    # TODO - This is a workaround for apt's old version of pipenv. We have to install it via pip and re-run the 
-    #        user's .profile to make sure its on PATH.
+    # TODO - This is a workaround for apt's old version of pipenv in Ubuntu 22.04. We have to install it via pip for now
+    #        We should check for an update to the apt package and move this back up to the apt command above.
     pip install pipenv
-    . ~/.profile
 
     git lfs install
-
-testy-test:
-    echo "export PATH=$PATH:/home/{{USER}}/.local/bin" >> ~/.profile
 
 # Initialize BinRec, S2E, LFS, pipenv, submodules. Required once before build. Requires super user privileges.
 _binrec-init:
