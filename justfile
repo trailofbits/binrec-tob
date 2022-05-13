@@ -36,11 +36,14 @@ _install-dependencies:
     sudo apt-get update
     sudo apt-get install -y bison clang-14 cmake flex g++ g++-multilib gcc gcc-multilib git libglib2.0-dev liblua5.1-dev \
         libsigc++-2.0-dev lld-14 llvm-14-dev lua5.3 nasm nlohmann-json3-dev pkg-config subversion net-tools curl git-lfs \
-        doxygen graphviz clang-format-14 binutils python3-dev python3-venv python3-pip
+        doxygen graphviz clang-format-14 binutils python3-dev python3-venv 
     
-    # TODO - This is a workaround for apt's old version of pipenv in Ubuntu 22.04. We have to install it via pip for now
-    #        We should check for an update to the apt package and move this back up to the apt command above.
+    # TODO - This is a workaround for a broken version of pipenv in Ubuntu 22.04. We have to install pip and use it to 
+    #        install pipenv first to resolve a broken dependency. Then we can install pipenv via apt as normal. When the
+    #        pipenv package is updated, we can remove these three lines and add 'pipenv' back to the install list above.
+    sudo apt-get install -y python3-pip
     pip install pipenv
+    sudo apt-get install -y pipenv
 
     git lfs install
 
