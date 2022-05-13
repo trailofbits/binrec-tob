@@ -34,9 +34,9 @@ install-binrec: _install-dependencies _binrec-init build-all build-s2e-image bui
 # Install apt packages and git LFS. Required once before build. Requires super user privileges.
 _install-dependencies:
     sudo apt-get update
-    sudo apt-get install -y bison clang-12 cmake flex g++ g++-multilib gcc gcc-multilib git libglib2.0-dev liblua5.1-dev \
-        libsigc++-2.0-dev lld-12 llvm-12-dev lua5.3 nasm nlohmann-json3-dev pkg-config python2 subversion net-tools curl \
-        pipenv git-lfs doxygen graphviz clang-format-12 binutils \
+    sudo apt-get install -y bison clang-14 cmake flex g++ g++-multilib gcc gcc-multilib git libglib2.0-dev liblua5.1-dev \
+        libsigc++-2.0-dev lld-14 llvm-14-dev lua5.3 nasm nlohmann-json3-dev pkg-config python2 subversion net-tools curl \
+        pipenv git-lfs doxygen graphviz clang-format-14 binutils \
         python3.9-dev python3.9-venv # For s2e-env (and compatibility with Python 3.9 from Pipfile): http://s2e.systems/docs/s2e-env.html#id2
 
     git lfs install
@@ -229,7 +229,7 @@ _format-clang:
 
 # Run clang-format linting recursively on a directory
 _format-clang-dir dirname:
-  find {{dirname}} -iname \*.cpp -or -iname \*.hpp -or -iname \*.h | xargs -n1 clang-format-12 -Werror -i
+  find {{dirname}} -iname \*.cpp -or -iname \*.hpp -or -iname \*.h | xargs -n1 clang-format-14 -Werror -i
 
 # Runs linting checks
 lint: _lint-python _lint-clang
@@ -264,7 +264,7 @@ _lint-clang:
 
 # Run clang-format linting recursively on a directory
 _lint-clang-dir dirname:
-  find {{dirname}} -iname \*.cpp -or -iname \*.hpp -or -iname \*.h | xargs -n1 clang-format-12 -Werror --dry-run
+  find {{dirname}} -iname \*.cpp -or -iname \*.hpp -or -iname \*.h | xargs -n1 clang-format-14 -Werror --dry-run
 
 ########## End: Code Formatting Recipes ##########
 

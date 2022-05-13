@@ -17,7 +17,7 @@ __all__ = (
     "llvm_command",
 )
 
-LLVM_MAJOR_VERSION = 12
+LLVM_MAJOR_VERSION = 14
 
 
 def llvm_command(command_name: str) -> str:
