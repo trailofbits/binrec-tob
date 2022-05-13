@@ -36,8 +36,7 @@ _install-dependencies:
     sudo apt-get update
     sudo apt-get install -y bison clang-14 cmake flex g++ g++-multilib gcc gcc-multilib git libglib2.0-dev liblua5.1-dev \
         libsigc++-2.0-dev lld-14 llvm-14-dev lua5.3 nasm nlohmann-json3-dev pkg-config python2 subversion net-tools curl \
-        pipenv git-lfs doxygen graphviz clang-format-14 binutils \
-        python3.9-dev python3.9-venv # For s2e-env (and compatibility with Python 3.9 from Pipfile): http://s2e.systems/docs/s2e-env.html#id2
+        pipenv git-lfs doxygen graphviz clang-format-14 binutils python3-dev python3-venv
 
     git lfs install
 
