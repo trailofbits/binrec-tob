@@ -35,10 +35,18 @@ install-binrec: _install-dependencies _binrec-init build-all build-s2e-image bui
 _install-dependencies:
     sudo apt-get update
     sudo apt-get install -y bison clang-14 cmake flex g++ g++-multilib gcc gcc-multilib git libglib2.0-dev liblua5.1-dev \
-        libsigc++-2.0-dev lld-14 llvm-14-dev lua5.3 nasm nlohmann-json3-dev pkg-config python2 subversion net-tools curl \
-        pipenv git-lfs doxygen graphviz clang-format-14 binutils python3-dev python3-venv
+        libsigc++-2.0-dev lld-14 llvm-14-dev lua5.3 nasm nlohmann-json3-dev pkg-config subversion net-tools curl git-lfs \
+        doxygen graphviz clang-format-14 binutils python3-dev python3-venv
+    
+    # TODO - This is a workaround for apt's old version of pipenv. We have to install it via pip and re-run the 
+    #        user's .profile to make sure its on PATH.
+    pip install pipenv
+    . ~/.profile
 
     git lfs install
+
+testy-test:
+    echo "export PATH=$PATH:/home/{{USER}}/.local/bin" >> ~/.profile
 
 # Initialize BinRec, S2E, LFS, pipenv, submodules. Required once before build. Requires super user privileges.
 _binrec-init:
