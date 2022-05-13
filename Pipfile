@@ -1,10 +1,10 @@
 [[source]]
-url = "https://pypi.python.org/simple"
+url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pypi"
 
 [packages]
-black = "==21.9b0"
+black = "*"
 python-dotenv = "*"
 
 [dev-packages]
@@ -16,4 +16,4 @@ coverage = "*"
 sphinx = "*"
 
 [requires]
-python_version = "3.9"
+python_version = "3.10.4"
