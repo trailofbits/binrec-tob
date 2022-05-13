@@ -23,6 +23,9 @@ repo_guest_images_commit      := "2afd9e4853936c3c38088272e90a927f62c9c58c"
 repo_qemu_commit              := "11032a68e0eb898a5d85af9dd6e284ad2e1b533d"
 repo_scripts_commit           := "3e6e6cbffcfe2ea7f5b823d2d5509838a54b89c9"
 
+# TODO - Remove this workaround for a broken pip package from apt ehn it gets fixed.
+export PATH := env_var('PATH') + ":" + env_var('HOME') + "/.local/bin"
+
 ########## End: Environment and Recipe Variables ##########
 
 
@@ -38,12 +41,12 @@ _install-dependencies:
         libsigc++-2.0-dev lld-14 llvm-14-dev lua5.3 nasm nlohmann-json3-dev pkg-config subversion net-tools curl git-lfs \
         doxygen graphviz clang-format-14 binutils python3-dev python3-venv 
     
-    # TODO - This is a workaround for a broken version of pipenv in Ubuntu 22.04. We have to install pip and use it to 
-    #        install pipenv first to resolve a broken dependency. Then we can install pipenv via apt as normal. When the
-    #        pipenv package is updated, we can remove these three lines and add 'pipenv' back to the install list above.
+    # TODO - This is a workaround for a broken version of pipenv in Ubuntu 22.04. We have to install pip via apt and use 
+    #        it to install pipenv to resolve a broken dependency. This pipenv won't be on PATH right away, so above we 
+    #        also need to append the user's local bin folder to the PATH. When the pipenv package is updated, we can 
+    #        remove these two lines and the PATH line above, then and add 'pipenv' back to the install list above.
     sudo apt-get install -y python3-pip
     pip install pipenv
-    sudo apt-get install -y pipenv
 
     git lfs install
 
