@@ -52,8 +52,7 @@ namespace s2e::plugins {
 
     static inline auto fileExists(const string &name) -> bool
     {
-        struct stat buffer {
-        };
+        struct stat buffer {};
         return stat(name.c_str(), &buffer) == 0;
     }
 
