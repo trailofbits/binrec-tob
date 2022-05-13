@@ -58,7 +58,7 @@ _binrec-init:
     git submodule update --recursive --init
     cd ./test/benchmark && git lfs pull
     cd ./s2e-env && pipenv run pip install .
-    pipenv run s2e init --non-interactive {{justdir}}/s2e
+    pipenv run s2e init {{justdir}}/s2e
     #just _freeze-s2e
     just s2e-insert-binrec-plugins
 
