@@ -44,7 +44,7 @@ static auto create_error_block(Module &m, Function *wrapper) -> BasicBlock *
     case fallback::ERROR1: {
         // create a prevPC global variable
         auto *prev_pc =
-            cast<GlobalVariable>(m.getOrInsertGlobal("prevPC", pc->getType()->getElementType()));
+            cast<GlobalVariable>(m.getOrInsertGlobal("prevPC", pc->getType()->getPointerElementType()));
         prev_pc->setInitializer(pc->getInitializer());
         prev_pc->setLinkage(pc->getLinkage());
         insert_prev_pc(wrapper, prev_pc);
@@ -64,7 +64,7 @@ static auto create_error_block(Module &m, Function *wrapper) -> BasicBlock *
             m.getNamedGlobal("R_EDI"),
             m.getNamedGlobal("R_ESP"),
             m.getNamedGlobal("R_EBP"),
-            b.CreateLoad(pc)};
+            b.CreateLoad(pc->getType()->getPointerElementType(), pc)};
         doInlineAsm(
             b,
             "movl $6, %esp\n\t"
@@ -112,7 +112,8 @@ static auto create_jump_table(BasicBlock *err_block) -> SwitchInst *
     err_block->replaceAllUsesWith(jump_table_block);
 
     IRBuilder<> b(jump_table_block);
-    Value *load_pc = b.CreateLoad(wrapper->getParent()->getNamedGlobal("PC"));
+    Value* pc_global = wrapper->getParent()->getNamedGlobal("PC");
+    Value *load_pc = b.CreateLoad(pc_global->getType()->getPointerElementType(), pc_global);
 
     // add a switch statement on the value of @PC that defaults to the old error block
     return b.CreateSwitch(load_pc, err_block, num_cases);

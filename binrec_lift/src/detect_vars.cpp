@@ -1,7 +1,11 @@
+#include <llvm/Pass.h>
+
 #include "detect_vars.hpp"
 #include "error.hpp"
 #include "pass_utils.hpp"
 #include "section_utils.hpp"
+
+#include <map>
 
 using namespace llvm;
 
@@ -54,7 +58,7 @@ static auto detectSectionVars(Module &m, section_meta_t &s) -> bool
             auto *expr = cast<ConstantExpr>(*gep->use_begin());
             assert(expr->getOpcode() == Instruction::BitCast);
             auto *targetType = cast<PointerType>(expr->getType());
-            auto *elementType = cast<IntegerType>(targetType->getElementType());
+            auto *elementType = cast<IntegerType>(targetType->getPointerElementType());
             assert(elementType->getBitWidth() % 8 == 0);
             unsigned size = elementType->getBitWidth() / 8;
 

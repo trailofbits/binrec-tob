@@ -21,7 +21,7 @@ auto UnflattenEnvPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAna
 {
     GlobalVariable *env = m.getNamedGlobal("env");
     auto *env_type =
-        cast<StructType>(cast<PointerType>(env->getType()->getElementType())->getElementType());
+        cast<StructType>(cast<PointerType>(env->getType()->getPointerElementType())->getPointerElementType());
     unique_ptr<DataLayout> layout = make_unique<DataLayout>(&m);
     const StructLayout *env_layout = layout->getStructLayout(env_type);
 
@@ -80,7 +80,7 @@ auto UnflattenEnvPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAna
                 }
 
                 // get type that is loaded/stored
-                Type *target_ty = cast<PointerType>(ptr_cast->getType())->getElementType();
+                Type *target_ty = cast<PointerType>(ptr_cast->getType())->getPointerElementType();
 
                 // find env struct member to which the offset belongs
                 unsigned member = env_layout->getElementContainingOffset(offset);
@@ -114,7 +114,7 @@ auto UnflattenEnvPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAna
 
                 failUnless(offset == 0, "non-zero offset remaining");
 
-                Value *repl = b.CreateInBoundsGEP(b.CreateLoad(env), indices);
+                Value *repl = b.CreateInBoundsGEP(nullptr, b.CreateLoad(env->getType()->getPointerElementType(), env), indices);
 
                 if (repl->getType() != ptr_cast->getType())
                     repl = b.CreatePointerCast(repl, ptr_cast->getType());

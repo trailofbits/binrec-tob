@@ -2,6 +2,7 @@
 #include "error.hpp"
 #include "pass_utils.hpp"
 #include <fstream>
+#include <map>
 
 using namespace binrec;
 using namespace llvm;
@@ -49,11 +50,12 @@ namespace {
 
     auto peekArg(Module *m, IRBuilder<> &irb, unsigned offset, size_t size) -> Value *
     {
-        Value *esp = irb.CreateLoad(m->getNamedGlobal("R_ESP"), "esp");
+        Value* resp = m->getNamedGlobal("R_ESP");
+        Value *esp = irb.CreateLoad(resp->getType()->getPointerElementType(), resp, "esp");
         Type *retTy = Type::getIntNTy(m->getContext(), size * 8);
         Value *ptr =
             irb.CreateIntToPtr(irb.CreateAdd(esp, irb.getInt32(offset)), retTy->getPointerTo());
-        return irb.CreateLoad(ptr, "arg");
+        return irb.CreateLoad(ptr->getType()->getPointerElementType(), ptr, "arg");
     }
 
     void collectUses(Instruction *inst, std::list<Instruction *> &eraseList)

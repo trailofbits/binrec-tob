@@ -229,7 +229,8 @@ static auto make_exit_tramp(Module &m, BasicBlock *return_bb) -> BasicBlock *
     // patch recovered IR to use have entry from enterTrap and exit to exitTramp
     Instruction *return_bb_term = return_bb->getTerminator();
     IRBuilder<> call_b(return_bb_term);
-    Value *on_unfallback = call_b.CreateLoad(m.getNamedGlobal("onUnfallback"));
+    Value* unfallback_global = m.getNamedGlobal("onUnfallback");
+    Value *on_unfallback = call_b.CreateLoad(unfallback_global->getType()->getPointerElementType(), unfallback_global);
     // Value *pc = callB.CreateLoad(m.getNamedGlobal("PC"));
     // when we port to 3.8, use this instead of the following 2 lines
     Instruction *then_t = llvm::SplitBlockAndInsertIfThen(on_unfallback, return_bb_term, true);
@@ -348,7 +349,7 @@ auto InsertTrampForRecFuncsPass::run(Module &m, ModuleAnalysisManager &am) -> Pr
     GlobalVariable *r_esp = m.getNamedGlobal("R_ESP");
     assert(r_esp && "R_ESP global variable doesn't exist");
     auto *prev_r_esp =
-        cast<GlobalVariable>(m.getOrInsertGlobal("prevR_ESP", r_esp->getType()->getElementType()));
+        cast<GlobalVariable>(m.getOrInsertGlobal("prevR_ESP", r_esp->getType()->getPointerElementType()));
     prev_r_esp->setInitializer(r_esp->getInitializer());
     prev_r_esp->setLinkage(r_esp->getLinkage());
 

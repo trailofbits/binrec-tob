@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
 #include <set>
+#include <map>
 
 using namespace binrec;
 using namespace llvm;

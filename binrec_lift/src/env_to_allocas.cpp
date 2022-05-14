@@ -85,7 +85,7 @@ auto EnvToAllocasPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAna
                 for (unsigned int i = 0; i < gep->getNumIndices(); ++i) {
                     idx.push_back(gep->getOperand(i + 1));
                 }
-                Value *newGep = b.CreateInBoundsGEP(gep->getPointerOperand(), idx);
+                Value *newGep = b.CreateInBoundsGEP(nullptr, gep->getPointerOperand(), idx);
                 replaceList.emplace_back(parent, newGep);
             }
 
@@ -97,7 +97,7 @@ auto EnvToAllocasPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAna
         DBG("transforming " << glob.getName() << " into alloca");
 
         AllocaInst *alloca =
-            b.CreateAlloca(glob.getType()->getElementType(), nullptr, glob.getName());
+            b.CreateAlloca(glob.getType()->getPointerElementType(), nullptr, glob.getName());
 
         if (glob.hasInitializer()) {
             b.CreateStore(glob.getInitializer(), alloca);

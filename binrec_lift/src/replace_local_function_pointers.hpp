@@ -2,6 +2,7 @@
 #define BINREC_REPLACE_LOCAL_FUNCTION_POINTERS_HPP
 
 #include <llvm/IR/PassManager.h>
+#include <llvm/Pass.h>
 #include <map>
 
 using namespace llvm;

@@ -9,6 +9,7 @@
 #include <cassert>
 #include <fstream>
 #include <llvm/IR/PassManager.h>
+#include <llvm/Pass.h>
 
 using namespace llvm;
 

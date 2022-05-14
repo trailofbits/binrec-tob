@@ -2,6 +2,7 @@
 #define BINREC_INLINEWRAPPER_HPP
 
 #include <llvm/IR/PassManager.h>
+#include <llvm/Pass.h>
 
 namespace binrec {
     class InlineWrapperPass : public llvm::PassInfoMixin<InlineWrapperPass> {

@@ -103,7 +103,7 @@ namespace binrec {
                 gep->idx_end(),
                 std::back_inserter(indices)); // Assuming at least one index
 
-            auto geprepl = irb.CreateInBoundsGEP(glob, indices);
+            auto geprepl = irb.CreateInBoundsGEP(nullptr, glob, indices);
             gep->replaceAllUsesWith(geprepl);
         } else {
             gep->replaceAllUsesWith(glob);
@@ -146,7 +146,7 @@ namespace binrec {
         failUnless(env != nullptr, "Missing global env pointer");
 
         auto env_ty =
-            cast<StructType>(cast<PointerType>(env->getType()->getElementType())->getElementType());
+            cast<StructType>(cast<PointerType>(env->getType()->getPointerElementType())->getPointerElementType());
 
         auto helperbc = loadBitcodeFile(runlibDir() + "/op_helper.bc", m.getContext());
         failUnless(!!helperbc, "Failed to find the op_helper.bc-file");
