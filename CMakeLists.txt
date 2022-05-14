@@ -10,7 +10,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 
-find_package(LLVM 12.0 REQUIRED CONFIG)
+find_package(LLVM 14.0 REQUIRED CONFIG)
 find_package(Python 3.9 REQUIRED COMPONENTS Interpreter Development)
 find_package(Doxygen
              REQUIRED dot
