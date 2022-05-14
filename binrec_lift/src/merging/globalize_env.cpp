@@ -145,8 +145,8 @@ namespace binrec {
         GlobalVariable *env = m.getNamedGlobal("env");
         failUnless(env != nullptr, "Missing global env pointer");
 
-        auto env_ty =
-            cast<StructType>(cast<PointerType>(env->getType()->getPointerElementType())->getPointerElementType());
+        auto env_ty = cast<StructType>(
+            cast<PointerType>(env->getType()->getPointerElementType())->getPointerElementType());
 
         auto helperbc = loadBitcodeFile(runlibDir() + "/op_helper.bc", m.getContext());
         failUnless(!!helperbc, "Failed to find the op_helper.bc-file");

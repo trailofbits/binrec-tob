@@ -50,7 +50,7 @@ namespace {
 
     auto peekArg(Module *m, IRBuilder<> &irb, unsigned offset, size_t size) -> Value *
     {
-        Value* resp = m->getNamedGlobal("R_ESP");
+        Value *resp = m->getNamedGlobal("R_ESP");
         Value *esp = irb.CreateLoad(resp->getType()->getPointerElementType(), resp, "esp");
         Type *retTy = Type::getIntNTy(m->getContext(), size * 8);
         Value *ptr =

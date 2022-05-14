@@ -5,8 +5,8 @@
 #include "pc_utils.hpp"
 #include <algorithm>
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
-#include <set>
 #include <map>
+#include <set>
 
 using namespace binrec;
 using namespace llvm;

@@ -43,8 +43,8 @@ static auto create_error_block(Module &m, Function *wrapper) -> BasicBlock *
         break;
     case fallback::ERROR1: {
         // create a prevPC global variable
-        auto *prev_pc =
-            cast<GlobalVariable>(m.getOrInsertGlobal("prevPC", pc->getType()->getPointerElementType()));
+        auto *prev_pc = cast<GlobalVariable>(
+            m.getOrInsertGlobal("prevPC", pc->getType()->getPointerElementType()));
         prev_pc->setInitializer(pc->getInitializer());
         prev_pc->setLinkage(pc->getLinkage());
         insert_prev_pc(wrapper, prev_pc);
@@ -112,7 +112,7 @@ static auto create_jump_table(BasicBlock *err_block) -> SwitchInst *
     err_block->replaceAllUsesWith(jump_table_block);
 
     IRBuilder<> b(jump_table_block);
-    Value* pc_global = wrapper->getParent()->getNamedGlobal("PC");
+    Value *pc_global = wrapper->getParent()->getNamedGlobal("PC");
     Value *load_pc = b.CreateLoad(pc_global->getType()->getPointerElementType(), pc_global);
 
     // add a switch statement on the value of @PC that defaults to the old error block

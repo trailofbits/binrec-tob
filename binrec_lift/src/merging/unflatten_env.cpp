@@ -20,8 +20,8 @@ static auto get_member_index(Type *ty, uint64_t offset, DataLayout *layout) -> u
 auto UnflattenEnvPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAnalyses
 {
     GlobalVariable *env = m.getNamedGlobal("env");
-    auto *env_type =
-        cast<StructType>(cast<PointerType>(env->getType()->getPointerElementType())->getPointerElementType());
+    auto *env_type = cast<StructType>(
+        cast<PointerType>(env->getType()->getPointerElementType())->getPointerElementType());
     unique_ptr<DataLayout> layout = make_unique<DataLayout>(&m);
     const StructLayout *env_layout = layout->getStructLayout(env_type);
 
@@ -114,7 +114,10 @@ auto UnflattenEnvPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAna
 
                 failUnless(offset == 0, "non-zero offset remaining");
 
-                Value *repl = b.CreateInBoundsGEP(nullptr, b.CreateLoad(env->getType()->getPointerElementType(), env), indices);
+                Value *repl = b.CreateInBoundsGEP(
+                    nullptr,
+                    b.CreateLoad(env->getType()->getPointerElementType(), env),
+                    indices);
 
                 if (repl->getType() != ptr_cast->getType())
                     repl = b.CreatePointerCast(repl, ptr_cast->getType());

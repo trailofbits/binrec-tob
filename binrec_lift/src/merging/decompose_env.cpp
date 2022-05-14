@@ -96,8 +96,8 @@ process_inst(Module &m, Instruction *inst, StructType *env_type, vector<StringRe
 auto DecomposeEnvPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAnalyses
 {
     GlobalVariable *env = m.getNamedGlobal("env");
-    auto *env_type =
-        cast<StructType>(cast<PointerType>(env->getType()->getPointerElementType())->getPointerElementType());
+    auto *env_type = cast<StructType>(
+        cast<PointerType>(env->getType()->getPointerElementType())->getPointerElementType());
 
     auto helperbc = loadBitcodeFile(runlibDir() + "/op_helper.bc", m.getContext());
     MDNode *env_info = get_env_type_info(move(helperbc));

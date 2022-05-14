@@ -77,8 +77,10 @@ auto ReplaceDynamicSymbolsPass::run(Module &m, ModuleAnalysisManager &am) -> Pre
             auto lookup = symbol_map.find(addr->getZExtValue());
             if (lookup != symbol_map.end()) {
                 IRBuilder<> irb{call};
-                Value* lookup_global = m.getNamedGlobal(lookup->second);
-                Instruction *sym = irb.CreateLoad(lookup_global->getType()->getPointerElementType(), lookup_global);
+                Value *lookup_global = m.getNamedGlobal(lookup->second);
+                Instruction *sym = irb.CreateLoad(
+                    lookup_global->getType()->getPointerElementType(),
+                    lookup_global);
                 call->replaceAllUsesWith(sym);
                 call->eraseFromParent();
             }

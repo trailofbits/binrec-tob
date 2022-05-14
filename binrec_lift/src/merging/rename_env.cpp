@@ -23,7 +23,8 @@ auto RenameEnvPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAnalys
         eip->setName("PC");
 
     if (GlobalVariable *regs = m.getNamedGlobal("regs")) {
-        Type *reg_ty = cast<ArrayType>(regs->getType()->getPointerElementType())->getPointerElementType();
+        Type *reg_ty =
+            cast<ArrayType>(regs->getType()->getPointerElementType())->getPointerElementType();
         for (User *use : regs->users()) {
             if (auto *gep = dyn_cast<GetElementPtrInst>(use))
                 replace_gep(m, gep, reg_ty);

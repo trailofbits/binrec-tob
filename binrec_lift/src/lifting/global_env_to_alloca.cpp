@@ -387,7 +387,7 @@ static auto update_signature(
 
     vector<Value *> ret_vals;
     for (auto ret_val : enumerate(sig.ret_vals)) {
-        AllocaInst* alloca = local_regs[ret_val.value()];
+        AllocaInst *alloca = local_regs[ret_val.value()];
         auto *val = irb.CreateLoad(alloca->getType()->getPointerElementType(), alloca);
         ret_vals.push_back(val);
     }
@@ -454,9 +454,13 @@ auto GlobalEnvToAllocaPass::run(Module &m, ModuleAnalysisManager &am) -> Preserv
                 AllocaInst *alloca =
                     irb.CreateAlloca(irb.getInt32Ty(), nullptr, reg->getName().lower());
                 local_regs.emplace(reg, alloca);
-                irb.CreateStore(irb.CreateLoad(reg->getType()->getPointerElementType(), reg), alloca);
+                irb.CreateStore(
+                    irb.CreateLoad(reg->getType()->getPointerElementType(), reg),
+                    alloca);
                 irb.SetInsertPoint(f->getEntryBlock().getTerminator());
-                irb.CreateStore(irb.CreateLoad(alloca->getType()->getPointerElementType(), alloca), reg);
+                irb.CreateStore(
+                    irb.CreateLoad(alloca->getType()->getPointerElementType(), alloca),
+                    reg);
             }
             reg_map = FunctionRegisterMap{nullptr, f, move(local_regs), {}};
         } else if (f->getName().startswith("Func_")) {
@@ -502,7 +506,7 @@ auto GlobalEnvToAllocaPass::run(Module &m, ModuleAnalysisManager &am) -> Preserv
                             arg->getName().lower());
                         local_reg_it = caller_map.local_regs.emplace(arg, alloca).first;
                     }
-                    Value* val = local_reg_it->second;
+                    Value *val = local_reg_it->second;
                     Value *param = irb.CreateLoad(val->getType()->getPointerElementType(), val);
                     args.push_back(param);
                 }

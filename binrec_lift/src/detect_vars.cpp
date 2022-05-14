@@ -1,10 +1,8 @@
-#include <llvm/Pass.h>
-
 #include "detect_vars.hpp"
 #include "error.hpp"
 #include "pass_utils.hpp"
 #include "section_utils.hpp"
-
+#include <llvm/Pass.h>
 #include <map>
 
 using namespace llvm;

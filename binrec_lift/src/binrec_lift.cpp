@@ -58,8 +58,8 @@
 #include <llvm/Bitcode/BitcodeWriterPass.h>
 #include <llvm/IR/IRPrintingPasses.h>
 #include <llvm/IRReader/IRReader.h>
-#include <llvm/Passes/PassBuilder.h>
 #include <llvm/Passes/OptimizationLevel.h>
+#include <llvm/Passes/PassBuilder.h>
 #include <llvm/Transforms/IPO/AlwaysInliner.h>
 #include <llvm/Transforms/IPO/GlobalDCE.h>
 #include <llvm/Transforms/IPO/GlobalOpt.h>
