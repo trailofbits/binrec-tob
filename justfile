@@ -16,11 +16,11 @@ plugins_dir := join(plugins_root, "src/s2e/Plugins")
 plugins_cmake := join(plugins_root, "src", "CMakeLists.txt")
 
 # S2E repos that need to be pinned to a specific commit (see issue #164)
-repo_s2e_commit               := "31565a75563e07d38de31349fd69c124b5124804"
+repo_s2e_commit               := "cbf0af205b02f3af3278584d6fcc760dfaf61288"
 repo_s2e_linux_kernel_commit  := "1e2dfecfc6a3e70e7dea478184aa1f13653dcbe1"
 repo_decree_commit            := "a523ec2ec1ca1e1369b33db755bed135af57e09c"
 repo_guest_images_commit      := "2afd9e4853936c3c38088272e90a927f62c9c58c"
-repo_qemu_commit              := "11032a68e0eb898a5d85af9dd6e284ad2e1b533d"
+repo_qemu_commit              := "50d5fe3d96ca23db005935a564a0040eb3db31ca"
 repo_scripts_commit           := "3e6e6cbffcfe2ea7f5b823d2d5509838a54b89c9"
 
 ########## End: Environment and Recipe Variables ##########
@@ -50,7 +50,7 @@ _binrec-init:
     cd ./test/benchmark && git lfs pull
     cd ./s2e-env && pipenv run pip install .
     pipenv run s2e init --non-interactive {{justdir}}/s2e
-    #just _freeze-s2e
+    just _freeze-s2e
     just s2e-insert-binrec-plugins
 
 # Freeze all S2E repositories to commits that have been tested against
