@@ -3,6 +3,9 @@
 #include "pass_utils.hpp"
 #include <set>
 
+#define PASS_NAME "env_to_allocas"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
+
 using namespace binrec;
 using namespace llvm;
 using namespace std;
@@ -37,7 +40,7 @@ namespace {
                 }
             } else {
                 LLVM_ERROR(error) << "Unexpected use of global: " << *use;
-                throw std::runtime_error{error};
+                throw binrec::lifting_error{"env_to_allocas", error};
             }
         }
 
@@ -50,11 +53,11 @@ auto EnvToAllocasPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAna
 {
     // Move each global that is only used within @wrapper
     Function *wrapper = m.getFunction("Func_wrapper");
-    // assert(wrapper && "Func_wrapper not found");
+    // PASS_ASSERT(wrapper && "Func_wrapper not found");
     if (!wrapper) {
         wrapper = m.getFunction("main");
     }
-    assert(wrapper && "main not found");
+    PASS_ASSERT(wrapper && "main not found");
 
     IRBuilder<> b(&*(wrapper->getEntryBlock().begin()));
     vector<GlobalVariable *> eraseList;

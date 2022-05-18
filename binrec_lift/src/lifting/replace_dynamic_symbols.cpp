@@ -14,7 +14,7 @@ static auto get_symbols(Module &m) -> map<uint32_t, string>
     auto binary_or_err = createBinary("binary");
     if (auto err = binary_or_err.takeError()) {
         LLVM_ERROR(error) << err;
-        throw std::runtime_error{error};
+        throw binrec::lifting_error{"replace_dynamic_symbols", error};
     }
     auto &binary = binary_or_err.get();
 

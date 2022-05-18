@@ -1,5 +1,6 @@
 #include "insert_calls.hpp"
 #include "analysis/trace_info_analysis.hpp"
+#include "error.hpp"
 #include "meta_utils.hpp"
 #include "pass_utils.hpp"
 #include "pc_utils.hpp"
@@ -7,6 +8,9 @@
 #include <map>
 #include <set>
 #include <vector>
+
+#define PASS_NAME "insert_calls"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
 
 using namespace binrec;
 using namespace llvm;
@@ -81,7 +85,7 @@ auto InsertCallsPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAnal
                         errs() << "Can't find call follow up block " << call_follow_up_block_name
                                << " of block " << bb.getName() << " in function " << f.getName()
                                << ".\n";
-                        assert(call_follow_up_block);
+                        PASS_ASSERT(call_follow_up_block);
                     }
                 }
 
@@ -132,7 +136,7 @@ auto InsertCallsPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAnal
                     join_block->moveAfter(exit_block);
 
                     if (call_follow_up_block == nullptr) {
-                        assert(
+                        PASS_ASSERT(
                             false &&
                             "This is not implemented yet. Also, is metadata set correctly with indirect calls?");
                     } else {
@@ -173,7 +177,7 @@ auto InsertCallsPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAnal
                         exit_block);
 
                     for (BasicBlock *successor : successors) {
-                        assert(
+                        PASS_ASSERT(
                             (successor->getParent() != &f || successor == &f.getEntryBlock()) &&
                             "Successor is basic block in own function instead of "
                             "a function for function pointer call.");

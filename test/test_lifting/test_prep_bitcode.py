@@ -81,11 +81,13 @@ class TestLiftingPrepBitcode:
     ):
         mock_mkstemp.return_value = (100, "tempfile")
         mock_lib_module.binrec_lift.link_prep_1.side_effect = CalledProcessError(0, "asdf")
+        mock_lib_module.convert_lib_error.return_value = BinRecError('asdf')
 
         with pytest.raises(BinRecError):
             lift.prep_bitcode_for_linkage(MockPath("/"), MockPath("source"), MockPath("dest"))
 
         assert mock_os.remove.call_args_list == [call("tempfile"), call(Path("tempfile.bc"))]
+        mock_lib_module.convert_lib_error.assert_called_once()
 
     # This is commented out based on issue #39. We can remove this once we know if
     # softfloat is not required.
@@ -111,8 +113,10 @@ class TestLiftingPrepBitcode:
     ):
         mock_mkstemp.return_value = (100, "tempfile")
         mock_lib_module.binrec_lift.link_prep_2.side_effect = CalledProcessError(0, 'asdf')
+        mock_lib_module.convert_lib_error.return_value = BinRecError('asdf')
 
         with pytest.raises(BinRecError):
             lift.prep_bitcode_for_linkage(MockPath("/"), MockPath("source"), MockPath("/dest", exists=True))
 
         assert list(sorted(mock_os.remove.call_args_list, key=str)) == list(sorted([call(Path("tempfile.bc")), call("tempfile")], key=str))
+        mock_lib_module.convert_lib_error.assert_called_once()

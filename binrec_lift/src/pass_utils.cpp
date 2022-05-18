@@ -1,4 +1,5 @@
 #include "pass_utils.hpp"
+#include "error.hpp"
 #include <fstream>
 #include <llvm/IR/InlineAsm.h>
 #include <llvm/IRReader/IRReader.h>
@@ -81,7 +82,7 @@ auto checkif(bool condition, const std::string &message) -> bool
 void failUnless(bool condition, const std::string &message)
 {
     if (!condition) {
-        throw std::runtime_error{message};
+        throw binrec::binrec_error{message};
     }
 }
 
@@ -89,7 +90,7 @@ auto s2eRoot() -> std::string
 {
     const char *envval = getenv("S2EDIR");
     if (!envval) {
-        throw std::runtime_error{"missing S2EDIR environment variable"};
+        throw binrec::lifting_error{"pass_utils", "missing S2EDIR environment variable"};
     }
     return std::string(envval);
 }
@@ -149,7 +150,7 @@ auto loadBitcodeFile(StringRef path, LLVMContext &ctx) -> std::unique_ptr<Module
         std::string error;
         raw_string_ostream error_stream{error};
         err.print("could not load bitcode file", error_stream);
-        throw std::runtime_error{error};
+        throw binrec::lifting_error{"pass_utils", error};
     }
 
     return from;

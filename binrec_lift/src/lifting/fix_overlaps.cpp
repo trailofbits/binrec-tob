@@ -7,6 +7,9 @@
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
 #include <set>
 
+#define PASS_NAME "fix_overlaps"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
+
 using namespace binrec;
 using namespace llvm;
 using namespace std;
@@ -47,7 +50,7 @@ static auto find_merge_pairs(Function &wrapper) -> list<pair<BasicBlock *, Basic
         for (BasicBlock *bb : merge) {
             if (merge_blocks.find(bb) != merge_blocks.end()) {
                 LLVM_ERROR(error) << "block " << bb->getName() << " being merged twice";
-                throw std::runtime_error{error};
+                throw binrec::lifting_error{"fix_overlaps", error};
             }
             merge_blocks.insert(bb);
         }
@@ -92,8 +95,8 @@ static void merge_blocks_same_end_point(BasicBlock *a, BasicBlock *b)
         real_pivot = real_pivot->getNextNode();
     }
 
-    assert(pivot);
-    assert(real_pivot);
+    PASS_ASSERT(pivot);
+    PASS_ASSERT(real_pivot);
 
     BasicBlock *split_block = pivot->getParent();
 
@@ -176,7 +179,7 @@ static void remove_exception_helper(BasicBlock *bb, BasicBlock *succ)
     // Erase !inststart instruction and call to helper_raise_exception (the
     // rest is either required or will be removed by DCE)
     Instruction *pivot = findInstStart(bb, getBlockAddress(succ));
-    assert(pivot);
+    PASS_ASSERT(pivot);
     vector<Instruction *> erase_list = {pivot};
 
     for (auto i = pivot->getIterator(), e = pivot->getParent()->end(); i != e; i++) {

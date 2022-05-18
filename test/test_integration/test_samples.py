@@ -3,13 +3,14 @@ import os
 import subprocess
 import json
 import shutil
+import sys
 from typing import List, Optional, Tuple, Union
 from dataclasses import dataclass, field
 from pathlib import Path
-from contextlib import contextmanager
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from _pytest.python import Metafunc
+import pytest
 
 from binrec.env import BINREC_ROOT
 from binrec.merge import merge_traces
@@ -18,23 +19,6 @@ from binrec import lift, project
 TEST_SAMPLE_SOURCES = ("binrec", "coreutils")
 TEST_SAMPLES_DIR = BINREC_ROOT / "test" / "benchmark" / "samples"
 TEST_BUILD_DIR = BINREC_ROOT / "test" / "benchmark" / "samples" / "bin" / "x86"
-
-
-@contextmanager
-def load_real_lib():
-    """
-    Load the real C modules so they can be called during the integration tests.
-    """
-    import _binrec_link
-    import _binrec_lift
-
-    lift.binrec_link = _binrec_link
-    lift.binrec_lift = _binrec_lift
-
-    yield
-
-    lift.binrec_link = MagicMock()
-    lift.binrec_lift = MagicMock()
 
 
 @dataclass
@@ -52,7 +36,9 @@ class TraceParams:
         match_stderr = item.get("match_stderr", True)
 
         return cls(
-            args=args, stdin=stdin, match_stdout=match_stdout,
+            args=args,
+            stdin=stdin,
+            match_stdout=match_stdout,
             match_stderr=match_stderr,
         )
 
@@ -114,6 +100,16 @@ def pytest_generate_tests(metafunc: Metafunc):
     """
     This method is called by pytest to generate test cases for this module.
     """
+    if isinstance(sys.modules["__real_binrec.lib"].binrec_lift, MagicMock):
+        pytest.skip(
+            "Unable to run integration tests: _binrec_lift module is unavailable."
+        )
+
+    if isinstance(sys.modules["__real_binrec.lib"].binrec_link, MagicMock):
+        pytest.skip(
+            "Unable to run integration tests: _binrec_link module is unavailable."
+        )
+
     test_plans: Optional[List[Tuple[Path, Path]]] = getattr(
         metafunc.function, "test_plans", None
     )
@@ -125,8 +121,9 @@ def pytest_generate_tests(metafunc: Metafunc):
         )
 
 
+@pytest.mark.flaky(reruns=1)
 @load_sample_test_cases
-def test_sample(binary: Path, test_plan_file: Path):
+def test_sample(binary: Path, test_plan_file: Path, real_lib_module):
     if test_plan_file.suffix.lower() == ".json":
         json_input = True
     else:
@@ -137,7 +134,10 @@ def test_sample(binary: Path, test_plan_file: Path):
     else:
         plan = TraceTestPlan.load_plaintext(binary, test_plan_file)
 
-    with load_real_lib():
+    patch_body = {
+        name: getattr(real_lib_module, name) for name in real_lib_module.__all__
+    }
+    with patch.multiple(lift, **patch_body):
         run_test(plan)
 
 
@@ -161,7 +161,11 @@ def compare_lift(plan: TraceTestPlan) -> None:
 
     for trace in plan.traces:
         project.validate_project(
-            plan.project, trace.args, trace.match_stdout, trace.match_stderr, skip_first=True
+            plan.project,
+            trace.args,
+            trace.match_stdout,
+            trace.match_stderr,
+            skip_first=True,
         )
 
 

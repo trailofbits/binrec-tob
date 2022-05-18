@@ -1,8 +1,12 @@
 #include "constant_loads.hpp"
+#include "error.hpp"
 #include "pass_utils.hpp"
 #include "section_utils.hpp"
 
 using namespace llvm;
+
+#define PASS_NAME "constant_loads"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
 
 struct param_t {
     Module &module;
@@ -53,7 +57,7 @@ static void pushReplacement(std::list<repl_t> &replacements, User *gep, Value *o
 auto ConstantLoads::runOnModule(Module &m) -> bool
 {
     GlobalVariable *memory = m.getNamedGlobal("memory");
-    assert(memory && "no global memory array");
+    PASS_ASSERT(memory && "no global memory array");
 
     std::list<repl_t> replacements;
     param_t p{m, 0, nullptr};
@@ -65,8 +69,8 @@ auto ConstantLoads::runOnModule(Module &m) -> bool
     for (User *use : memory->users()) {
         User *gep = cast<User>(use);
 
-        assert(isa<GetElementPtrInst>(gep) || isa<GEPOperator>(gep));
-        assert(gep->getNumOperands() == 2);
+        PASS_ASSERT(isa<GetElementPtrInst>(gep) || isa<GEPOperator>(gep));
+        PASS_ASSERT(gep->getNumOperands() == 2);
 
         Value *offset = gep->getOperand(1);
         if (auto *constInt = dyn_cast<ConstantInt>(offset)) {
@@ -106,7 +110,7 @@ auto ConstantLoads::runOnModule(Module &m) -> bool
             gep->eraseFromParent();
         } else {
             auto *op = cast<GEPOperator>(r.gep);
-            assert(r.offset == zero && "GEPOperator used with non-constant offset");
+            PASS_ASSERT(r.offset == zero && "GEPOperator used with non-constant offset");
             Constant *idx[] = {zero, ConstantInt::get(i32Ty, r.address - r.sectionBase)};
             newGep = ConstantExpr::getInBoundsGetElementPtr(nullptr, r.sectionGlobal, idx);
             op->replaceAllUsesWith(newGep);

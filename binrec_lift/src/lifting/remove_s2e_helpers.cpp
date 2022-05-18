@@ -1,10 +1,14 @@
 #include "remove_s2e_helpers.hpp"
+#include "error.hpp"
 #include "ir/selectors.hpp"
 #include "pass_utils.hpp"
 #include <llvm/ADT/SetVector.h>
 #include <llvm/IR/Operator.h>
 #include <llvm/IR/PassManager.h>
 #include <llvm/IR/Verifier.h>
+
+#define PASS_NAME "remove_s2e_helpers"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
 
 using namespace binrec;
 using namespace llvm;
@@ -44,15 +48,15 @@ namespace {
                         if (auto *op = dyn_cast<Operator>(store->getPointerOperand())) {
                             if (op->getOpcode() == Instruction::IntToPtr) {
                                 auto *opnd = cast<ConstantInt>(op->getOperand(0));
-                                assert(
+                                PASS_ASSERT(
                                     opnd->getType()->isIntegerTy(64) &&
                                     "expected cast from 64-bit pointer");
-                                assert(op->getType()->isPointerTy() && "expected cast to *i8");
+                                PASS_ASSERT(op->getType()->isPointerTy() && "expected cast to *i8");
                                 // uint64_t addr = opnd->getZExtValue();
 
                                 // if (first_addr)
-                                //    assert(addr == first_addr && "expected inttoptr to always cast
-                                //    the same address");
+                                //    PASS_ASSERT(addr == first_addr && "expected inttoptr to always
+                                //    cast the same address");
                                 // else
                                 //    first_addr = addr;
 

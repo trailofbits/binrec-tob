@@ -1,8 +1,14 @@
 #ifndef BINREC_LINK_ERROR_HPP
 #define BINREC_LINK_ERROR_HPP
 
+#include <stdexcept>
 #include <system_error>
 #include <type_traits>
+
+#define LINK_ASSERT(cond)                                                                          \
+    if (!(cond)) {                                                                                 \
+        throw std::runtime_error(#cond);                                                           \
+    }
 
 namespace binrec {
     enum class LinkError { Bad_Elf = 1, CC_Err };

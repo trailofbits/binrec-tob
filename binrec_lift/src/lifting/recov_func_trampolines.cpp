@@ -1,10 +1,14 @@
 #include "recov_func_trampolines.hpp"
+#include "error.hpp"
 #include "meta_utils.hpp"
 #include "pass_utils.hpp"
 #include "pc_utils.hpp"
 #include <fstream>
 #include <llvm/IR/PassManager.h>
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
+
+#define PASS_NAME "recov_func_trampolines"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
 
 using namespace binrec;
 using namespace llvm;
@@ -129,7 +133,7 @@ writeOutFuncsToOverwrite(std::vector<OrigRecovFuncPair> *out, const std::string 
 static auto makeEnterTramp(Module &m, OrigRecovFuncPair *recovFunc) -> BasicBlock *
 {
     Function *wrapper = m.getFunction("Func_wrapper");
-    assert(wrapper);
+    PASS_ASSERT(wrapper);
     BasicBlock *enterTrampoline = BasicBlock::Create(
         m.getContext(),
         "enterTrampoline" + std::to_string(recovFunc->origCallTargetAddress),
@@ -193,7 +197,7 @@ static auto makeEnterTramp(Module &m, OrigRecovFuncPair *recovFunc) -> BasicBloc
 static auto makeExitTramp(Module &m) -> BasicBlock *
 {
     Function *wrapper = m.getFunction("Func_wrapper");
-    assert(wrapper);
+    PASS_ASSERT(wrapper);
     BasicBlock *exitTrampoline = BasicBlock::Create(m.getContext(), "exitTrampoline", wrapper);
     IRBuilder<> exitB(exitTrampoline);
 

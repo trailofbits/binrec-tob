@@ -1,7 +1,11 @@
 #include "decompose_env.hpp"
+#include "error.hpp"
 #include "ir/selectors.hpp"
 #include "pass_utils.hpp"
 #include <llvm/IR/DebugInfo.h>
+
+#define PASS_NAME "decompose_env"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
 
 using namespace binrec;
 using namespace llvm;
@@ -74,11 +78,11 @@ process_inst(Module &m, Instruction *inst, StructType *env_type, vector<StringRe
     } else if (auto *bitcast = dyn_cast<BitCastInst>(inst)) {
         // The bitcast happens when LLVM generates a memcpy intrinsic which the struct is
         // passed in (e.g. helper_fldz_FT0).
-        assert(bitcast->hasOneUse() && "The memcpy intrinsic uses the i8* only once.");
+        PASS_ASSERT(bitcast->hasOneUse() && "The memcpy intrinsic uses the i8* only once.");
         auto *offset = cast<GetElementPtrInst>(bitcast->user_back());
-        assert(offset->getNumIndices() == 1 && "Gep in memcpy is a single offset from a i8*.");
+        PASS_ASSERT(offset->getNumIndices() == 1 && "Gep in memcpy is a single offset from a i8*.");
         auto *add_offset_base = cast<BinaryOperator>(offset->getOperand(1));
-        assert(
+        PASS_ASSERT(
             add_offset_base->getOpcode() == Instruction::Add &&
             "Memcpy offset is an add instruction.");
         uint64_t base = cast<ConstantInt>(add_offset_base->getOperand(1))->getZExtValue();

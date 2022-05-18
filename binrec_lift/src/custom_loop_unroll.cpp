@@ -1,5 +1,6 @@
 #define DEBUG_TYPE "loop-unroll"
 #include "custom_loop_unroll.hpp"
+#include "error.hpp"
 #include "pass_utils.hpp"
 #include <llvm/Analysis/LoopIterator.h>
 #include <llvm/Analysis/ScalarEvolution.h>
@@ -38,7 +39,7 @@ auto CustomLoopUnroll::doInitialization(Loop *L, LPPassManager &LPM) -> bool
     }
 
     if (HaveErr) {
-        throw std::runtime_error{error};
+        throw binrec::lifting_error{"custom_loop_unroll", error};
     }
 
     return false;

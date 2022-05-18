@@ -1,30 +1,34 @@
 #include "meta_utils.hpp"
+#include "error.hpp"
 #include "pass_utils.hpp"
 #include <llvm/IR/Metadata.h>
+
+#define PASS_NAME "meta_utils"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
 
 using namespace llvm;
 
 auto binrec::getBlockMeta(const BasicBlock *bb, StringRef kind) -> MDNode *
 {
-    assert(!bb->empty() && "BB is empty");
+    PASS_ASSERT(!bb->empty() && "BB is empty");
     return bb->getTerminator()->getMetadata(kind);
 }
 
 auto binrec::getBlockMeta(const Function *f, StringRef kind) -> MDNode *
 {
-    assert(!f->empty() && "function is empty");
+    PASS_ASSERT(!f->empty() && "function is empty");
     return getBlockMeta(&f->getEntryBlock(), kind);
 }
 
 void binrec::setBlockMeta(BasicBlock *bb, StringRef kind, MDNode *md)
 {
-    assert(!bb->empty() && "BB is empty");
+    PASS_ASSERT(!bb->empty() && "BB is empty");
     bb->getTerminator()->setMetadata(kind, md);
 }
 
 void binrec::setBlockMeta(Function *f, StringRef kind, MDNode *md)
 {
-    assert(!f->empty() && "function is empty");
+    PASS_ASSERT(!f->empty() && "function is empty");
     setBlockMeta(&f->getEntryBlock(), kind, md);
 }
 

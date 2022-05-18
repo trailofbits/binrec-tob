@@ -1,5 +1,6 @@
 #include "pc_jumps.hpp"
 #include "analysis/trace_info_analysis.hpp"
+#include "error.hpp"
 #include "meta_utils.hpp"
 #include "pass_utils.hpp"
 #include "pc_utils.hpp"
@@ -9,6 +10,9 @@
 #include <llvm/IR/InlineAsm.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/PassManager.h>
+
+#define PASS_NAME "pc_jumps"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
 
 using namespace binrec;
 using namespace llvm;
@@ -103,7 +107,7 @@ static auto create_jump_table(BasicBlock *err_block) -> SwitchInst *
         if (is_possible_jump_target(&bb))
             num_cases++;
     }
-    assert(num_cases > 0);
+    PASS_ASSERT(num_cases > 0);
 
     DBG("creating BB jump table of size " << num_cases);
 
@@ -181,7 +185,7 @@ auto PcJumpsPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAnalyses
                     // checking successor of plt block in __libc_start_main jmp chain, a successor
                     // of plt from the puts chain is found. But the plt block is not a ret-block, it
                     // contains an additional jump.
-                    // assert(is_ret_block);
+                    // PASS_ASSERT(is_ret_block);
                     is_ret_block = true;
                     break;
                 }
@@ -194,7 +198,7 @@ auto PcJumpsPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAnalyses
             SwitchInst *sw = SwitchInst::Create(load_pc, err_bb, successors.size(), terminator);
 
             for (BasicBlock *succ1 : successors) {
-                assert(isRecoveredBlock(succ1));
+                PASS_ASSERT(isRecoveredBlock(succ1));
                 ConstantInt *addr =
                     ConstantInt::get(Type::getInt32Ty(bb.getContext()), getBlockAddress(succ1));
                 sw->addCase(addr, succ1);

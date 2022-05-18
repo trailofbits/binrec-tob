@@ -59,7 +59,7 @@ struct ELFPLTFunsPass : public ModulePass {
                 !F.getName().startswith("__ld"))
             {
                 LLVM_ERROR(error) << "unresolved function: " << F.getName();
-                throw std::runtime_error{error};
+                throw binrec::lifting_error{"elf_plt_funcs", error};
             }
         }
 

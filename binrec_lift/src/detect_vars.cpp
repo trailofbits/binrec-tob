@@ -3,6 +3,9 @@
 #include "pass_utils.hpp"
 #include "section_utils.hpp"
 
+#define PASS_NAME "detect_vars"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
+
 using namespace llvm;
 
 char DetectVars::ID = 0;
@@ -22,7 +25,7 @@ static auto getInitializer(GlobalVariable *global, unsigned index, IntegerType *
 
     if (!isa<ConstantAggregateZero>(ginit)) {
         auto *arr = cast<ConstantDataArray>(ginit);
-        assert(arr->getElementByteSize() == 1);
+        PASS_ASSERT(arr->getElementByteSize() == 1);
 
         // asuming little-endian
         for (unsigned i = 0, iUpperBound = elementType->getBitWidth() / 8; i < iUpperBound; ++i)
@@ -42,7 +45,7 @@ static auto detectSectionVars(Module &m, section_meta_t &s) -> bool
 
     for (User *use : s.global->users()) {
         if (auto *gep = dyn_cast<GEPOperator>(use)) {
-            assert(cast<ConstantInt>(gep->getOperand(1))->isZero());
+            PASS_ASSERT(cast<ConstantInt>(gep->getOperand(1))->isZero());
             auto *indexConst = dyn_cast<ConstantInt>(gep->getOperand(2));
 
             if (!indexConst)
@@ -50,12 +53,12 @@ static auto detectSectionVars(Module &m, section_meta_t &s) -> bool
 
             unsigned index = indexConst->getZExtValue();
 
-            assert(gep->hasOneUse());
+            PASS_ASSERT(gep->hasOneUse());
             auto *expr = cast<ConstantExpr>(*gep->use_begin());
-            assert(expr->getOpcode() == Instruction::BitCast);
+            PASS_ASSERT(expr->getOpcode() == Instruction::BitCast);
             auto *targetType = cast<PointerType>(expr->getType());
             auto *elementType = cast<IntegerType>(targetType->getElementType());
-            assert(elementType->getBitWidth() % 8 == 0);
+            PASS_ASSERT(elementType->getBitWidth() % 8 == 0);
             unsigned size = elementType->getBitWidth() / 8;
 
             for (auto it : sizes) {
@@ -63,7 +66,7 @@ static auto detectSectionVars(Module &m, section_meta_t &s) -> bool
                     LLVM_ERROR(error)
                         << "overlapping globals in " << s.global->getName() << ": (" << it.first
                         << ", " << it.second << ") and (" << index << ", " << size << ")";
-                    throw std::runtime_error{error};
+                    throw binrec::lifting_error{"detect_vars", error};
                 }
             }
 

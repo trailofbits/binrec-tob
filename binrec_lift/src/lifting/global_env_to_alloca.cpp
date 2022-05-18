@@ -1,4 +1,5 @@
 #include "global_env_to_alloca.hpp"
+#include "error.hpp"
 #include "ir/register.hpp"
 #include <bitset>
 #include <llvm/ADT/PostOrderIterator.h>
@@ -8,6 +9,9 @@
 #include <llvm/IR/CFG.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/Transforms/Utils/Cloning.h>
+
+#define PASS_NAME "global_env_to_alloca"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
 
 using namespace binrec;
 using namespace llvm;
@@ -100,7 +104,7 @@ static auto get_must_defs(const Function &f, const map<const BasicBlock *, RegSe
         if (!succ_empty(&bb) || isa<UnreachableInst>(bb.getTerminator())) {
             continue;
         }
-        assert(isa<ReturnInst>(bb.getTerminator()));
+        PASS_ASSERT(isa<ReturnInst>(bb.getTerminator()));
         result &= live_registers[&bb];
     }
 
@@ -394,7 +398,7 @@ static auto update_signature(
 
     InlineFunctionInfo inline_info;
     InlineResult inline_result = InlineFunction(*call, inline_info);
-    assert(inline_result.isSuccess());
+    PASS_ASSERT(inline_result.isSuccess());
 
     for (auto &bb : *new_f) {
         for (auto &i : bb) {
@@ -517,7 +521,7 @@ auto GlobalEnvToAllocaPass::run(Module &m, ModuleAnalysisManager &am) -> Preserv
     }
 
     for (CallInst *call : calls_to_remove) {
-        assert(call->getNumUses() == 0);
+        PASS_ASSERT(call->getNumUses() == 0);
         call->eraseFromParent();
     }
 

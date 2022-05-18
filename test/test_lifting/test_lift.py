@@ -141,8 +141,11 @@ class TestLifting:
 
     def test_clean_bitcode_error(self, mock_lib_module):
         mock_lib_module.binrec_lift.clean.side_effect = OSError()
+        mock_lib_module.convert_lib_error.return_value = BinRecError('asdf')
         with pytest.raises(BinRecError):
             lift._clean_bitcode(MockPath("asdf"))
+
+        mock_lib_module.convert_lib_error.assert_called_once()
 
     @patch.object(lift.subprocess, "check_call")
     def test_apply_fixups(self, mock_check_call):
@@ -184,8 +187,11 @@ class TestLifting:
 
     def test_lift_bitcode_error(self, mock_lib_module):
         mock_lib_module.binrec_lift.lift.side_effect = OSError()
+        mock_lib_module.convert_lib_error.return_value = BinRecError('asdf')
         with pytest.raises(BinRecError):
             lift._lift_bitcode(MockPath("asdf"))
+
+        mock_lib_module.convert_lib_error.assert_called_once()
 
     def test_optimize_bitcode(self, mock_lib_module):
         trace_dir = MockPath("asdf")
@@ -201,8 +207,11 @@ class TestLifting:
 
     def test_optimize_bitcode_error(self, mock_lib_module):
         mock_lib_module.binrec_lift.optimize.side_effect = OSError()
+        mock_lib_module.convert_lib_error.return_value = BinRecError('asdf')
         with pytest.raises(BinRecError):
             lift._optimize_bitcode(MockPath("asdf"))
+
+        mock_lib_module.convert_lib_error.assert_called_once()
 
     @patch.object(lift.subprocess, "check_call")
     def test_disassemble_bitcode(self, mock_check_call):
@@ -233,8 +242,11 @@ class TestLifting:
 
     def test_recover_bitcode_error(self, mock_lib_module):
         mock_lib_module.binrec_lift.compile_prep.side_effect = OSError()
+        mock_lib_module.convert_lib_error.return_value = BinRecError('asdf')
         with pytest.raises(BinRecError):
             lift._recover_bitcode(MockPath("asdf"))
+
+        mock_lib_module.convert_lib_error.assert_called_once()
 
     @patch.object(lift.subprocess, "check_call")
     def test_compile_bitcode(self, mock_check_call):
@@ -270,8 +282,11 @@ class TestLifting:
 
     def test_link_recovered_binary_error(self, mock_lib_module):
         mock_lib_module.binrec_link.link.side_effect = CalledProcessError(0, "asdf")
+        mock_lib_module.convert_lib_error.return_value = BinRecError('asdf')
         with pytest.raises(BinRecError):
             lift._link_recovered_binary(MagicMock(name="asdf"))
+
+        mock_lib_module.convert_lib_error.assert_called_once()
 
     @patch.object(lift, "_extract_binary_symbols")
     @patch.object(lift, "_extract_data_imports")

@@ -1,7 +1,11 @@
 #include "pc_utils.hpp"
+#include "error.hpp"
 #include "pass_utils.hpp"
 #include <algorithm>
 #include <llvm/IR/CFG.h>
+
+#define PASS_NAME "pc_utils"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
 
 using namespace llvm;
 
@@ -69,7 +73,7 @@ auto binrec::findLastPCStore(BasicBlock &bb) -> StoreInst *
 auto binrec::getLastPc(BasicBlock *bb) -> unsigned
 {
     MDNode *md = bb->getTerminator()->getMetadata("lastpc");
-    assert(md && "expected lastpc in metadata node");
+    PASS_ASSERT(md && "expected lastpc in metadata node");
     return cast<ConstantInt>(dyn_cast<ValueAsMetadata>(md->getOperand(0))->getValue())
         ->getZExtValue();
 }
@@ -91,7 +95,7 @@ auto binrec::getLastInstStartPc(BasicBlock *bb, bool allowEmpty, bool noRecovere
     }
 
     if (!noRecovered && !allowEmpty)
-        assert(lastPc);
+        PASS_ASSERT(lastPc);
 
     return lastPc;
 }

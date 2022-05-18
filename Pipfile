@@ -4,16 +4,17 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-black = "==21.9b0"
 python-dotenv = "*"
 
 [dev-packages]
+black = "==22.3.0"
 flake8 = "*"
 mypy = "*"
 pytest = "*"
 isort = "*"
 coverage = "*"
 sphinx = "*"
+pytest-rerunfailures = "*"
 
 [requires]
 python_version = "3.9"

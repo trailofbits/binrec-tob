@@ -1,5 +1,6 @@
 #include "insert_tramp_for_rec_funcs.hpp"
 #include "analysis/trace_info_analysis.hpp"
+#include "error.hpp"
 #include "meta_utils.hpp"
 #include "pass_utils.hpp"
 #include "utils/function_info.hpp"
@@ -9,6 +10,9 @@
 #include <map>
 #include <set>
 #include <unordered_set>
+
+#define PASS_NAME "insert_tramp_for_rec_funcs"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
 
 using namespace binrec;
 using namespace llvm;
@@ -28,7 +32,7 @@ static auto get_block_by_name(StringRef name, Function *containing_f) -> BasicBl
 static auto make_enter_tramp(Module &m, BasicBlock *entry_bb) -> BasicBlock *
 {
     Function *wrapper = m.getFunction("Func_wrapper");
-    assert(wrapper);
+    PASS_ASSERT(wrapper);
     uint32_t entry_pc = getPc(entry_bb);
     BasicBlock *enter_trampoline =
         BasicBlock::Create(m.getContext(), "enterTrampoline." + entry_bb->getName(), wrapper);
@@ -130,7 +134,7 @@ static auto make_enter_tramp(Module &m, BasicBlock *entry_bb) -> BasicBlock *
     }
 
     auto *pred_switch = dyn_cast<SwitchInst>(entry_pred->getTerminator());
-    assert(pred_switch && "Terminator is not switch");
+    PASS_ASSERT(pred_switch && "Terminator is not switch");
     ConstantInt *case_tag =
         ConstantInt::get(Type::getInt32Ty(enter_trampoline->getContext()), -entry_pc);
     pred_switch->addCase(case_tag, enter_trampoline);
@@ -146,7 +150,7 @@ static auto make_enter_tramp(Module &m, BasicBlock *entry_bb) -> BasicBlock *
 static auto make_exit_tramp(Module &m, BasicBlock *return_bb) -> BasicBlock *
 {
     Function *wrapper = m.getFunction("Func_wrapper");
-    assert(wrapper);
+    PASS_ASSERT(wrapper);
     BasicBlock *exit_trampoline = BasicBlock::Create(m.getContext(), "exitTrampoline", wrapper);
     IRBuilder<> exit_b(exit_trampoline);
 
@@ -254,9 +258,9 @@ static void get_cb_entry_and_returns(
     unordered_set<uint32_t> &callers)
 {
     Function *wrapper = m.getFunction("Func_wrapper");
-    assert(wrapper && "Func_wrapper not found");
+    PASS_ASSERT(wrapper && "Func_wrapper not found");
     Function *trampoline = m.getFunction("helper_stub_trampoline");
-    assert(trampoline && "trampoline not found");
+    PASS_ASSERT(trampoline && "trampoline not found");
 
     // iterate over lib functions
     for (auto *u : trampoline->users()) {
@@ -283,13 +287,13 @@ static void get_cb_entry_and_returns(
         DBG("lib function pc that calls callback: " << utohexstr(bb_pc));
 
         auto it = fi.entry_pc_to_return_pcs.find(bb_pc);
-        assert(it != fi.entry_pc_to_return_pcs.end() && "No record for the lib function");
+        PASS_ASSERT(it != fi.entry_pc_to_return_pcs.end() && "No record for the lib function");
 
         for (uint32_t ret_pc : it->second) {
             // insert retBB into set
             DBG("callback ret: " << utohexstr(ret_pc));
             BasicBlock *ret_bb = get_block_by_name("BB_" + utohexstr(ret_pc), wrapper);
-            assert(ret_bb && "Couldn't find return BB");
+            PASS_ASSERT(ret_bb && "Couldn't find return BB");
             returns.insert(ret_bb);
         }
 
@@ -346,7 +350,7 @@ auto InsertTrampForRecFuncsPass::run(Module &m, ModuleAnalysisManager &am) -> Pr
 
     // create a prevR_ESP to store where it was pointing.
     GlobalVariable *r_esp = m.getNamedGlobal("R_ESP");
-    assert(r_esp && "R_ESP global variable doesn't exist");
+    PASS_ASSERT(r_esp && "R_ESP global variable doesn't exist");
     auto *prev_r_esp =
         cast<GlobalVariable>(m.getOrInsertGlobal("prevR_ESP", r_esp->getType()->getElementType()));
     prev_r_esp->setInitializer(r_esp->getInitializer());
@@ -368,7 +372,7 @@ auto InsertTrampForRecFuncsPass::run(Module &m, ModuleAnalysisManager &am) -> Pr
     // Write func entry PC values to a file to be processed by patching script.
     ofstream out_file("rfuncs");
     if (!out_file.is_open()) {
-        throw std::runtime_error{"Unable to open file: rfuncs"};
+        throw binrec::lifting_error{"insert_tramp_for_rec_funcs", "Unable to open file: rfuncs"};
     }
     for (BasicBlock *entry : entries) {
         out_file << getPc(entry) << "\n";

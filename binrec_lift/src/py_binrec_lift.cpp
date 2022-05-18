@@ -4,6 +4,7 @@
 #include <llvm/Support/CommandLine.h>
 //#include <llvm/ADT/StringMap.h>
 #include "binrec_lift.hpp"
+#include "error.hpp"
 #include "lift_context.hpp"
 #include "pass_utils.hpp"
 #include <llvm/Analysis/AliasAnalysis.h>
@@ -12,6 +13,29 @@
 extern "C" {
 
 #include <Python.h>
+
+static PyObject *PyLiftError;
+
+static PyObject *PyLiftError_str(PyObject *self)
+{
+    if (!PyObject_HasAttrString(self, "args")) {
+        // This should never happen
+        return PyUnicode_FromString("");
+    }
+
+    PyObject *ret = NULL;
+    // New reference
+    PyObject *args = PyObject_GetAttrString(self, "args");
+    if (PyTuple_Size(args) < 2) {
+        ret = PyObject_Repr(args);
+    } else {
+        ret = PyUnicode_FromFormat("[%U] %U", PyTuple_GetItem(args, 0), PyTuple_GetItem(args, 1));
+    }
+
+    Py_XDECREF(args);
+
+    return ret;
+}
 
 /**
  * Set the LLVM memssa check limit for the current lift operation.
@@ -105,8 +129,10 @@ static int run_lift_operation(binrec::LiftContext &ctx)
     try {
         binrec::run_lift(ctx);
         status = 0;
+    } catch (binrec::lifting_error &err) {
+        PyErr_SetObject(PyLiftError, Py_BuildValue("(ss)", err.pass(), err.what()));
+        status = -1;
     } catch (std::runtime_error &err) {
-        // TODO
         PyErr_SetString(PyExc_RuntimeError, err.what());
         status = -1;
     }
@@ -540,8 +566,19 @@ static struct PyModuleDef lift_module = {
            variables. */
     LiftMethods};
 
+const char *LIFT_ERROR_DOC = "Lifting pass failure containing two arguments\n\n"
+                             "  0. ``pass_name: str`` - the pass name that failed\n"
+                             "  1. ``failure: str`` - the failure message or assertion error\n";
+
 PyMODINIT_FUNC PyInit__binrec_lift(void)
 {
-    return PyModule_Create(&lift_module);
+    PyLiftError = PyErr_NewExceptionWithDoc("_binrec_lift.LiftError", LIFT_ERROR_DOC, NULL, NULL);
+    ((PyTypeObject *)PyLiftError)->tp_str = PyLiftError_str;
+
+
+    PyObject *mod = PyModule_Create(&lift_module);
+    PyModule_AddObject(mod, "LiftError", PyLiftError);
+
+    return mod;
 }
 }

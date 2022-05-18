@@ -1,6 +1,10 @@
 #include "remove_sections.hpp"
+#include "error.hpp"
 #include "pass_utils.hpp"
 #include "section_utils.hpp"
+
+#define PASS_NAME "remove_sections"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
 
 using namespace binrec;
 using namespace llvm;
@@ -55,10 +59,10 @@ namespace {
             } else if (isa<GEPOperator>(gep)) {
                 ops.push_back(cast<GEPOperator>(gep));
             } else {
-                assert(!"expected GEP as use of section global");
+                PASS_ASSERT(!"expected GEP as use of section global");
             }
-            assert(gep->getNumOperands() == 3);
-            assert(cast<ConstantInt>(gep->getOperand(1))->getZExtValue() == 0);
+            PASS_ASSERT(gep->getNumOperands() == 3);
+            PASS_ASSERT(cast<ConstantInt>(gep->getOperand(1))->getZExtValue() == 0);
         }
 
         // Replace uses with getelementptrs into @memory

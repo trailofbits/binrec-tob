@@ -1,6 +1,7 @@
 #include "analysis/env_alias_analysis.hpp"
 #include "analysis/trace_info_analysis.hpp"
 #include "binrec_lift.hpp"
+#include "error.hpp"
 #include "lift_context.hpp"
 #include <llvm/ADT/Triple.h>
 #include <llvm/Analysis/AliasAnalysis.h>
@@ -66,6 +67,8 @@ auto main(int argc, char *argv[]) -> int
 
     try {
         run_lift(ctx);
+    } catch (lifting_error &error) {
+        errs() << "[" << error.pass() << "] " << error.what() << "\n";
     } catch (runtime_error &error) {
         errs() << error.what() << "\n";
         return -1;

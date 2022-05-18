@@ -46,7 +46,7 @@ static void find_caller_bbs(
                 continue;
 
             caller_pc_to_caller_bb[p.first].insert(&bb);
-            // assert(callerPcToCallerBB.insert({p.first, &B}).second && "Duplicate
+            // PASS_ASSERT(callerPcToCallerBB.insert({p.first, &B}).second && "Duplicate
             // BB for the same pc");
             /*
             if(callerPcToCallerBB.insert({p.first, &B}).second == false){
@@ -57,7 +57,7 @@ static void find_caller_bbs(
             }
             */
         }
-        // assert(callerPcToCallerBB.find(p.first) != callerPcToCallerBB.end() &&
+        // PASS_ASSERT(callerPcToCallerBB.find(p.first) != callerPcToCallerBB.end() &&
         // "No BB for caller");
     }
 

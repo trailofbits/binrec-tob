@@ -306,7 +306,7 @@ _unit-test-cpp:
 
 # Runs integration tests, which may take several minutes to complete
 run-integration-tests:
-  pipenv run coverage run --source=binrec -m pytest --verbose -k "test_integration"
+  pipenv run coverage run --source=binrec -m pytest --verbose -k "test_integration" -rs
 
 # Print the last test run code coverage report
 print-coverage-report:
@@ -324,7 +324,7 @@ _ci-unit-tests: _unit-test-python print-coverage-report
 
 ########## Section: Dev/Debug Recipes ##########
 
-# Pretty print a trace info file 
+# Pretty print a trace info file
 _pretty-print-trace-info ti-file *flags:
   pipenv run python -m binrec.trace_info pretty "{{ti-file}}" {{flags}}
 

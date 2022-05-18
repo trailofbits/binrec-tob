@@ -1,7 +1,11 @@
 #include "prune_retaddr_push.hpp"
+#include "error.hpp"
 #include "pass_utils.hpp"
 #include "pc_utils.hpp"
 #include <llvm/IR/CFG.h>
+
+#define PASS_NAME "prune_retaddr_push"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
 
 using namespace binrec;
 using namespace llvm;
@@ -51,7 +55,7 @@ auto PruneRetaddrPushPass::run(Module &m, ModuleAnalysisManager &am) -> Preserve
                 }
             }
 
-            assert(retaddr_load);
+            PASS_ASSERT(retaddr_load);
 
             PHINode *phi =
                 PHINode::Create(retaddr_load->getType(), 10, "retaddr", &*(callee->begin()));
@@ -102,7 +106,7 @@ auto PruneRetaddrPushPass::run(Module &m, ModuleAnalysisManager &am) -> Preserve
             }
 
             if (phi->getNumIncomingValues() == 0) {
-                throw std::runtime_error{"no phi values "};
+                throw binrec::lifting_error{"prune_retaddr_push", "no phi values "};
             }
 
             lib_calls++;

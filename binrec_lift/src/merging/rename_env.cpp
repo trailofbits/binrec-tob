@@ -1,5 +1,9 @@
 #include "rename_env.hpp"
+#include "error.hpp"
 #include "pass_utils.hpp"
+
+#define PASS_NAME "rename_env"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
 
 using namespace binrec;
 using namespace llvm;
@@ -9,10 +13,10 @@ static constexpr std::array<const char *, 8> Reg_Names =
 
 template <typename T> static void replace_gep(Module &m, T *gep, Type *reg_ty)
 {
-    assert(gep->getNumIndices() == 2);
-    assert(gep->hasAllConstantIndices());
+    PASS_ASSERT(gep->getNumIndices() == 2);
+    PASS_ASSERT(gep->hasAllConstantIndices());
     unsigned index = cast<ConstantInt>(gep->getOperand(2))->getZExtValue();
-    assert(index < Reg_Names.size());
+    PASS_ASSERT(index < Reg_Names.size());
     gep->replaceAllUsesWith(cast<GlobalVariable>(m.getOrInsertGlobal(Reg_Names.at(index), reg_ty)));
 }
 

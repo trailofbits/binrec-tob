@@ -1,9 +1,13 @@
 #define DEBUG_TYPE "section-utils"
 #include "section_utils.hpp"
+#include "error.hpp"
 #include "pass_utils.hpp"
 #include <fstream>
 
 #define WRAPPER_SECTION ".wrapper"
+
+#define PASS_NAME "section_utils"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
 
 using namespace llvm;
 
@@ -40,7 +44,7 @@ void copySection(Module &m, section_meta_t &s, std::byte *data, bool readonly)
     }
 
     // create global
-    assert(m.getGlobalList().size());
+    PASS_ASSERT(m.getGlobalList().size());
     static GlobalVariable *insertBefore = &*(m.getGlobalList().begin());
     s.global = new GlobalVariable(
         m,

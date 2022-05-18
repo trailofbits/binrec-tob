@@ -10,7 +10,7 @@ from pathlib import Path
 from . import project
 from .env import BINREC_LIB, BINREC_LINK_LD, BINREC_RUNLIB, llvm_command
 from .errors import BinRecError
-from .lib import binrec_lift, binrec_link
+from .lib import binrec_lift, binrec_link, convert_lib_error
 
 logger = logging.getLogger("binrec.lift")
 
@@ -47,6 +47,8 @@ def prep_bitcode_for_linkage(
     :param working_dir: S2E capture directory (typically ``s2e-out-*``)
     :param source: the input bitcode filename
     :param destination: the output bitcode filename
+    :raises BinRecError: operation failed
+    :raises OSError: I/O error
     """
     logger.debug("preparing capture bitcode for linkage: %s", source)
 
@@ -72,8 +74,9 @@ def prep_bitcode_for_linkage(
         os.remove(tmp)
         with suppress(OSError):
             os.remove(tmp_bc)
-        raise BinRecError(
-            f"failed first stage of linkage prep for bitcode: {source}: {err}"
+
+        raise convert_lib_error(
+            err, f"failed first stage of linkage prep for bitcode: {source}"
         )
 
     shutil.move(tmp_bc, destination)
@@ -84,8 +87,9 @@ def prep_bitcode_for_linkage(
             os.remove(tmp_bc)
 
         os.remove(tmp)
-        raise BinRecError(
-            f"failed second stage of linkage prep for bitcode: {source}: {err}"
+
+        raise convert_lib_error(
+            err, f"failed second stage of linkage prep for bitcode: {source}"
         )
 
     shutil.move(tmp_bc, destination)
@@ -101,6 +105,8 @@ def _extract_binary_symbols(trace_dir: Path) -> None:
     **Outputs:** trace_dir / "symbols"
 
     :param trace_dir: binrec binary trace directory
+    :raises BinRecError: operation failed
+    :raises OSError: I/O error
     """
     plt_entry_re = r"^([0-9a-f]+) <(.+)@plt>:$"
     output_file = trace_dir / "symbols"
@@ -140,6 +146,8 @@ def _extract_data_imports(trace_dir: Path) -> None:
     **Outputs:** trace_dir / "data_imports"
 
     :param trace_dir: binrec binary trace directory
+    :raises BinRecError: operation failed
+    :raises OSError: I/O error
     """
     binary = trace_dir / "binary"
     data_imports = trace_dir / "data_imports"
@@ -170,6 +178,8 @@ def _extract_sections(trace_dir: Path) -> None:
     **Outputs:** trace_dir / "sections"
 
     :param trace_dir: binrec binary trace directory
+    :raises BinRecError: operation failed
+    :raises OSError: I/O error
     """
     binary = trace_dir / "binary"
     sections = trace_dir / "sections"
@@ -201,6 +211,7 @@ def _clean_bitcode(trace_dir: Path) -> None:
     - trace_dir / "cleaned-memssa.ll"
 
     :param trace_dir: binrec binary trace directory
+    :raises BinRecError: operation failed
     """
     logger.debug("cleaning captured bitcode: %s", trace_dir.name)
     try:
@@ -210,8 +221,8 @@ def _clean_bitcode(trace_dir: Path) -> None:
             working_dir=str(trace_dir),
         )
     except Exception as err:
-        raise BinRecError(
-            f"failed to clean captured LLVM bitcode: {trace_dir.name}: {err}"
+        raise convert_lib_error(
+            err, f"failed to clean captured LLVM bitcode: {trace_dir.name}"
         )
 
 
@@ -226,6 +237,7 @@ def _apply_fixups(trace_dir: Path) -> None:
       - trace_dir / "linked.ll"
 
     :param trace_dir: binrec binary trace directory
+    :raises BinRecError: operation failed
     """
     logger.debug("applying fixups to captured bitcode: %s", trace_dir.name)
     try:
@@ -267,6 +279,7 @@ def _lift_bitcode(trace_dir: Path) -> None:
       - trace_dir / "rfuncs"
 
     :param trace_dir: binrec binary trace directory
+    :raises BinRecError: operation failed
     """
     logger.debug(
         "performing initial lifting of captured LLVM bitcode: %s", trace_dir.name
@@ -279,9 +292,8 @@ def _lift_bitcode(trace_dir: Path) -> None:
             clean_names=True,
         )
     except Exception as err:
-        raise BinRecError(
-            f"failed to perform initial lifting of LLVM bitcode: {trace_dir.name}: "
-            f"{err}"
+        raise convert_lib_error(
+            err, f"failed to perform initial lifting of LLVM bitcode: {trace_dir.name}"
         )
 
 
@@ -297,6 +309,7 @@ def _optimize_bitcode(trace_dir: Path) -> None:
         - trace_dir / "optimized-memssa.ll"
 
     :param trace_dir: binrec binary trace directory
+    :raises BinRecError: operation failed
     """
     logger.debug("optimizing lifted bitcode: %s", trace_dir.name)
     try:
@@ -307,8 +320,8 @@ def _optimize_bitcode(trace_dir: Path) -> None:
             working_dir=str(trace_dir),
         )
     except Exception as err:
-        raise BinRecError(
-            f"failed to optimized lifted LLVM bitcode: {trace_dir.name}: {err}"
+        raise convert_lib_error(
+            err, f"failed to optimized lifted LLVM bitcode: {trace_dir.name}"
         )
 
 
@@ -321,6 +334,7 @@ def _disassemble_bitcode(trace_dir: Path) -> None:
     **Outputs:** trace_dir / "optimized.ll"
 
     :param trace_dir: binrec binary trace directory
+    :raises BinRecError: operation failed
     """
     logger.debug("disassembling optimized bitcode: %s", trace_dir.name)
     try:
@@ -345,6 +359,7 @@ def _recover_bitcode(trace_dir: Path) -> None:
         - trace_dir / "recovered-memssa.ll"
 
     :param trace_dir: binrec binary trace directory
+    :raises BinRecError: operation failed
     """
     logger.debug("lowering optimized LLVM bitcode for compilation: %s", trace_dir.name)
     try:
@@ -354,8 +369,8 @@ def _recover_bitcode(trace_dir: Path) -> None:
             working_dir=str(trace_dir),
         )
     except Exception as err:
-        raise BinRecError(
-            f"failed to lower optimized LLVM bitcode: {trace_dir.name}: {err}"
+        raise convert_lib_error(
+            err, f"failed to lower optimized LLVM bitcode: {trace_dir.name}"
         )
 
 
@@ -368,6 +383,7 @@ def _compile_bitcode(trace_dir: Path) -> None:
     **Outputs:** trace_dir / "recovered.o"
 
     :param trace_dir: binrec binary trace directory
+    :raises BinRecError: operation failed
     """
     logger.debug("compiling recovered LLVM bitcode: %s", trace_dir.name)
     try:
@@ -395,6 +411,7 @@ def _link_recovered_binary(trace_dir: Path) -> None:
     **Outputs:** trace_dir / "recovered"
 
     :param trace_dir: binrec binary trace directory
+    :raises BinRecError: operation failed
     """
     i386_ld = str(BINREC_LINK_LD / "i386.ld")
     libbinrec_rt = str(BINREC_LIB / "libbinrec_rt.a")
@@ -409,7 +426,7 @@ def _link_recovered_binary(trace_dir: Path) -> None:
             destination=str(trace_dir / "recovered"),
         )
     except Exception as err:
-        raise BinRecError("failed to link recovered binary: %s", err)
+        raise convert_lib_error(err, "failed to link recovered binary")
 
 
 def lift_trace(project_name: str) -> None:

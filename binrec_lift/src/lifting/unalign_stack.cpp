@@ -1,6 +1,10 @@
 #include "unalign_stack.hpp"
+#include "error.hpp"
 #include "pass_utils.hpp"
 #include <llvm/IR/PassManager.h>
+
+#define PASS_NAME "unalign_stack"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
 
 using namespace binrec;
 using namespace llvm;
@@ -46,7 +50,7 @@ auto UnalignStackPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAna
 
         // Remove stack alignment of esp
         GlobalVariable *r_esp = m.getNamedGlobal("R_ESP");
-        assert(r_esp && "R_ESP not found");
+        PASS_ASSERT(r_esp && "R_ESP not found");
 
         for (Instruction &inst : f.getEntryBlock()) {
             if (is_stack_align(inst, r_esp)) {

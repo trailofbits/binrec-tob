@@ -3,6 +3,8 @@
 #include "pass_utils.hpp"
 #include <fstream>
 
+#define PASS_NAME "inline_lib_call_args"
+
 using namespace binrec;
 using namespace llvm;
 using namespace std;
@@ -33,7 +35,7 @@ namespace {
             default:
                 LLVM_ERROR(error) << "invalid float return size for function " << sig.name << ": "
                                   << sig.retsize << ". Expected 4 (float) or 8 (double).";
-                throw std::runtime_error{error};
+                throw binrec::lifting_error{PASS_NAME, error};
             }
         }
         if (sig.retsize == 0) {
@@ -136,7 +138,7 @@ namespace {
                 } else {
                     LLVM_ERROR(error) << "function " << sig.name
                                       << " has invalid floating-point return size: " << sig.retsize;
-                    throw std::runtime_error{error};
+                    throw binrec::lifting_error{PASS_NAME, error};
                 }
             } else if (sig.retsize <= 4) {
                 b.CreateCall(m.getFunction("virtualize_return_i32"), ret);
@@ -145,7 +147,7 @@ namespace {
             } else {
                 LLVM_ERROR(error) << "function " << sig.name << " has invalid return size "
                                   << sig.retsize;
-                throw std::runtime_error{error};
+                throw binrec::lifting_error{PASS_NAME, error};
             }
         }
 

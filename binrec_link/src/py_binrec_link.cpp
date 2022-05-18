@@ -87,10 +87,16 @@ static PyObject *binrec_link(PyObject *self, PyObject *args, PyObject *kwargs)
     ctx.ld_script_filename = linker_script;
     ctx.output_filename = destination;
 
-    if (auto err = binrec::run_link(ctx)) {
-        raise_error(err);
-        binrec::cleanup_link(ctx);
+    try {
+        if (auto err = binrec::run_link(ctx)) {
+            raise_error(err);
+            binrec::cleanup_link(ctx);
 
+            return NULL;
+        }
+    } catch (std::runtime_error &error) {
+        PyErr_SetString(PyExc_RuntimeError, error.what());
+        binrec::cleanup_link(ctx);
         return NULL;
     }
 

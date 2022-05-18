@@ -1,8 +1,12 @@
 #include "add_debug.hpp"
+#include "error.hpp"
 #include "meta_utils.hpp"
 #include "pass_utils.hpp"
 #include "pc_utils.hpp"
 #include <llvm/IR/PassManager.h>
+
+#define PASS_NAME "add_debug"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
 
 using namespace binrec;
 using namespace llvm;
@@ -15,7 +19,7 @@ auto AddDebugPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAnalyse
 
     LLVMContext &ctx = m.getContext();
     GlobalVariable *global_pc = m.getNamedGlobal("PC");
-    assert(global_pc);
+    PASS_ASSERT(global_pc);
 
     for (Function &f : m) {
         if (!f.getName().startswith("Func_")) {

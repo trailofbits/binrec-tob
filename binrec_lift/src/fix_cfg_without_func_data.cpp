@@ -1,8 +1,12 @@
 #include "fix_cfg_without_func_data.hpp"
+#include "error.hpp"
 #include "pass_utils.hpp"
 #include "pc_utils.hpp"
 #include <algorithm>
 #include <llvm/IR/CFG.h>
+
+#define PASS_NAME "fix_cfg_without_func_data"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
 
 using namespace llvm;
 
@@ -57,7 +61,7 @@ void fix_cfg_without_func_data::getBBsWithLibCalls(
 auto fix_cfg_without_func_data::runOnModule(Module &m) -> bool
 {
     Function *wrapper = m.getFunction("Func_wrapper");
-    assert(wrapper && "No wrapper Function");
+    PASS_ASSERT(wrapper && "No wrapper Function");
 
     std::unordered_set<BasicBlock *> BBSet;
     getBBsWithLibCalls(*wrapper, BBSet);
@@ -85,7 +89,7 @@ auto fix_cfg_without_func_data::runOnModule(Module &m) -> bool
                           << " nextBB: " << nextBB->getName() << " addCase: " << addCase);
         if (addCase) {
             auto *sw = dyn_cast<SwitchInst>(B->getTerminator());
-            assert(sw && "Terminator is not switch inst");
+            PASS_ASSERT(sw && "Terminator is not switch inst");
             ConstantInt *addr =
                 ConstantInt::get(Type::getInt32Ty(B->getContext()), getBlockAddress(nextBB));
 

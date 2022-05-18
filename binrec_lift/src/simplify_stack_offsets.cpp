@@ -2,6 +2,9 @@
 #include "error.hpp"
 #include "pass_utils.hpp"
 
+#define PASS_NAME "simplify_stack_offsets"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
+
 using namespace llvm;
 
 char SimplifyStackOffsets::ID = 0;
@@ -20,7 +23,7 @@ static RegisterPass<SimplifyStackOffsets>
 auto SimplifyStackOffsets::runOnModule(Module &m) -> bool
 {
     GlobalVariable *stack = m.getNamedGlobal("stack");
-    assert(stack && "stack variable not found");
+    PASS_ASSERT(stack && "stack variable not found");
     auto *stackTy = cast<ArrayType>(stack->getType()->getElementType());
     unsigned wordWidth = cast<IntegerType>(stackTy->getElementType())->getBitWidth() / 8;
 
@@ -47,11 +50,11 @@ auto SimplifyStackOffsets::runOnModule(Module &m) -> bool
 
         if (relativeOffset % wordWidth != 0) {
             LLVM_ERROR(error) << "non-word-aligned stack offset " << relativeOffset << ": " << *add;
-            throw std::runtime_error{error};
+            throw binrec::lifting_error{"simplify_stack_offsets", error};
         }
 
         auto *gep = cast<GEPOperator>(cast<ConstantExpr>(add->getOperand(0))->getOperand(0));
-        assert(cast<ConstantInt>(gep->getOperand(1))->getZExtValue() == 0);
+        PASS_ASSERT(cast<ConstantInt>(gep->getOperand(1))->getZExtValue() == 0);
 
         unsigned oldOffset = cast<ConstantInt>(gep->getOperand(2))->getZExtValue();
         unsigned newOffset = oldOffset + relativeOffset / wordWidth;

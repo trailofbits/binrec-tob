@@ -2,6 +2,9 @@
 #include "error.hpp"
 #include "ir/selectors.hpp"
 
+#define PASS_NAME "function_renaming"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
+
 using namespace binrec;
 using namespace llvm;
 using namespace llvm::object;
@@ -12,7 +15,7 @@ FunctionRenamingPass::FunctionRenamingPass()
     auto binary_or_err = createBinary("binary");
     if (auto err = binary_or_err.takeError()) {
         LLVM_ERROR(error) << err;
-        throw std::runtime_error{error};
+        throw binrec::lifting_error{"function_renaming", error};
     }
     binary = move(binary_or_err.get());
 }
@@ -20,7 +23,7 @@ FunctionRenamingPass::FunctionRenamingPass()
 auto FunctionRenamingPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAnalyses
 {
     auto *elf = dyn_cast<ELFObjectFileBase>(binary.getBinary());
-    assert(elf);
+    PASS_ASSERT(elf);
 
     DenseMap<uint64_t, Function *> address_to_func;
     for (Function &f : LiftedFunctions{m}) {
@@ -28,7 +31,7 @@ auto FunctionRenamingPass::run(Module &m, ModuleAnalysisManager &am) -> Preserve
         if (name == "Func_wrapper")
             continue;
         uint64_t address;
-        assert(!name.substr(5).consumeInteger(16, address));
+        PASS_ASSERT(!name.substr(5).consumeInteger(16, address));
         address_to_func.insert(make_pair(address, &f));
     }
 

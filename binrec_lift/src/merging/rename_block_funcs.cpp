@@ -1,9 +1,13 @@
 #include "rename_block_funcs.hpp"
+#include "error.hpp"
 #include "ir/selectors.hpp"
 #include "pass_utils.hpp"
 #include "binrec/tracing/trace_info.hpp"
 #include <fstream>
 #include <set>
+
+#define PASS_NAME "rename_block_funcs"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
 
 using namespace binrec;
 using namespace llvm;
@@ -81,7 +85,7 @@ auto RenameBlockFuncsPass::run(Module &m, ModuleAnalysisManager &am) -> Preserve
         "renamed " << renamed_pcs.size() << " blocks, removed " << removed << " blocks, " << total
                    << " blocks remaining");
 
-    assert(renamed_pcs.size() <= known_pcs.size());
+    PASS_ASSERT(renamed_pcs.size() <= known_pcs.size());
 
     return PreservedAnalyses::none();
 }

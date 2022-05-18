@@ -8,12 +8,16 @@
  */
 
 #include "elf_symbols.hpp"
+#include "error.hpp"
 #include "ir/selectors.hpp"
 #include "meta_utils.hpp"
 #include "pass_utils.hpp"
 #include <algorithm>
 #include <fstream>
 #include <set>
+
+#define PASS_NAME "elf_symbols"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
 
 using namespace binrec;
 using namespace llvm;
@@ -30,7 +34,7 @@ namespace {
 
 static void annotate_symbol(Function *f, const string &symbol)
 {
-    assert(!f->empty() && "stub function is empty");
+    PASS_ASSERT(!f->empty() && "stub function is empty");
     LLVMContext &ctx = f->getContext();
     MDNode *md = MDNode::get(ctx, MDString::get(ctx, symbol));
     setBlockMeta(f, "extern_symbol", md);
@@ -89,7 +93,7 @@ remove_plt_succs(Function *f, set<Function *> &erase_list, const elf_section &pl
     vector<Function *> succs;
     unsigned nsuccs = getBlockMeta(f, "succs")->getNumOperands();
 
-    assert(nsuccs >= 1);
+    PASS_ASSERT(nsuccs >= 1);
     Function *lookup = get_plt_lookup_function(f, plt_section);
 
     if (!lookup) {
@@ -113,7 +117,7 @@ remove_plt_succs(Function *f, set<Function *> &erase_list, const elf_section &pl
     // linking part of stub should do a direct jump to linking code at the
     // start of the PLT
     getBlockSuccs(lookup, succs);
-    assert(succs.size() == 1);
+    PASS_ASSERT(succs.size() == 1);
     Function *plt = succs[0];
 
     DBG("removing PLT code " << lookup->getName() << " and " << plt->getName() << " for stub "
@@ -122,7 +126,7 @@ remove_plt_succs(Function *f, set<Function *> &erase_list, const elf_section &pl
     // ignore `lookup` because it will be removed, and append all successors of
     // `plt` instead
     failUnless(getBlockSuccs(f, succs));
-    assert(vectorContains(succs, lookup));
+    PASS_ASSERT(vectorContains(succs, lookup));
 
     vector<Function *> merged;
     for (Function *s : succs) {
@@ -174,7 +178,7 @@ auto ELFSymbolsPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAnaly
     f.close();
 
     // bail early if there are external functions but no .plt section.
-    assert((!changed || plt_section.address) && "binary does not contain .plt section");
+    PASS_ASSERT((!changed || plt_section.address) && "binary does not contain .plt section");
 
     set<Function *> erase_list;
     for (Function &f3 : LiftedFunctions{m}) {

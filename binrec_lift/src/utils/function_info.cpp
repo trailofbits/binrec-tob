@@ -1,10 +1,14 @@
 #include "function_info.hpp"
+#include "error.hpp"
 #include "pass_utils.hpp"
 #include "binrec/tracing/trace_info.hpp"
 #include <fstream>
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Module.h>
+
+#define PASS_NAME "function_info"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
 
 using namespace binrec;
 using namespace llvm;
@@ -40,7 +44,7 @@ auto FunctionInfo::get_tbs_by_function_entry(Module &m) const
         // TODO (hbrodin): This uses the old method of location "main". See recover_functions.cpp
         // for an updated variant. It seems this part is not reached. Haven't investigated.
         auto *entry = m.getFunction("Func_" + utohexstr(entry_pc[1]));
-        assert(entry);
+        PASS_ASSERT(entry);
         DenseSet<Function *> tbs;
         for (Function &f : m) {
             if (f.getName().startswith("Func_") && f.getName() != "Func_wrapper") {

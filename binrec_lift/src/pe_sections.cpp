@@ -4,10 +4,14 @@
  */
 
 #include "pe_sections.hpp"
+#include "error.hpp"
 #include "pass_utils.hpp"
 #include "pe_reader.hpp"
 #include "section_utils.hpp"
 #include <cmath>
+
+#define PASS_NAME "pe_sections"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
 
 using namespace llvm;
 
@@ -40,7 +44,7 @@ auto PESections::runOnModule(Module &m) -> bool
 
     // combine raw section table data with runtime load base metadata
     NamedMDNode *mdSections = m.getNamedMetadata("sections");
-    assert(mdSections);
+    PASS_ASSERT(mdSections);
     section_meta_t s;
     const Section *lastSection = nullptr;
     size_t lastLoadBase = 0;
@@ -49,7 +53,7 @@ auto PESections::runOnModule(Module &m) -> bool
         readSectionMeta(s, mdSections->getOperand(i));
 
         const Section *section = reader.findSectionByName(s.name.data());
-        assert(section);
+        PASS_ASSERT(section);
 
         s.fileOffset = section->offset;
         s.size = section->virtualSize;
@@ -60,7 +64,7 @@ auto PESections::runOnModule(Module &m) -> bool
             if (s.fileOffset && section->flags & COFF::IMAGE_SCN_MEM_READ)
             { // XXX: && !(section->flags & IMAGE_SCN_MEM_DISCARDABLE) {
                 auto optData = reader.readSection(*section);
-                assert(optData.has_value());
+                PASS_ASSERT(optData.has_value());
                 optData->swap(data);
             }
 
@@ -75,8 +79,8 @@ auto PESections::runOnModule(Module &m) -> bool
     }
 
     // move wrapper function to custom section to avoid overlap
-    assert(lastSection);
-    assert(lastSection->flags & COFF::IMAGE_SCN_ALIGN_4096BYTES);
+    PASS_ASSERT(lastSection);
+    PASS_ASSERT(lastSection->flags & COFF::IMAGE_SCN_ALIGN_4096BYTES);
     unsigned nchunks = ceilf((float)lastSection->rawSize / 0x1000);
 
     writeSectionConfig(WRAPPER_SECTION, lastLoadBase + nchunks * 0x1000);

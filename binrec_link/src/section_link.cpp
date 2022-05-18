@@ -1,5 +1,6 @@
 #include "section_link.hpp"
 #include "compiler_command.hpp"
+#include "link_error.hpp"
 #include <llvm/Support/Format.h>
 #include <llvm/Support/FormatVariadic.h>
 #include <llvm/Support/raw_ostream.h>
@@ -40,7 +41,7 @@ auto binrec::link_recovered_binary(
 
     string placeholder_sections_str = "PLACEHOLDER_SECTIONS";
     auto placeholder_sections_begin = ld_script_template.find(placeholder_sections_str);
-    assert(placeholder_sections_begin != string::npos);
+    LINK_ASSERT(placeholder_sections_begin != string::npos);
     ld_script_template.replace(
         placeholder_sections_begin,
         placeholder_sections_str.size(),

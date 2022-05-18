@@ -1,10 +1,14 @@
 #include "untangle_interpreter.hpp"
 #include "custom_loop_unroll.hpp"
+#include "error.hpp"
 #include "pass_utils.hpp"
 #include <fstream>
 #include <llvm/Transforms/Scalar.h>
 #include <llvm/Transforms/Utils.h>
 #include <set>
+
+#define PASS_NAME "untangle_interpreter"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
 
 using namespace llvm;
 
@@ -129,9 +133,9 @@ auto UntangleInterpreter::getOrCreatePair(const unsigned vpcValue) -> const Head
 
         // Replace backedge with switch statement
         auto *br = dyn_cast<BranchInst>(newLatch->getTerminator());
-        assert(br);
-        assert(br->getNumSuccessors() == 1);
-        assert(br->getSuccessor(0) == newHeader);
+        PASS_ASSERT(br);
+        PASS_ASSERT(br->getNumSuccessors() == 1);
+        PASS_ASSERT(br->getSuccessor(0) == newHeader);
         br->eraseFromParent();
 
         // Set VPC constant at start of header block to help dead code
@@ -169,13 +173,15 @@ auto UntangleInterpreter::runOnLoop(Loop *L, LPPassManager &LPM) -> bool
     const bool filesRead = readTraceFiles(entry, exits, edges);
 
     if (!vpc || !filesRead) {
-        throw std::runtime_error{"no trace files found"};
+        throw binrec::lifting_error{"untangle_interpreter", "no trace files found"};
     }
 
     // The header cannot contain PHI nodes because this will create problems
     // when pointing successors to other nodes
     if (isa<PHINode>(L->getHeader()->begin())) {
-        throw std::runtime_error{"interpreter header should not contain PHI nodes"};
+        throw binrec::lifting_error{
+            "untangle_interpreter",
+            "interpreter header should not contain PHI nodes"};
     }
 
     auto *vpcTy = cast<IntegerType>(vpc->getType()->getElementType());
@@ -184,7 +190,9 @@ auto UntangleInterpreter::runOnLoop(Loop *L, LPPassManager &LPM) -> bool
     const HeaderLatchPair &entryPair = getOrCreatePair(entry);
 
     if (!ReplaceSuccessor(L->getLoopPreheader(), L->getHeader(), entryPair.first)) {
-        throw std::runtime_error{"could not patch successor of preheader"};
+        throw binrec::lifting_error{
+            "untangle_interpreter",
+            "could not patch successor of preheader"};
     }
 
     // Add edges between virtual instructions based on trace files, duplicating

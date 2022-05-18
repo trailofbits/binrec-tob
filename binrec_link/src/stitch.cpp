@@ -1,4 +1,5 @@
 #include "stitch.hpp"
+#include "link_error.hpp"
 #include <llvm/Object/ELFObjectFile.h>
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/Process.h>
@@ -81,17 +82,17 @@ static auto get_start_patch(const ELFFile<ELFT> &original_elf, const ELFFile<ELF
     -> Patch
 {
     auto *recovered_symtab_section = get_section(recovered_elf, ".symtab");
-    assert(recovered_symtab_section && "Recovered binary must have a symtab section.");
+    LINK_ASSERT(recovered_symtab_section && "Recovered binary must have a symtab section.");
 
     auto recovered_main_symbol = get_symbol(recovered_elf, *recovered_symtab_section, "main");
-    assert(recovered_main_symbol.second && "Recovered binary must have a main symbol.");
+    LINK_ASSERT(recovered_main_symbol.second && "Recovered binary must have a main symbol.");
 
     uint64_t recovered_main_address_offset = recovered_symtab_section->sh_offset +
         recovered_main_symbol.first * recovered_symtab_section->sh_entsize +
         offsetof(typename ELFFile<ELFT>::Elf_Sym, st_value);
 
     auto *original_text_section = get_section(recovered_elf, ".orig.text");
-    assert(original_text_section && "Recovered binary must have a .orig.text section.");
+    LINK_ASSERT(original_text_section && "Recovered binary must have a .orig.text section.");
 
     auto original_start_address = original_elf.getHeader().e_entry;
 
@@ -113,7 +114,7 @@ template <class ELFT> static auto get_dynamic_patch(const ELFFile<ELFT> &recover
     }
 
     auto *recovered_dynamic_section = get_section(recovered_elf, ".dynamic");
-    assert(recovered_dynamic_section && "Recovered binary must have a dynamic section.");
+    LINK_ASSERT(recovered_dynamic_section && "Recovered binary must have a dynamic section.");
 
     Patch p;
     p.target_offset = recovered_dynamic_section->sh_offset;

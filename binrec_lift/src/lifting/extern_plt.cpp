@@ -7,6 +7,9 @@
 #include <llvm/IR/PassManager.h>
 #include <llvm/Transforms/Utils/Cloning.h>
 
+#define PASS_NAME "extern_plt"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
+
 using namespace binrec;
 using namespace llvm;
 
@@ -19,7 +22,7 @@ static auto find_trampoline_call(BasicBlock &bb) -> CallInst *
                 return call;
         }
     }
-    assert(!"no call to helper_stub_trampoline");
+    throw lifting_error{PASS_NAME, "no call to helper_stub_trampoline"};
 }
 
 // NOLINTNEXTLINE
@@ -27,11 +30,11 @@ auto ExternPLTPass::run(Function &f, FunctionAnalysisManager &am) -> PreservedAn
 {
     auto &m = *f.getParent();
     auto *nonlib_setjmp = m.getFunction("nonlib_setjmp");
-    assert(nonlib_setjmp);
+    PASS_ASSERT(nonlib_setjmp);
     auto *nonlib_longjmp = m.getFunction("nonlib_longjmp");
-    assert(nonlib_longjmp);
+    PASS_ASSERT(nonlib_longjmp);
     auto *helper = m.getFunction("helper_extern_stub");
-    assert(helper);
+    PASS_ASSERT(helper);
 
     bool changed = false;
 
@@ -99,7 +102,7 @@ auto ExternPLTPass::run(Function &f, FunctionAnalysisManager &am) -> PreservedAn
         InlineFunctionInfo info;
         if (!InlineFunction(*call, info).isSuccess()) {
             LLVM_ERROR(error) << "could not inline call:" << *call;
-            throw std::runtime_error{error};
+            throw binrec::lifting_error{"extern_plt", error};
         }
 
         // Attach symbol as metadata to trampoline call for optional use by

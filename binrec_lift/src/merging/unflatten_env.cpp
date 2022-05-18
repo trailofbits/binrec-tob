@@ -1,7 +1,11 @@
 #include "unflatten_env.hpp"
+#include "error.hpp"
 #include "ir/selectors.hpp"
 #include "pass_utils.hpp"
 #include <memory>
+
+#define PASS_NAME "unflatten_env"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
 
 using namespace binrec;
 using namespace llvm;
@@ -71,12 +75,12 @@ auto UnflattenEnvPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAna
                 if (ptr_cast) {
                     offset = 0;
                 } else if (load_use->isBinaryOp() && load_use->getOpcode() == Instruction::Add) {
-                    assert(load_use->hasOneUse() && "multiple add uses");
+                    PASS_ASSERT(load_use->hasOneUse() && "multiple add uses");
                     offset = cast<ConstantInt>(load_use->getOperand(1))->getZExtValue();
                     ptr_cast = cast<IntToPtrInst>(*load_use->user_begin());
                 } else {
-                    errs() << "load use is no add or inttoptr:" << *load_use << "\n";
-                    assert(false);
+                    LLVM_ERROR(error) << "load use is no add or inttoptr:" << *load_use;
+                    throw lifting_error{PASS_NAME, error};
                 }
 
                 // get type that is loaded/stored
@@ -108,7 +112,7 @@ auto UnflattenEnvPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAna
                     } else if (auto *struc_ty = dyn_cast<StructType>(member_ty)) {
                         member_ty = struc_ty->getTypeAtIndex(member);
                     } else {
-                        assert(false);
+                        throw lifting_error{PASS_NAME, "member type is not an array or struct"};
                     }
                 }
 

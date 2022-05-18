@@ -10,7 +10,7 @@ add_library(binrec_link_static STATIC
         src/binrec_link.cpp src/binrec_link.hpp)
 
 target_compile_definitions(binrec_link_static PUBLIC ${LLVM_DEFINITIONS})
-target_compile_options(binrec_link_static PUBLIC -fno-rtti -fno-exceptions -fpic)
+target_compile_options(binrec_link_static PUBLIC -fno-rtti -fpic)
 target_include_directories(binrec_link_static PUBLIC ${LLVM_INCLUDE_DIRS} ${CMAKE_CURRENT_LIST_DIR}/include)
 llvm_map_components_to_libnames(llvm_libs core object support)
 target_link_libraries(binrec_link_static PUBLIC ${llvm_libs})

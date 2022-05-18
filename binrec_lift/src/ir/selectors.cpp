@@ -1,4 +1,8 @@
 #include "selectors.hpp"
+#include "error.hpp"
+
+#define PASS_NAME "selectors"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
 
 using namespace binrec;
 using namespace llvm;
@@ -6,7 +10,7 @@ using namespace std;
 
 auto binrec::is_lifted_function(const Function &f) -> bool
 {
-    assert(f.hasName());
+    PASS_ASSERT(f.hasName());
     StringRef name = f.getName();
     return name.startswith("Func_") && name != "Func_wrapper" && name != "Func_init";
 }

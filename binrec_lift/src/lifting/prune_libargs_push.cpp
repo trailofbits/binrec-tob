@@ -5,6 +5,9 @@
 #include <llvm/IR/CFG.h>
 #include <llvm/IR/PassManager.h>
 
+#define PASS_NAME "prune_libargs_push"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
+
 using namespace binrec;
 using namespace llvm;
 using namespace std;
@@ -67,7 +70,7 @@ static auto pruneArgs(Function &stub) -> unsigned
             continue;
         }
 
-        assert(distance(ibegin, iend) == 1);
+        PASS_ASSERT(distance(ibegin, iend) == 1);
 
         unsigned nloads = 0;
 
@@ -87,7 +90,7 @@ static auto pruneArgs(Function &stub) -> unsigned
         if (argLoads.size() != argSizes.size()) {
             LLVM_ERROR(error) << "could not find all argument loads (" << argLoads.size() << " / "
                               << argSizes.size() << "):";
-            throw std::runtime_error{error};
+            throw binrec::lifting_error{"prune_libargs_push", error};
         }
 
         BasicBlock *caller = *pred_begin(callee);
@@ -114,7 +117,7 @@ static auto pruneArgs(Function &stub) -> unsigned
             }
         }
 
-        assert(pushInsts.size() == argSizes.size());
+        PASS_ASSERT(pushInsts.size() == argSizes.size());
 
         // Collect stack stores in each push instruction before the call
         std::vector<Instruction *> eraseList;
@@ -125,7 +128,7 @@ static auto pruneArgs(Function &stub) -> unsigned
                 LLVM_ERROR(error) << "multiple memory stores where one push was "
                                      "expected:"
                                   << *otherStore;
-                throw std::runtime_error{error};
+                throw binrec::lifting_error{"prune_libargs_push", error};
             }
 
             const unsigned expectedSize = argSizes[arg];
@@ -134,7 +137,7 @@ static auto pruneArgs(Function &stub) -> unsigned
             if (storedSize != expectedSize) {
                 LLVM_ERROR(error) << "expected arg push of " << expectedSize << " bytes, got "
                                   << storedSize << " bytes:" << *push;
-                throw std::runtime_error{error};
+                throw binrec::lifting_error{"prune_libargs_push", error};
             }
 
             argLoads[arg]->replaceAllUsesWith(push->getOperand(1));

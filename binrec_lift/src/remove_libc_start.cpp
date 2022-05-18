@@ -4,6 +4,7 @@
  */
 
 #include "remove_libc_start.hpp"
+#include "error.hpp"
 #include "ir/selectors.hpp"
 #include "meta_utils.hpp"
 #include "pass_utils.hpp"
@@ -11,6 +12,9 @@
 #include <fstream>
 #include <llvm/IR/CFG.h>
 #include <set>
+
+#define PASS_NAME "remove_libc_start"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
 
 using namespace binrec;
 using namespace llvm;
@@ -67,10 +71,10 @@ auto RemoveLibcStart::runOnModule(Module &m) -> bool
 
         if (f.peek() == ' ') {
             f >> flag;
-            assert(f.good());
+            PASS_ASSERT(f.good());
 
             if (flag == 'e') {
-                assert(!entry && "entry point already set");
+                PASS_ASSERT(!entry && "entry point already set");
                 entry = m.getFunction("Func_" + utohexstr(addr));
             } else if (flag == 'x') {
                 if (Function *x = findContainingBlock(m, addr))
@@ -78,13 +82,13 @@ auto RemoveLibcStart::runOnModule(Module &m) -> bool
                 else
                     DBG("could not find BB containing exit address " << addr);
             } else {
-                assert(!"invalid flag");
+                throw lifting_error{PASS_NAME, "invalid flag"};
             }
         }
     }
 
     // move entry block
-    assert(entry);
+    PASS_ASSERT(entry);
     moveEntryBlock(entry);
 
     // remove entry block from successor lists
@@ -93,7 +97,7 @@ auto RemoveLibcStart::runOnModule(Module &m) -> bool
     }
 
     // remove successor lists of exit blocks
-    // assert(exits.size() && "no exit points found");
+    // PASS_ASSERT(exits.size() && "no exit points found");
 
     for (Function *f : exits) {
         DBG("clearing successor list of exit block " << f->getName());

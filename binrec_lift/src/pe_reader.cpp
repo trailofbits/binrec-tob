@@ -1,15 +1,19 @@
 #include "pe_reader.hpp"
+#include "error.hpp"
 #include <cassert>
 #include <cstring>
 #include <string>
+
+#define PASS_NAME "pe_reader"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
 
 using namespace std;
 using namespace llvm;
 
 PeReader::PeReader(const char *path) : m_infile(path, ifstream::binary)
 {
-    assert(readBuf(&m_dosHeader, 0, sizeof(m_dosHeader)));
-    assert(readBuf(&m_ntHeader, m_dosHeader.AddressOfNewExeHeader + 4, sizeof(m_ntHeader)));
+    PASS_ASSERT(readBuf(&m_dosHeader, 0, sizeof(m_dosHeader)));
+    PASS_ASSERT(readBuf(&m_ntHeader, m_dosHeader.AddressOfNewExeHeader + 4, sizeof(m_ntHeader)));
     m_sectionsInited = false;
 }
 
@@ -23,7 +27,7 @@ auto PeReader::getSectionTable() -> const SectionTable &
         for (auto &section : m_sections) {
             object::coff_section hdr{};
 
-            assert(readBuf(&hdr, offset, sizeof(hdr)));
+            PASS_ASSERT(readBuf(&hdr, offset, sizeof(hdr)));
 
             section.name = (const char *)hdr.Name;
             section.offset = hdr.PointerToRawData;

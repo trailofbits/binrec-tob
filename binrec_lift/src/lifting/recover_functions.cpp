@@ -12,6 +12,9 @@
 #include <set>
 #include <vector>
 
+#define PASS_NAME "recover_functions"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
+
 using namespace binrec;
 using namespace llvm;
 using namespace std;
@@ -161,7 +164,7 @@ namespace {
             true); // true is AllowInternalLinkage since registers are made internal
         if (!eax) {
             LLVM_ERROR(error) << "Failed to get a reference to R_EAX";
-            throw std::runtime_error{error};
+            throw binrec::lifting_error{"recover_functions", error};
         }
 
         std::vector<BasicBlock *> successors;
@@ -177,14 +180,14 @@ namespace {
         for (size_t i = 0; i < 2; i++) {
             if (!getBlockSuccs(block, successors)) {
                 LLVM_ERROR(error) << "Failed to find successors for block:\n" << *block;
-                throw std::runtime_error{error};
+                throw binrec::lifting_error{"recover_functions", error};
             }
 
             if (successors.size() != 1) {
                 LLVM_ERROR(error) << "Expected a single successor for potential main block, "
                                   << block->getName() << ": got " << successors.size()
                                   << " successors";
-                throw std::runtime_error{error};
+                throw binrec::lifting_error{"recover_functions", error};
             }
             block = successors[0];
             successors.clear();
@@ -211,7 +214,7 @@ namespace {
         auto mainpc = locate_main_addr(entrypoint, m);
         if (mainpc == 0) {
             LLVM_ERROR(error) << "Failed to located main via entrypoint";
-            throw std::runtime_error{error};
+            throw binrec::lifting_error{"recover_functions", error};
         }
 
         // Return the Func_xxxxxx
@@ -513,7 +516,7 @@ auto RecoverFunctionsPass::run(Module &m, ModuleAnalysisManager &am) -> Preserve
 
             InlineFunctionInfo inline_info;
             InlineResult inline_result = InlineFunction(*inlining_call, inline_info);
-            assert(inline_result.isSuccess());
+            PASS_ASSERT(inline_result.isSuccess());
 
             copy_metadata(tb->getEntryBlock().getTerminator(), bb->getTerminator());
 
@@ -546,13 +549,13 @@ auto RecoverFunctionsPass::run(Module &m, ModuleAnalysisManager &am) -> Preserve
     }
 
     vector<Function *> entry_points = fl.get_entrypoint_functions(m);
-    assert(!entry_points.empty() && "No entry points, can't recover main");
+    PASS_ASSERT(!entry_points.empty() && "No entry points, can't recover main");
     auto *wrapper = m.getFunction("Func_wrapper");
-    assert(wrapper);
+    PASS_ASSERT(wrapper);
     BasicBlock *entry_block = BasicBlock::Create(context, "", wrapper);
     // NOTE (hbrodin): Changed how main function is located due to update S2E version
     auto main_func = get_main(entry_points[0], m);
-    assert(main_func && "Failed to locate main-function");
+    PASS_ASSERT(main_func && "Failed to locate main-function");
     CallInst::Create(main_func, {}, "", entry_block);
     ReturnInst::Create(context, entry_block);
 

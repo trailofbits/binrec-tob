@@ -1,8 +1,12 @@
 #include "inline_qemu_op_helpers.hpp"
+#include "error.hpp"
 #include <array>
 #include <llvm/ADT/StringRef.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/Transforms/Utils/Cloning.h>
+
+#define PASS_NAME "inline_qemu_op_helpers"
+#define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
 
 using namespace binrec;
 using namespace llvm;
@@ -37,10 +41,10 @@ auto InlineQemuOpHelpersPass::run(Module &m, ModuleAnalysisManager &am) -> Prese
             auto &call = *cast<CallInst>(user);
             InlineFunctionInfo ifi;
             InlineResult result = InlineFunction(call, ifi);
-            assert(result.isSuccess());
+            PASS_ASSERT(result.isSuccess());
         }
 
-        assert(helper->user_empty());
+        PASS_ASSERT(helper->user_empty());
         helper->eraseFromParent();
     }
     return PreservedAnalyses::none();
