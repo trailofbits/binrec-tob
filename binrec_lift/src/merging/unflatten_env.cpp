@@ -115,7 +115,7 @@ auto UnflattenEnvPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAna
                 failUnless(offset == 0, "non-zero offset remaining");
 
                 Value *repl = b.CreateInBoundsGEP(
-                    nullptr,
+                    env->getType()->getPointerElementType(),
                     b.CreateLoad(env->getType()->getPointerElementType(), env),
                     indices);
 

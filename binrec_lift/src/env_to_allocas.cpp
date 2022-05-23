@@ -85,7 +85,10 @@ auto EnvToAllocasPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAna
                 for (unsigned int i = 0; i < gep->getNumIndices(); ++i) {
                     idx.push_back(gep->getOperand(i + 1));
                 }
-                Value *newGep = b.CreateInBoundsGEP(nullptr, gep->getPointerOperand(), idx);
+                Value *newGep = b.CreateInBoundsGEP(
+                    gep->getPointerOperand()->getType()->getPointerElementType(),
+                    gep->getPointerOperand(),
+                    idx);
                 replaceList.emplace_back(parent, newGep);
             }
 

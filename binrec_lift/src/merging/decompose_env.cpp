@@ -67,7 +67,8 @@ process_inst(Module &m, Instruction *inst, StructType *env_type, vector<StringRe
             vector<Value *> indices = {b.getInt32(0)};
             for (unsigned i = 2, i_upper_bound = gep->getNumIndices(); i < i_upper_bound; ++i)
                 indices.push_back(gep->getOperand(i + 1));
-            gep->replaceAllUsesWith(b.CreateInBoundsGEP(nullptr, glob, indices));
+            gep->replaceAllUsesWith(
+                b.CreateInBoundsGEP(glob->getType()->getPointerElementType(), glob, indices));
         } else {
             gep->replaceAllUsesWith(glob);
         }

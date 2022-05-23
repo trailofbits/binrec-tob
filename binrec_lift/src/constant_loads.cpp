@@ -100,7 +100,11 @@ auto ConstantLoads::runOnModule(Module &m) -> bool
 
             Value *sectionOffset = b.CreateAdd(b.getInt32(r.address - r.sectionBase), r.offset);
             Value *idx[] = {zero, sectionOffset};
-            newGep = b.CreateInBoundsGEP(nullptr, r.sectionGlobal, idx, gep->getName());
+            newGep = b.CreateInBoundsGEP(
+                r.sectionGlobal->getType()->getPointerElementType(),
+                r.sectionGlobal,
+                idx,
+                gep->getName());
 
             gep->replaceAllUsesWith(newGep);
             gep->eraseFromParent();

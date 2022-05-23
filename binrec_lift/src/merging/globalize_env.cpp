@@ -103,7 +103,8 @@ namespace binrec {
                 gep->idx_end(),
                 std::back_inserter(indices)); // Assuming at least one index
 
-            auto geprepl = irb.CreateInBoundsGEP(nullptr, glob, indices);
+            auto geprepl =
+                irb.CreateInBoundsGEP(glob->getType()->getPointerElementType(), glob, indices);
             gep->replaceAllUsesWith(geprepl);
         } else {
             gep->replaceAllUsesWith(glob);
@@ -113,7 +114,7 @@ namespace binrec {
     }
 
     // Replace GEPs with GEP to new global variables representing fields of the CPUX86State struct.
-    // For other instructions, iterate users untill a GEP is found.
+    // For other instructions, iterate users until a GEP is found.
     static void process_instruction(
         Instruction *inst,
         StructType *env_ty,
