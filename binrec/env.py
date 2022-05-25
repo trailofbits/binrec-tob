@@ -25,9 +25,10 @@ def llvm_command(command_name: str) -> str:
     A stub function to resolve an unversioned LLVM command to the correct command for
     the system. For now, this function simply appends the major version of the
     supported LLVM platform. In the future, this may resolve the LLVM command to a path
-    or support multiple LVVM versions.
+    or support multiple LLVM versions.
     """
-    return f"{command_name}-{LLVM_MAJOR_VERSION}"
+    #return f"{command_name}-{LLVM_MAJOR_VERSION}"
+    return f"{command_name}"
 
 
 def _load_env() -> None:

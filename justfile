@@ -14,6 +14,10 @@ justdir := justfile_directory()
 plugins_root := justdir + "/s2e/source/s2e/libs2eplugins"
 plugins_dir := join(plugins_root, "src/s2e/Plugins")
 plugins_cmake := join(plugins_root, "src", "CMakeLists.txt")
+s2e_bins := justdir + "/s2e/install/bin"
+
+# Add Clang / LLVM binaries (and other dependencies) from S2E install to PATH
+export PATH := env_var('PATH') + ":" + s2e_bins
 
 # S2E repos that need to be pinned to a specific commit (see issue #164)
 repo_s2e_commit               := "31565a75563e07d38de31349fd69c124b5124804"
@@ -22,9 +26,6 @@ repo_decree_commit            := "a523ec2ec1ca1e1369b33db755bed135af57e09c"
 repo_guest_images_commit      := "2afd9e4853936c3c38088272e90a927f62c9c58c"
 repo_qemu_commit              := "11032a68e0eb898a5d85af9dd6e284ad2e1b533d"
 repo_scripts_commit           := "3e6e6cbffcfe2ea7f5b823d2d5509838a54b89c9"
-
-# TODO - Remove this workaround for a broken pip package from apt ehn it gets fixed.
-export PATH := env_var('PATH') + ":" + env_var('HOME') + "/.local/bin"
 
 ########## End: Environment and Recipe Variables ##########
 
@@ -37,16 +38,9 @@ install-binrec: _install-dependencies _binrec-init build-all build-s2e-image bui
 # Install apt packages and git LFS. Required once before build. Requires super user privileges.
 _install-dependencies:
     sudo apt-get update
-    sudo apt-get install -y bison clang-14 cmake flex g++ g++-multilib gcc gcc-multilib git libglib2.0-dev liblua5.1-dev \
-        libsigc++-2.0-dev lld-14 llvm-14-dev lua5.3 nasm nlohmann-json3-dev pkg-config subversion net-tools curl git-lfs \
-        doxygen graphviz clang-format-14 binutils python3-dev python3-venv 
-    
-    # TODO - This is a workaround for a broken version of pipenv in Ubuntu 22.04. We have to install pip via apt and use 
-    #        it to install pipenv to resolve a broken dependency. This pipenv won't be on PATH right away, so above we 
-    #        also need to append the user's local bin folder to the PATH. When the pipenv package is updated, we can 
-    #        remove these two lines and the PATH line above, then and add 'pipenv' back to the install list above.
-    sudo apt-get install -y python3-pip
-    pip install pipenv
+    sudo apt-get install -y bison cmake flex g++ g++-multilib gcc gcc-multilib git libglib2.0-dev liblua5.1-dev \
+        libsigc++-2.0-dev lua5.3 nasm nlohmann-json3-dev pkg-config subversion curl git-lfs doxygen graphviz \
+        binutils python3-dev python3-venv pipenv
 
     git lfs install
 
@@ -103,8 +97,8 @@ clean-binrec:
 _clean-s2e:
     rm -rf ./s2e/build
 
-# Build an s2e image. Default is x86 Debian-9.2.1.
-build-s2e-image image="debian-9.2.1-i386":
+# Build an s2e image. Default is x86 Debian-11.3.
+build-s2e-image image="debian-11.3-i386":
   just _s2e-command image_build -d \"{{image}}\"
 
 # This will trigger a rebuild of libs2e, which contains the plugins
