@@ -354,7 +354,7 @@ def new_project(
         )
 
     logger.info("Creating project: %s", project_name)
-    callargs = ["s2e", "new_project", "--name", project_name]
+    callargs = ["s2e", "new_project", "-i", "debian-11.3-i386", "--name", project_name]
     if sym_args:
         callargs.extend(["--sym-args", sym_args])
 
