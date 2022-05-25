@@ -22,13 +22,6 @@ FetchContent_Declare(robin_hood_hashing
 )
 FetchContent_MakeAvailable(robin_hood_hashing)
 
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/6b74da4757a549563d7c37c8fae3e704662a043b.zip
-)
-FetchContent_MakeAvailable(googletest)
-enable_testing()
 include(GoogleTest)
 
 
