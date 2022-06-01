@@ -16,7 +16,7 @@ from binrec.env import BINREC_ROOT
 from binrec.merge import merge_traces
 from binrec import lift, project
 
-TEST_SAMPLE_SOURCES = ("binrec", "coreutils")
+TEST_SAMPLE_SOURCES = ("binrec", "coreutils", "debian")
 TEST_SAMPLES_DIR = BINREC_ROOT / "test" / "benchmark" / "samples"
 TEST_BUILD_DIR = BINREC_ROOT / "test" / "benchmark" / "samples" / "bin" / "x86"
 
