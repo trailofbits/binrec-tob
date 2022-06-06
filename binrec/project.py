@@ -396,6 +396,17 @@ def main() -> None:
     run_batch.add_argument("project", help="project name")
     run_batch.add_argument("batch_file", help="file containing inputs to run")
 
+    run_fuzzer = subparsers.add_parser("run-fuzzer")
+    run_fuzzer.add_argument("project", help="project name")
+    run_fuzzer.add_argument(
+        "campaign_file", type=Path, help="file containing JSON fuzzing campaign"
+    )
+    run_fuzzer.add_argument(
+        "--dump_batch",
+        help="dump a batch file of the campaign fuzzing realization",
+        action="store_true",
+    )
+
     set_args = subparsers.add_parser("set-args")
     set_args.add_argument("project", type=str, help="project name")
     set_args.add_argument("args", nargs="*", help="command line arguments")
