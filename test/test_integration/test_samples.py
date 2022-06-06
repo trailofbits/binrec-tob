@@ -1,11 +1,9 @@
-from codecs import ignore_errors
+import logging
 import os
 import subprocess
-import json
 import shutil
 import sys
-from typing import List, Optional, Tuple, Union
-from dataclasses import dataclass, field
+from typing import List, Optional, Tuple
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -15,56 +13,13 @@ import pytest
 from binrec.env import BINREC_ROOT
 from binrec.merge import merge_traces
 from binrec import lift, project
+from binrec.batch import BatchTraceParams, TraceParams
 
 TEST_SAMPLE_SOURCES = ("binrec", "coreutils", "debian")
 TEST_SAMPLES_DIR = BINREC_ROOT / "test" / "benchmark" / "samples"
 TEST_BUILD_DIR = BINREC_ROOT / "test" / "benchmark" / "samples" / "bin" / "x86"
 
-
-@dataclass
-class TraceParams:
-    args: List[str] = field(default_factory=list)
-    stdin: Union[bool, str] = False
-    match_stdout: Union[bool, str] = True
-    match_stderr: Union[bool, str] = True
-
-    @classmethod
-    def load_dict(cls, item: dict) -> "TraceParams":
-        args = item.get("args") or []
-        stdin = item.get("stdin") or False
-        match_stdout = item.get("match_stdout", True)
-        match_stderr = item.get("match_stderr", True)
-
-        return cls(
-            args=args,
-            stdin=stdin,
-            match_stdout=match_stdout,
-            match_stderr=match_stderr,
-        )
-
-
-@dataclass
-class TraceTestPlan:
-    binary: Path
-    traces: List[TraceParams]
-
-    @property
-    def project(self) -> str:
-        return self.binary.name
-
-    @classmethod
-    def load_plaintext(cls, binary: Path, filename: Path) -> "TraceTestPlan":
-        invocations = project.parse_batch_file(filename)
-        return TraceTestPlan(binary, [TraceParams(args) for args in invocations])
-
-    @classmethod
-    def load_json(cls, binary: Path, filename: Path) -> "TraceTestPlan":
-        with open(filename, "r") as file:
-            body = json.loads(file.read().strip())
-
-        return TraceTestPlan(
-            binary, [TraceParams.load_dict(item) for item in body["runs"]]
-        )
+logger = logging.getLogger("binrec.test.test_samples")
 
 
 def load_sample_test_cases(func: callable) -> callable:
@@ -124,16 +79,7 @@ def pytest_generate_tests(metafunc: Metafunc):
 @pytest.mark.flaky(reruns=1)
 @load_sample_test_cases
 def test_sample(binary: Path, test_plan_file: Path, real_lib_module):
-    if test_plan_file.suffix.lower() == ".json":
-        json_input = True
-    else:
-        json_input = False
-
-    if json_input:
-        plan = TraceTestPlan.load_json(binary, test_plan_file)
-    else:
-        plan = TraceTestPlan.load_plaintext(binary, test_plan_file)
-
+    plan = BatchTraceParams.load(binary, test_plan_file)
     patch_body = {
         name: getattr(real_lib_module, name) for name in real_lib_module.__all__
     }
@@ -141,35 +87,7 @@ def test_sample(binary: Path, test_plan_file: Path, real_lib_module):
         run_test(plan)
 
 
-def assert_subprocess(*args, assert_error: str = "", **kwargs) -> None:
-    """
-    Run a subprocess and assert that is exits with a 0 return code.
-    """
-    proc = subprocess.run(*args, **kwargs)
-    assert proc.returncode == 0, assert_error
-
-
-def compare_lift(plan: TraceTestPlan) -> None:
-    """
-    Compare the original binary against the lifted binary for each test input. This method runs
-    the original and the lifted and then compares the process return code, stdout, and stderr
-    content. An ``AssertionError`` is raised if any of the comparison criteria does not match
-    between the original and lifted sample.
-
-    :param plan: test plan to execute and compare the original against the recovered
-    """
-
-    for trace in plan.traces:
-        project.validate_project(
-            plan.project,
-            trace.args,
-            trace.match_stdout,
-            trace.match_stderr,
-            skip_first=True,
-        )
-
-
-def run_test(plan: TraceTestPlan) -> None:
+def run_test(plan: BatchTraceParams) -> None:
     """
     Run a test binary, merge results, and lift the results. The binary may be executed
     multiple times depending on how many items are in the ``plan.traces`` parameter.
@@ -184,13 +102,7 @@ def run_test(plan: TraceTestPlan) -> None:
 
     project_dir = project.new_project(plan.project, plan.binary)
 
-    print(">> running", len(plan.traces), "traces")
-    for i, trace in enumerate(plan.traces, start=1):
-        print(">> starting trace", i, "with arguments:", trace.args)
-        if trace.stdin:
-            print("warning: stdin is not supported yet")
-
-        project.run_project(plan.project, trace.args)
+    project.run_project_batch_params(plan)
 
     # Merge traces
     merge_traces(plan.project)
@@ -198,10 +110,7 @@ def run_test(plan: TraceTestPlan) -> None:
     # Lift
     lift.lift_trace(plan.project)
 
-    print(
-        ">> successfully ran and merged",
-        len(plan.traces),
-        "traces, verifying recovered binary",
-    )
-    compare_lift(plan)
-    print(">> verified recovered binary")
+    logger.info("successfully ran and merged %d traces; verifying recovered binary",
+                len(plan.traces))
+    project.validate_lift_result_batch_params(plan)
+    logger.info("verified recovered binary")

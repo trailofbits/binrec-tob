@@ -291,22 +291,24 @@ _clean-python-docs:
 ########## Section: Testing Recipes ##########
 
 # Runs all unit and integration tests, which may take several minutes to complete
-run-all-tests: erase-test-coverage run-unit-tests run-integration-tests print-coverage-report
+run-all-tests: erase-test-coverage _unit-test-python _unit-test-cpp _integration-test-python print-coverage-report
 
 # Runs unit tests
-run-unit-tests: _unit-test-python _unit-test-cpp
+run-unit-tests: erase-test-coverage _unit-test-python _unit-test-cpp
 
 # Runs Python unit tests
 _unit-test-python:
-  pipenv run coverage run --source=binrec --omit binrec/lib.py -m pytest --verbose -k "not test_integration"
+  pipenv run coverage run --append --source=binrec --omit binrec/lib.py -m pytest --verbose -k "not test_integration"
 
 # Runs C++ unit tests
 _unit-test-cpp:
   cd build && ctest
 
 # Runs integration tests, which may take several minutes to complete
-run-integration-tests:
-  pipenv run coverage run --source=binrec -m pytest --verbose -k "test_integration" -rs
+run-integration-tests: erase-test-coverage _integration-test-python
+
+_integration-test-python:
+  pipenv run coverage run --append --source=binrec -m pytest --verbose -k  "test_integration" -rs
 
 # Print the last test run code coverage report
 print-coverage-report:

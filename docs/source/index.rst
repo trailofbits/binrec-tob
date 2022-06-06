@@ -17,6 +17,7 @@ Welcome to BinRec's documentation!
    core
    errors
    auditing
+   batch
    lib
 
 

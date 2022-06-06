@@ -1,6 +1,8 @@
 import os
+import re
 import subprocess
 from pathlib import Path
+from typing import List
 
 from dotenv import load_dotenv
 
@@ -71,3 +73,60 @@ BINREC_LINK_LD = Path(os.environ["BINREC_LINK_LD"]).absolute()
 BINREC_LIB = Path(os.environ["BINREC_LIB"]).absolute()
 #: The aboslute path to the BinRec S2E projects directory
 BINREC_PROJECTS = Path(os.environ["BINREC_PROJECTS"]).absolute()
+
+#: The default filename for the binrec trace config script
+TRACE_CONFIG_FILENAME = "binrec_trace_config.sh"
+
+#: The default input files directory name
+INPUT_FILES_DIRNAME = "input_files"
+
+
+def project_dir(project_name: str) -> Path:
+    """
+    :returns: the path to the S2E project directory
+    """
+    return BINREC_PROJECTS / project_name
+
+
+def merged_trace_dir(project_name: str) -> Path:
+    """
+    :returns: the path to the merged trace directory for the project. Contains
+        merged traces, IRs, and binaries, etc.
+    """
+    return project_dir(project_name) / "s2e-out"
+
+
+def trace_dir(project_name: str, trace_id: int) -> Path:
+    """
+    :returns: the path to a single project trace directory
+    """
+    return project_dir(project_name) / f"s2e-out-{trace_id}"
+
+
+def input_files_dir(project_name: str) -> Path:
+    """
+    :returns the path to the project input files directory
+    """
+    return project_dir(project_name) / INPUT_FILES_DIRNAME
+
+
+def trace_config_filename(project_name: str) -> Path:
+    """
+    :returns: the path to the project trace config filename
+    """
+    return project_dir(project_name) / TRACE_CONFIG_FILENAME
+
+
+def get_trace_dirs(project_name: str) -> List[Path]:
+    """
+    :returns: the list of project completed trace directories, excluding the merged
+        trace directory
+    """
+    pattern = re.compile(r"s2e-out-[0-9]$")
+
+    trace_dirs: List[Path] = []
+    for trace_dir in project_dir(project_name).iterdir():
+        if trace_dir.is_dir() and pattern.match(trace_dir.name):
+            trace_dirs.append(trace_dir)
+
+    return sorted(trace_dirs)

@@ -13,6 +13,7 @@ class MockPath:
         is_dir: bool = False,
         children: List["MockPath"] = None,
         exists: bool = False,
+        **kwargs
     ):
         """
         :param path: the file path or file name
@@ -33,9 +34,14 @@ class MockPath:
         self.is_file = MagicMock(side_effect=lambda: self._exists and not self._is_dir)
         self.exists = MagicMock(side_effect=lambda: self._exists or self._is_dir)
         self.iterdir = MagicMock(side_effect=lambda: self.children)
+        self.symlink_to = MagicMock()
+        self.mkdir = MagicMock()
 
         if children:
             self.build_tree(*children)
+
+        for name, value in kwargs.items():
+            object.__setattr__(self, name, value)
 
     def __getattr__(self, name: str) -> MagicMock:
         attr = MagicMock()

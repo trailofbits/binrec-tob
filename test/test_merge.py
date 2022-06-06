@@ -174,13 +174,14 @@ class TestMerge:
         with pytest.raises(BinRecError):
             merge.merge_bitcode(capture_dirs, dest)
 
-    @patch.object(merge, "project")
+    @patch.object(merge, "merged_trace_dir")
+    @patch.object(merge, "get_trace_dirs")
     @patch.object(merge, "shutil")
     @patch.object(merge, "merge_bitcode")
-    def test_merge_traces(self, mock_merge_bc, mock_shutil, mock_project):
+    def test_merge_traces(self, mock_merge_bc, mock_shutil, mock_get_trace_dirs, mock_merged_trace_dir):
         mock_root = MockPath("/")
-        outdir = mock_project.merged_trace_dir.return_value = mock_root / "out"
-        trace_dirs = mock_project.get_trace_dirs.return_value = [
+        outdir = mock_merged_trace_dir.return_value = mock_root / "out"
+        trace_dirs = mock_get_trace_dirs.return_value = [
             mock_root / "1",
             mock_root / "2",
         ]
@@ -193,9 +194,9 @@ class TestMerge:
             trace_dirs[0] / "binary", outdir / "binary"
         )
 
-    @patch.object(merge, "project")
-    def test_merge_traces_no_dirs(self, mock_project):
-        mock_project.get_trace_dirs.return_value = []
+    @patch.object(merge, "get_trace_dirs")
+    def test_merge_traces_no_dirs(self, mock_get_trace_dirs):
+        mock_get_trace_dirs.return_value = []
 
         with pytest.raises(BinRecError):
             merge.merge_traces("hello")

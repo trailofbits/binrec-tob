@@ -1,5 +1,6 @@
+from re import M
 import subprocess
-from unittest.mock import patch, mock_open, call
+from unittest.mock import patch, mock_open, call, MagicMock
 
 import pytest
 
@@ -59,136 +60,29 @@ BATCH_WITHOUT_ARGS = ""
 
 class TestProject:
 
-    def test_project_dir(self):
-        assert project.project_dir("asdf") == BINREC_PROJECTS / "asdf"
+    @patch.object(project, "TraceParams")
+    def test_set_project_args(self, mock_params_cls):
+        pass
 
-    def test_merged_trace_dir(self):
-        assert project.merged_trace_dir("asdf") == BINREC_PROJECTS / "asdf" / "s2e-out"
+    @patch.object(project, "TraceParams")
+    def test_set_project_args_no_args(self, mock_params_cls):
+        pass
 
-    def test_trace_dir(self):
-        assert project.trace_dir("asdf", 100) == BINREC_PROJECTS / "asdf" / "s2e-out-100"
+    @patch.object(project, "TraceParams")
+    def test_set_project_args_empty_quote_args0(self, mock_params_cls):
+        pass
 
-    @patch.object(project, "project_dir")
-    def test_get_trace_dirs(self, mock_project_dir):
-        root = mock_project_dir.return_value = MockPath("asdf")
-        file = root / MockPath("s2e-out-1", exists=True)
-        not_trace_dir = root / MockPath("asdf", is_dir=True)
-        trace_dir_1 = root / MockPath("s2e-out-2", is_dir=True)
-        trace_dir_2 = root / MockPath("s2e-out-3", is_dir=True)
+    @patch.object(project, "BatchTraceParams")
+    @patch.object(project, "validate_lift_result")
+    def test_validate_batch_project(self, mock_validate_lift_result, mock_params_cls):
+        binary = BINREC_PROJECTS / "asdf" / "s2e-out" / "binary"
+        mock_params_cls.load.return_value = MagicMock(traces=[1, 2, 3], project="asdf")
 
-        assert project.get_trace_dirs("asdf") == [trace_dir_1, trace_dir_2]
-        mock_project_dir.assert_called_once_with("asdf")
+        project.validate_lift_result_batch_file("asdf", "./myfile.txt")
 
-    @patch.object(project, "open", new_callable=mock_open,
-                  read_data=BATCH_WITH_ARGS)
-    def test_parse_batch_file(self, mock_file):
-        invocations = project.parse_batch_file("myfile.txt")
-
-        assert mock_file.call_args_list == [ call("myfile.txt", "r")]
-        assert invocations == [ ["Jack", "Jill"], ["0", "1", "2"],
-                                ["Jack", "0", "Jill", "1", "2"] ]
-
-    @patch.object(project, "open", new_callable=mock_open,
-                  read_data=BATCH_WITHOUT_ARGS)
-    def test_parse_batch_file_no_args(self, mock_file):
-        invocations = project.parse_batch_file("myfile.txt")
-        assert mock_file.call_args_list == [ call("myfile.txt", "r")]
-        assert invocations == [[""]]
-
-    @patch.object(project, "open", new_callable=mock_open,
-                  read_data=BOOTSTRAP_WITH_EXECUTE_AND_SYM)
-    def test_set_project_args(self, mock_file):
-        bootstrap = BINREC_PROJECTS / "my_project" / "bootstrap.sh"
-        project.set_project_args("my_project", ["", "hello world", "goodbye"])
-        assert mock_file.call_args_list == [
-            call(bootstrap, "r"),
-            call(bootstrap, "w")
-        ]
-
-        handle = mock_file()
-        handle.readlines.assert_called_once()
-        handle.writelines.assert_called_once_with(BOOTSTRAP_EXPECTED.splitlines(keepends=True))
-
-    @patch.object(project, "open", new_callable=mock_open,
-                read_data=BOOTSTRAP_WITH_EXECUTE_AND_SYM)
-    def test_set_project_args_no_args(self, mock_file):
-        bootstrap = BINREC_PROJECTS / "my_project" / "bootstrap.sh"
-        project.set_project_args("my_project", [])
-        assert mock_file.call_args_list == [
-            call(bootstrap, "r"),
-            call(bootstrap, "w")
-        ]
-
-        handle = mock_file()
-        handle.readlines.assert_called_once()
-        handle.writelines.assert_called_once_with(BOOTSTRAP_NO_ARGS.splitlines(keepends=True))
-
-    @patch.object(project, "open", new_callable=mock_open,
-                read_data=BOOTSTRAP_WITH_EXECUTE_AND_SYM)
-    def test_set_project_args_empty_quotes(self, mock_file):
-        bootstrap = BINREC_PROJECTS / "my_project" / "bootstrap.sh"
-        project.set_project_args("my_project", ['""'])
-        assert mock_file.call_args_list == [
-            call(bootstrap, "r"),
-            call(bootstrap, "w")
-        ]
-
-        handle = mock_file()
-        handle.readlines.assert_called_once()
-        handle.writelines.assert_called_once_with(BOOTSTRAP_NO_ARGS.splitlines(keepends=True))
-
-    @patch.object(project, "open", new_callable=mock_open,
-                  read_data=BOOTSTRAP_NO_EXECUTE)
-    def test_set_project_args_no_existing_command(self, mock_file):
-        bootstrap = BINREC_PROJECTS / "my_project" / "bootstrap.sh"
-        project.set_project_args("my_project", ["", "hello world", "goodbye"])
-        assert mock_file.call_args_list == [
-            call(bootstrap, "r"),
-            call(bootstrap, "w")
-        ]
-
-        handle = mock_file()
-        handle.readlines.assert_called_once()
-        handle.writelines.assert_called_once_with(BOOTSTRAP_EXPECTED.splitlines(keepends=True))
-
-    @patch.object(project, "open", new_callable=mock_open,
-                  read_data=BOOTSTRAP_WITH_EXECUTE)
-    def test_set_project_args_no_sym_args(self, mock_file):
-        with pytest.raises(BinRecError):
-            project.set_project_args("my_project", ["", "hello world", "goodbye"])
-
-    # Note: validate project tests are rather shallow since validation is really test code itself
-    @patch.object(project.os, "remove")
-    @patch.object(project.os, "link")
-    @patch.object(project.subprocess, "Popen")
-    def test_validate_project(self, mock_popen, mock_link, mock_remove):
-        args = ["Jack", "Jill"]
-        project.validate_project("asdf", args)
-        merged_tgt = str(BINREC_PROJECTS / "asdf" / "s2e-out" / "test-target")
-        mock_popen.assert_called_with([merged_tgt] + args,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE,
-                                    stdin=subprocess.DEVNULL)
-
-    @patch.object(project.os, "remove")
-    @patch.object(project.os, "link")
-    @patch.object(project.subprocess, "Popen")
-    def test_validate_project_skip_first(self, mock_popen, mock_link, mock_remove):
-        args = ["", "Jack", "Jill"]
-        project.validate_project("asdf", args, skip_first=True)
-        merged_tgt = str(BINREC_PROJECTS / "asdf" / "s2e-out" / "test-target")
-        mock_popen.assert_called_with([merged_tgt] + args[1:],
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE,
-                                    stdin=subprocess.DEVNULL)
-
-    @patch.object(project, "parse_batch_file", return_value=[line.strip().split() for line in BATCH_WITH_ARGS.split("\n")])
-    @patch.object(project, "validate_project")
-    def test_validate_batch_project(self, mock_validate_project, mock_parse_batch_file):
-        project.validate_batch_project("asdf", "./myfile.txt", False)
-        mock_parse_batch_file.assert_called_once_with("./myfile.txt")
-        calls = [call("asdf", ["Jack", "Jill"], skip_first=False), call("asdf", ["0", "1", "2"], skip_first=False), call("asdf", ["Jack", "0", "Jill", "1", "2"], skip_first=False)]
-        mock_validate_project.assert_has_calls(calls, any_order=False)
+        mock_params_cls.load.assert_called_once_with(binary, "./myfile.txt", project="asdf")
+        calls = [call("asdf", 1), call("asdf", 2), call("asdf", 3)]
+        mock_validate_lift_result.assert_has_calls(calls, any_order=False)
 
     @patch.object(project.subprocess, "check_call")
     def test_run_project(self, mock_check_call):
@@ -208,20 +102,32 @@ class TestProject:
         with pytest.raises(BinRecError):
             project.run_project("asdf")
 
-    @patch.object(project, "parse_batch_file", return_value=[line.strip().split() for line in BATCH_WITH_ARGS.split("\n")])
+    @patch.object(project, "BatchTraceParams")
     @patch.object(project, "run_project")
-    def test_run_batch_project(self, mock_run_project, mock_parse_batch_file):
-        project.run_batch_project("asdf", "./myfile.txt")
-        mock_parse_batch_file.assert_called_once_with("./myfile.txt")
-        calls = [call("asdf", ["Jack", "Jill"]), call("asdf", ["0", "1", "2"]), call("asdf", ["Jack", "0", "Jill", "1", "2"])]
+    def test_run_batch_project(self, mock_run_project, mock_params_cls):
+        binary = BINREC_PROJECTS / "asdf" / "binary"
+        invocations = [line.strip().split() for line in BATCH_WITH_ARGS.split("\n")]
+        params = mock_params_cls.load.return_value = MagicMock(traces=[MagicMock(args=args) for args in invocations], project="asdf")
+        project.run_project_batch_file("asdf", "./myfile.txt")
+        mock_params_cls.load.assert_called_once_with(binary, "./myfile.txt", project="asdf")
+
+        for trace in params.traces:
+            trace.setup_input_file_directory.assert_called_once_with("asdf")
+            trace.write_config_script.assert_called_once_with("asdf")
+
+        calls = [call("asdf", None), call("asdf", None), call("asdf", None)]
         mock_run_project.assert_has_calls(calls, any_order=False)
 
     @patch.object(project, "project_dir")
+    @patch.object(project, "input_files_dir")
     @patch.object(project.subprocess, "check_call")
     @patch.object(project, "open", new_callable=mock_open)
-    def test_new_project(self, mock_file, mock_check_call, mock_project_dir):
+    @patch.object(project, "set_project_args")
+    @patch.object(project, "patch_s2e_project")
+    def test_new_project(self, mock_patch, mock_set_args, mock_file, mock_check_call, mock_input_files_dir, mock_project_dir):
         project_dir = mock_project_dir.return_value = MockPath("/asdf", exists=False)
-        assert project.new_project("asdf", "/binary") is project_dir
+        input_files_dir = mock_input_files_dir.return_value = MockPath("/asdf/input_files", exists=False)
+        assert project.new_project("asdf", MockPath("/binary")) is project_dir
         mock_check_call.assert_called_once_with(["s2e", "new_project", "--name", "asdf", "/binary"])
         mock_file.assert_called_once_with(project_dir / "s2e-config.lua", "a")
         handle = mock_file()
@@ -236,16 +142,29 @@ pluginsConfig.ExportELF = {{
     }},
     exportInterval = 1000 -- export every 1000 basic blocks
 }}
+
+table.insert(pluginsConfig.HostFiles.baseDirs, "{input_files_dir}")
 """
         )
+        mock_patch.assert_called_once_with("asdf")
+        mock_set_args.assert_called_once_with("asdf", [""])
+        mock_input_files_dir.assert_called_once_with("asdf")
+        input_files_dir.mkdir.assert_called_once()
+        (project_dir / "binary").symlink_to.assert_called_once_with(project_dir / "binary")
 
     @patch.object(project, "project_dir")
+    @patch.object(project, "input_files_dir")
     @patch.object(project.subprocess, "check_call")
     @patch.object(project, "open", new_callable=mock_open)
-    def test_new_project_args(self, mock_file, mock_check_call, mock_project_dir):
+    @patch.object(project, "set_project_args")
+    @patch.object(project, "patch_s2e_project")
+    def test_new_project_args(self, mock_patch, mock_set_args, mock_file, mock_check_call, mock_input_files_dir, mock_project_dir):
         mock_project_dir.return_value = MockPath("/asdf", exists=False)
-        project.new_project("asdf", "/binary", "1 2", ["one", "two"])
-        mock_check_call.assert_called_once_with(["s2e", "new_project", "--name", "asdf", "--sym-args", "1 2", "/binary", "one", "two"])
+        mock_input_files_dir.return_value = MockPath("/asdf/input_files", exists=False)
+        project.new_project("asdf", MockPath("/binary"), "1 2", ["one", "two"])
+        mock_check_call.assert_called_once_with(["s2e", "new_project", "--name", "asdf", "/binary"])
+        mock_patch.assert_called_once_with("asdf")
+        mock_set_args.assert_called_once_with("asdf", ["1 2", "one", "two"])
 
     @patch.object(project, "project_dir")
     @patch.object(project.subprocess, "check_call")

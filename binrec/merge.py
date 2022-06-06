@@ -6,8 +6,7 @@ import tempfile
 from pathlib import Path
 from typing import List
 
-from . import project
-from .env import BINREC_BIN, llvm_command
+from .env import BINREC_BIN, get_trace_dirs, llvm_command, merged_trace_dir
 from .errors import BinRecError
 from .lift import prep_bitcode_for_linkage
 
@@ -145,8 +144,8 @@ def merge_traces(project_name: str) -> None:
 
     :param project_name: the name of the project to merge
     """
-    trace_dirs = project.get_trace_dirs(project_name)
-    outdir = project.merged_trace_dir(project_name)
+    trace_dirs = get_trace_dirs(project_name)
+    outdir = merged_trace_dir(project_name)
 
     if not trace_dirs:
         raise BinRecError(
