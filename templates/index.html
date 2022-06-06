@@ -1,0 +1,28 @@
+<html>
+  <div class="input-group">
+    <h1>New Project</h1>
+    <form action="" method="get">
+      Project name
+      <input type="text" name="projname">
+      <input type="submit" value="Create">
+    </form>
+  </div>
+  <div class="form-group">
+    <form class="form-inline" method="POST" action="{{ url_for('project') }}">
+      <h1>Existing Project</h1>
+      <div class="input-group">
+          Select Project
+          <select name="project_select" class="selectpicker form-control">
+            {% for o in data %}
+            <option value="{{ o.name }}">{{ o.name }}</option>
+            {% endfor %}
+          </select>
+      </div>
+      <button type="submit">Go</button>
+    </form>
+  </div>
+  <div>
+    <h1>Verify Installation</h1>
+    <input type="submit" value="Verify Binrec Installation">
+  </div>
+</html>

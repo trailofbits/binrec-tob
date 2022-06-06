@@ -1,0 +1,15 @@
+<h1><b>{{ select }}</b></h1>
+
+<form class="form-inline">
+  <div class="form-group">
+    <div class="input-group">
+        <span class="input-group-addon">Select Trace</span>
+            <select name="trace-select" class="selectpicker form-control">
+              {% for trace in traces %}
+              <option value="{{ trace }}">{{ trace }}</option>
+              {% endfor %}
+            </select>
+    </div>
+    <input type="submit" value="toe">
+  </div>
+</form>
