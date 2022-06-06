@@ -46,9 +46,14 @@ auto CallTracerPass::run(Module &m, ModuleAnalysisManager &am) -> llvm::Preserve
         GlobalVariable *debugStr = makeDebugStr(f);
         SmallVector<Value *, 16> args;
         args.push_back(irb.getInt32(STDERR_FILENO));
-        args.push_back(irb.CreateInBoundsGEP(debugStr, {irb.getInt32(0), irb.getInt32(0)}));
+        args.push_back(irb.CreateInBoundsGEP(
+            debugStr->getType()->getPointerElementType(),
+            debugStr,
+            {irb.getInt32(0), irb.getInt32(0)}));
         for (Argument &arg : f.args()) {
-            Value *argVal = arg.getType()->isPointerTy() ? cast<Value>(irb.CreateLoad(&arg)) : &arg;
+            Value *argVal = arg.getType()->isPointerTy()
+                ? cast<Value>(irb.CreateLoad(arg.getType()->getPointerElementType(), &arg))
+                : &arg;
             args.push_back(argVal);
         }
         irb.CreateCall(&rtPrintf, args);

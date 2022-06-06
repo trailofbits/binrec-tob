@@ -14,9 +14,9 @@ Key Dependencies and Environment
 Binrec has been developed for and tested against the following environments and major dependencies:
 
 - Ubuntu: 20.04.03
-- LLVM (Clang): 12
+- LLVM (Clang): 14
 - Python 3.9
-- s2e-env @778116b
+- s2e-env @4bd6a45
 
 The limiting factor for both Linux environment and LLVM is s2e, which supports Ubuntu 20.04 LTS at a maximum.
 

@@ -2,6 +2,7 @@
 #define BINREC_CONSTANT_LOADS_HPP
 
 #include <llvm/IR/PassManager.h>
+#include <llvm/Pass.h>
 
 using namespace llvm;
 

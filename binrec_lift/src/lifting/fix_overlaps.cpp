@@ -5,6 +5,7 @@
 #include "pc_utils.hpp"
 #include <algorithm>
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
+#include <map>
 #include <set>
 
 #define PASS_NAME "fix_overlaps"

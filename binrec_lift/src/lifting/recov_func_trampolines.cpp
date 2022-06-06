@@ -270,7 +270,10 @@ auto RecovFuncTrampolinesPass::run(Module &m, ModuleAnalysisManager &am) -> Pres
         // patch recovered IR to use have entry from enterTrap and exit to exitTramp
         Instruction *termOfFuncExitBlock = recovFunc.recovRetAddress->getParent()->getTerminator();
         IRBuilder<> callB(termOfFuncExitBlock);
-        Value *onUnfallback = callB.CreateLoad(m.getNamedGlobal("onUnfallback"));
+        Value *unfallback_global = m.getNamedGlobal("onUnfallback");
+        Value *onUnfallback = callB.CreateLoad(
+            unfallback_global->getType()->getPointerElementType(),
+            unfallback_global);
         // when we port to 3.8, use this instead of the following 2 lines
         Instruction *thenT =
             llvm::SplitBlockAndInsertIfThen(onUnfallback, termOfFuncExitBlock, true);

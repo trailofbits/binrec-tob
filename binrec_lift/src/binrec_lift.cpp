@@ -58,6 +58,7 @@
 #include <llvm/Bitcode/BitcodeWriterPass.h>
 #include <llvm/IR/IRPrintingPasses.h>
 #include <llvm/IRReader/IRReader.h>
+#include <llvm/Passes/OptimizationLevel.h>
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/Transforms/IPO/AlwaysInliner.h>
 #include <llvm/Transforms/IPO/GlobalDCE.h>
@@ -149,7 +150,7 @@ namespace binrec {
         }
 
         if (ctx.optimize) {
-            mpm.addPass(pb.buildPerModuleDefaultPipeline(PassBuilder::OptimizationLevel::O3));
+            mpm.addPass(pb.buildPerModuleDefaultPipeline(OptimizationLevel::O3));
         }
 
         if (ctx.optimize_better) {
@@ -163,9 +164,8 @@ namespace binrec {
             mpm.addPass(createModuleToFunctionPassAdaptor(DCEPass{}));
             mpm.addPass(AlwaysInlinerPass{});
             mpm.addPass(createModuleToFunctionPassAdaptor(DCEPass{}));
-            mpm.addPass(createModuleToFunctionPassAdaptor(GVN{}));
-            mpm.addPass(createModuleToFunctionPassAdaptor(DCEPass{}));
-            mpm.addPass(pb.buildModuleOptimizationPipeline(PassBuilder::OptimizationLevel::O3));
+            mpm.addPass(createModuleToFunctionPassAdaptor(GVNPass{}));
+            mpm.addPass(pb.buildModuleOptimizationPipeline(OptimizationLevel::O3));
             mpm.addPass(GlobalOptPass{});
         }
 

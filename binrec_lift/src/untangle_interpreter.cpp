@@ -150,7 +150,7 @@ auto UntangleInterpreter::getOrCreatePair(const unsigned vpcValue) -> const Head
         }
 
         b.SetInsertPoint(newLatch);
-        b.CreateSwitch(b.CreateLoad(vpc), errBlock, 2);
+        b.CreateSwitch(b.CreateLoad(vpc->getType()->getPointerElementType(), vpc), errBlock, 2);
 
         HeaderLatchPair pair = std::make_pair(newHeader, newLatch);
         return vpcMap.insert(std::make_pair(vpcValue, pair)).first->second;
@@ -184,7 +184,7 @@ auto UntangleInterpreter::runOnLoop(Loop *L, LPPassManager &LPM) -> bool
             "interpreter header should not contain PHI nodes"};
     }
 
-    auto *vpcTy = cast<IntegerType>(vpc->getType()->getElementType());
+    auto *vpcTy = cast<IntegerType>(vpc->getType()->getPointerElementType());
 
     // Point preheader to first virtual instruction
     const HeaderLatchPair &entryPair = getOrCreatePair(entry);

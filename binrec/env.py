@@ -19,7 +19,7 @@ __all__ = (
     "llvm_command",
 )
 
-LLVM_MAJOR_VERSION = 12
+LLVM_MAJOR_VERSION = 14
 
 
 def llvm_command(command_name: str) -> str:
@@ -27,9 +27,9 @@ def llvm_command(command_name: str) -> str:
     A stub function to resolve an unversioned LLVM command to the correct command for
     the system. For now, this function simply appends the major version of the
     supported LLVM platform. In the future, this may resolve the LLVM command to a path
-    or support multiple LVVM versions.
+    or support multiple LLVM versions.
     """
-    return f"{command_name}-{LLVM_MAJOR_VERSION}"
+    return f"{command_name}"
 
 
 def _load_env() -> None:
@@ -55,6 +55,11 @@ def _load_env() -> None:
 
         if version:
             os.environ["GCC_LIB"] = f"/usr/lib/gcc/x86_64-linux-gnu/{version}"
+
+    # Add Clang / LLVM binaries (and other dependencies) from S2E install to PATH
+    if not os.environ.get("S2E_BIN"):
+        raise BinRecError(".env file must specify S2E_BIN")
+    os.environ["PATH"] = os.environ["S2E_BIN"] + ":" + os.environ["PATH"]
 
 
 _load_env()

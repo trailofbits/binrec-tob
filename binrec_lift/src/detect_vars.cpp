@@ -2,6 +2,8 @@
 #include "error.hpp"
 #include "pass_utils.hpp"
 #include "section_utils.hpp"
+#include <llvm/Pass.h>
+#include <map>
 
 #define PASS_NAME "detect_vars"
 #define PASS_ASSERT(cond) LIFT_ASSERT(PASS_NAME, cond)
@@ -57,7 +59,7 @@ static auto detectSectionVars(Module &m, section_meta_t &s) -> bool
             auto *expr = cast<ConstantExpr>(*gep->use_begin());
             PASS_ASSERT(expr->getOpcode() == Instruction::BitCast);
             auto *targetType = cast<PointerType>(expr->getType());
-            auto *elementType = cast<IntegerType>(targetType->getElementType());
+            auto *elementType = cast<IntegerType>(targetType->getPointerElementType());
             PASS_ASSERT(elementType->getBitWidth() % 8 == 0);
             unsigned size = elementType->getBitWidth() / 8;
 

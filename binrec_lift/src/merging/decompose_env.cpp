@@ -71,7 +71,8 @@ process_inst(Module &m, Instruction *inst, StructType *env_type, vector<StringRe
             vector<Value *> indices = {b.getInt32(0)};
             for (unsigned i = 2, i_upper_bound = gep->getNumIndices(); i < i_upper_bound; ++i)
                 indices.push_back(gep->getOperand(i + 1));
-            gep->replaceAllUsesWith(b.CreateInBoundsGEP(glob, indices));
+            gep->replaceAllUsesWith(
+                b.CreateInBoundsGEP(glob->getType()->getPointerElementType(), glob, indices));
         } else {
             gep->replaceAllUsesWith(glob);
         }
@@ -100,8 +101,8 @@ process_inst(Module &m, Instruction *inst, StructType *env_type, vector<StringRe
 auto DecomposeEnvPass::run(Module &m, ModuleAnalysisManager &am) -> PreservedAnalyses
 {
     GlobalVariable *env = m.getNamedGlobal("env");
-    auto *env_type =
-        cast<StructType>(cast<PointerType>(env->getType()->getElementType())->getElementType());
+    auto *env_type = cast<StructType>(
+        cast<PointerType>(env->getType()->getPointerElementType())->getPointerElementType());
 
     auto helperbc = loadBitcodeFile(runlibDir() + "/op_helper.bc", m.getContext());
     MDNode *env_info = get_env_type_info(move(helperbc));
