@@ -199,6 +199,9 @@ list-traces project:
 list-merged project:
   pipenv run python -m binrec.project list-merged "{{project}}"
 
+run-flask:
+  pipenv run flask run
+
 ########## End: End-User API Recipes ##########
 
 
