@@ -93,11 +93,22 @@ typedef struct float_status {
     flag snan_bit_is_one;
 } float_status;
 
+// NOTE
+// The following floating point externs are no longer used by custom-helpers.cpp
+// because it appears that these are not properly exported by qemu and, therefore,
+// cannot be used directly by the lifted binary. These are kept here for
+// compatibility.
+//
+// For more information, see https://github.com/trailofbits/binrec-prerelease/issues/187
+// and the s2e/source/qemu/target/i386/fpu_helper.c file.
+
 extern float_status fp_status;
 extern unsigned int fpstt;
 extern FPReg fpregs[8];
 extern uint8_t fptags[8];
 extern floatx80 ft0;
+
+// -------------------------------------------------------------------------------------
 
 #define STACK_SIZE (1024 * 1024 * 16) / sizeof(stackword_t)
 extern stackword_t stack[STACK_SIZE] __attribute__((aligned(16)));

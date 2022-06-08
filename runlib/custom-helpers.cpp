@@ -163,18 +163,16 @@ helper_stub_trampoline(const reg_t ecx, const reg_t edx, const reg_t esp, const 
         : "r"(esp), "r"(targetpc), "c"(ecx), "d"(edx)
         : "ebx");
 
-    // put fpstt in local to avoid double memory load
-    const unsigned int tmp_fpstt = fpstt;
+    double val;
 
-    // TODO(meilya) I think this can be changed to helper_*
-    // copy return value fo library function to virtual environment, return
-    // edx/eax by value so that we don't use pointers to virtual registers
-    asm("fstpt   %0" : "=m"(fpregs[tmp_fpstt].d)::);
-
-    // activate ST0
-    // FIXME: is this even necessary?
-    // TODO: test SPEC2006 with this disabled, if that works remove it
-    fptags[tmp_fpstt] = 0;
+    // Known limitation: this always converts 80bit floating point values
+    // to 64-bit. We do this because the Qemu 80bit helper functions are
+    // not available so we have to use the 64-bit functions.
+    //
+    // See https://github.com/trailofbits/binrec-prerelease/issues/187
+    // for more information.
+    asm("fstpl   %0" : "=m"(val)::);
+    helper_fldl_ST0(val);
 
     // this is optimized away, as explained above
     return ((uint64_t)ret.edx << 32) | ret.eax;

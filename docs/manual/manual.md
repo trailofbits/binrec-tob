@@ -44,6 +44,13 @@ Walkthroughs of Common Workflows
  5. (Re-)Optimization |TODO|
 
 
+Known Limitations
+-----------------
+
+ - Non-deterministic binaries may lift successfully but will not operate exactly the same as the original binary because all code paths wouldn't have been recored during execution.
+ - All lifted floating point operations are done using 64-bit `double` values, which may reduce the precision for some operations.
+
+
 Appendix A: Some Useful BinRec Commands
 --------------------------------------------------
  - `just` (no command): List BinRec commands and a short description of their behavior
