@@ -170,10 +170,6 @@ run project-name project-json:
 run-batch project-name batch-file:
   pipenv run python -m binrec.project run-batch "{{project-name}}" "{{batch-file}}"
 
-# Set an S2E analysis project command line arguments.
-set-args project-name *args:
-  pipenv run python -m binrec.project --verbose set-args "$@"
-
 # Validate a lifted binary against the original with respect to provided arguments
 validate project-name *args:
   pipenv run python -m binrec.project validate "$@"

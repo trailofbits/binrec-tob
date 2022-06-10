@@ -420,7 +420,8 @@ def main() -> None:
         logging.getLogger("binrec").setLevel(logging.DEBUG)
 
     if args.current_parser == "run":
-        run_project(args.project, open(args.json, "r"))
+        with open(args.json, "r") as campaign_json:
+            run_project(args.project, campaign_json.read())
     elif args.current_parser == "run-batch":
         run_project_batch_file(args.project, Path(args.batch_file))
     elif args.current_parser == "new":
