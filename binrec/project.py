@@ -234,7 +234,7 @@ def validate_lift_result_batch_file(project: str, batch_file: Path) -> None:
     validate_lift_result_batch_params(params)
 
 
-def run_project(project: str, campaign_json: Path) -> None:
+def run_project(project: str, campaign_json: Optional[str]) -> None:
     """
     Run a project. The ``args`` parameter is optional and, when specified, changes the
     project's command line arguments prior to running.
@@ -244,8 +244,8 @@ def run_project(project: str, campaign_json: Path) -> None:
     """
     logger.info("Running project %s with arguments: %s", project, json)
 
-    with open(campaign_json, "r") as file:
-        body = json.loads(file.read().strip())
+    if campaign_json is not None:
+        body = json.loads(campaign_json)
         args: List[str] = [body["symbolic"]] + [
             str(concrete) for concrete in body["concrete"]
         ]
@@ -420,7 +420,7 @@ def main() -> None:
         logging.getLogger("binrec").setLevel(logging.DEBUG)
 
     if args.current_parser == "run":
-        run_project(args.project, Path(args.json))
+        run_project(args.project, open(args.json, "r"))
     elif args.current_parser == "run-batch":
         run_project_batch_file(args.project, Path(args.batch_file))
     elif args.current_parser == "new":
