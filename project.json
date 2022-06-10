@@ -1,5 +1,4 @@
 {
-  "bin": "test/benchmark/samples/bin/x86/binrec/eq",
   "symargs": [],
   "concargs": [
     1,

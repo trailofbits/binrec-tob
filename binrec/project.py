@@ -234,7 +234,7 @@ def validate_lift_result_batch_file(project: str, batch_file: Path) -> None:
     validate_lift_result_batch_params(params)
 
 
-def run_project(project: str, args: List[str] = None) -> None:
+def run_project(project: str, json: str) -> None:
     """
     Run a project. The ``args`` parameter is optional and, when specified, changes the
     project's command line arguments prior to running.
@@ -242,10 +242,12 @@ def run_project(project: str, args: List[str] = None) -> None:
     :param project: project name
     :param args: project command line arguments
     """
-    logger.info("Running project %s with arguments: %s", project, args)
+    logger.info("Running project %s with arguments: %s", project, json)
 
+    """
     if args is not None:
-        set_project_args(project, args)
+        set_project_args(project, json)
+    """
 
     try:
         subprocess.check_call(["s2e", "run", "--no-tui", project])
@@ -263,7 +265,7 @@ def run_project_batch_params(params: BatchTraceParams) -> None:
     for i, trace in enumerate(params.traces, start=1):
         trace.setup_input_file_directory(params.project)
         trace.write_config_script(params.project)
-        run_project(params.project, None)
+        run_project(params.project, None)  # FIXME
 
 
 def run_project_batch_file(project: str, batch_file: Path) -> None:
@@ -364,17 +366,6 @@ def main() -> None:
     new_proj = subparsers.add_parser("new")
     new_proj.add_argument("project", help="Name of new analysis project")
     new_proj.add_argument("binary", help="Path to binary used in analysis")
-    new_proj.add_argument(
-        "sym_args",
-        help='Symbolic args to pass to binary. E.g. "1 3" ensures makes arguments one '
-        "and three symbolic.",
-    )
-    new_proj.add_argument(
-        "args",
-        nargs="*",
-        help="Arguments to pass to binary. Use @@ to indicate a file with symbolic "
-        "content",
-    )
 
     subparsers.add_parser("list")
     listtracecmd = subparsers.add_parser("list-traces")
@@ -389,7 +380,7 @@ def main() -> None:
 
     run = subparsers.add_parser("run")
     run.add_argument("project", help="Name of project to run")
-    run.add_argument("--args", nargs="*", help="command line arguments", default=None)
+    run.add_argument("json", help="no")
     # TODO (hbrodin): Enable passing of additional parameters to s2e run
 
     run_batch = subparsers.add_parser("run-batch")
@@ -427,13 +418,11 @@ def main() -> None:
         logging.getLogger("binrec").setLevel(logging.DEBUG)
 
     if args.current_parser == "run":
-        run_project(args.project, args.args)
+        run_project(args.project, args.json)
     elif args.current_parser == "run-batch":
         run_project_batch_file(args.project, Path(args.batch_file))
     elif args.current_parser == "new":
-        new_project(
-            args.project, Path(args.binary), args=args.args, sym_args=args.sym_args
-        )
+        new_project(args.project, Path(args.binary), args=None, sym_args=None)
     elif args.current_parser == "list":
         _list()
     elif args.current_parser == "list-traces":
