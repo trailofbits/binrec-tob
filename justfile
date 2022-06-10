@@ -164,7 +164,7 @@ new-project name binary:
 
 # Run an S2E analysis project. Override sample command line arguments by passing "--args ARGS ARGS"
 run project-name project-json:
-  pipenv run python -m binrec.project run project-name project-json
+  pipenv run python -m binrec.project run "{{project-name}}" "{{project-json}}"
 
 # Run an S2E analysis project multiple times with a batch of inputs
 run-batch project-name batch-file:

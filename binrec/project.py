@@ -234,7 +234,7 @@ def validate_lift_result_batch_file(project: str, batch_file: Path) -> None:
     validate_lift_result_batch_params(params)
 
 
-def run_project(project: str, json: str) -> None:
+def run_project(project: str, campaign_json: Path) -> None:
     """
     Run a project. The ``args`` parameter is optional and, when specified, changes the
     project's command line arguments prior to running.
@@ -244,10 +244,12 @@ def run_project(project: str, json: str) -> None:
     """
     logger.info("Running project %s with arguments: %s", project, json)
 
-    """
-    if args is not None:
-        set_project_args(project, json)
-    """
+    with open(campaign_json, "r") as file:
+        body = json.loads(file.read().strip())
+        args: List[str] = [body["symbolic"]] + [
+            str(concrete) for concrete in body["concrete"]
+        ]
+        set_project_args(project, args)
 
     try:
         subprocess.check_call(["s2e", "run", "--no-tui", project])
@@ -265,7 +267,7 @@ def run_project_batch_params(params: BatchTraceParams) -> None:
     for i, trace in enumerate(params.traces, start=1):
         trace.setup_input_file_directory(params.project)
         trace.write_config_script(params.project)
-        run_project(params.project, None)  # FIXME
+        run_project(params.project, None)  # FIXME(jl)
 
 
 def run_project_batch_file(project: str, batch_file: Path) -> None:
@@ -418,7 +420,7 @@ def main() -> None:
         logging.getLogger("binrec").setLevel(logging.DEBUG)
 
     if args.current_parser == "run":
-        run_project(args.project, args.json)
+        run_project(args.project, Path(args.json))
     elif args.current_parser == "run-batch":
         run_project_batch_file(args.project, Path(args.batch_file))
     elif args.current_parser == "new":
