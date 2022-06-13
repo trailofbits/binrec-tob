@@ -70,32 +70,83 @@ class TestTraceParams:
     def test_concrete_args_empty(self):
         assert batch.TraceParams(args=[]).concrete_args == []
 
-    @patch.object(batch, "shlex")
     @patch.object(batch, "open", new_callable=mock_open)
     @patch.object(batch, "print")
-    def test_write_config_script(self, mock_print, mock_file, mock_shlex):
+    @patch.object(batch.TraceParams, "_write_variables")
+    @patch.object(batch.TraceParams, "_write_get_input_files_function")
+    @patch.object(batch.TraceParams, "_write_setup_function")
+    @patch.object(batch.TraceParams, "_write_teardown_function")
+    def test_write_config_script(self, mock_teardown, mock_setup, mock_input_files, mock_vars, mock_print, mock_file):
         filename = BINREC_PROJECTS / "asdf" / "binrec_trace_config.sh"
-        mock_shlex.quote.side_effect = ["sym", "con_1", "con_2"]
-        mock_file_input = MagicMock()
-        params = batch.TraceParams(args=["1 2", "one", "two"], input_files=[mock_file_input])
+        params = batch.TraceParams()
         params.write_config_script("asdf")
 
-        assert mock_shlex.quote.call_args_list == [call("1 2"), call("one"), call("two")]
         mock_file.assert_called_once_with(filename, "w")
         handle = mock_file()
+        mock_print.assert_called_once_with("#!/bin/bash", file=handle)
+        mock_vars.assert_called_once_with(handle)
+        mock_input_files.assert_called_once_with(handle)
+        mock_setup.assert_called_once_with(handle)
+        mock_teardown.assert_called_once_with(handle)
+    
+    @patch.object(batch, "shlex")
+    @patch.object(batch, "print")
+    def test_write_variables(self, mock_print, mock_shlex):
+        handle = MagicMock()
+        mock_shlex.quote.side_effect = ["sym", "con_1", "con_2"]
+        params = batch.TraceParams(args=["1 2", "one", "two"])
+        params._write_variables(handle)
+
+        assert mock_shlex.quote.call_args_list == [call("1 2"), call("one"), call("two")]
         assert mock_print.call_args_list == [
-            call("#!/bin/bash", file=handle),
             call("export S2E_SYM_ARGS=sym", file=handle),
             call("export TRACE_ARGS=(con_1 con_2)", file=handle),
             call(file=handle),
+        ]
+    
+    @patch.object(batch, "print")
+    def test_write_get_input_files_functions(self, mock_print):
+        handle = MagicMock()
+        mock_file_input = MagicMock()
+        params = batch.TraceParams(input_files=[mock_file_input])
+        params._write_get_input_files_function(handle)
+
+        assert mock_print.call_args_list == [
             call("function get_trace_input_files() {", file=handle),
             call("  mkdir ./input_files", file=handle),
             call("  cd ./input_files", file=handle),
             call(mock_file_input.get_file_script.return_value, file=handle),
             call("  cd ..", file=handle),
-            call("}", file=handle)
+            call("}", file=handle),
+            call(file=handle)
         ]
         mock_file_input.get_file_script.assert_called_once_with(s2e_get_var="../${S2EGET}", indent="  ")
+
+    @patch.object(batch, "print")
+    def test_write_setup_function(self, mock_print):
+        handle = MagicMock()
+        params = batch.TraceParams(setup=['asdf'])
+        params._write_setup_function(handle)
+
+        assert mock_print.call_args_list == [
+            call("function setup_trace() {", file=handle),
+            call("  asdf", file=handle),
+            call("}", file=handle),
+            call(file=handle)
+        ]
+    
+    @patch.object(batch, "print")
+    def test_write_teardown_function(self, mock_print):
+        handle = MagicMock()
+        params = batch.TraceParams(teardown=['asdf'])
+        params._write_teardown_function(handle)
+
+        assert mock_print.call_args_list == [
+            call("function teardown_trace() {", file=handle),
+            call("  asdf", file=handle),
+            call("}", file=handle),
+            call(file=handle)
+        ]
 
     def test_load_dict(self):
         assert batch.TraceParams.load_dict({

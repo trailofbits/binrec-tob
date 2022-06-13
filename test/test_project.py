@@ -1,4 +1,4 @@
-from re import M
+from pathlib import Path
 import subprocess
 from unittest.mock import patch, mock_open, call, MagicMock
 
@@ -83,6 +83,30 @@ class TestProject:
         mock_params_cls.load.assert_called_once_with(binary, "./myfile.txt", project="asdf")
         calls = [call("asdf", 1), call("asdf", 2), call("asdf", 3)]
         mock_validate_lift_result.assert_has_calls(calls, any_order=False)
+    
+    @patch.object(project, "subprocess")
+    def test_run_trace_setup(self, mock_subproc):
+        trace = MagicMock(setup=['asdf', 'qwer'])
+        project._run_trace_setup(trace, Path("path"))
+        mock_subproc.run.assert_called_once_with(["/bin/bash", "--noprofile"], input=b"asdf\nqwer", cwd="path")
+    
+    @patch.object(project, "subprocess")
+    def test_run_trace_setup_empty(self, mock_subproc):
+        trace = MagicMock(setup=[])
+        project._run_trace_setup(trace, Path("path"))
+        mock_subproc.run.assert_not_called()
+
+    @patch.object(project, "subprocess")
+    def test_run_trace_teardown(self, mock_subproc):
+        trace = MagicMock(teardown=['asdf', 'qwer'])
+        project._run_trace_teardown(trace, Path("path"))
+        mock_subproc.run.assert_called_once_with(["/bin/bash", "--noprofile"], input=b"asdf\nqwer", cwd="path")
+    
+    @patch.object(project, "subprocess")
+    def test_run_trace_teardown_empty(self, mock_subproc):
+        trace = MagicMock(teardown=[])
+        project._run_trace_teardown(trace, Path("path"))
+        mock_subproc.run.assert_not_called()
 
     @patch.object(project.subprocess, "check_call")
     def test_run_project(self, mock_check_call):

@@ -99,6 +99,26 @@ def _link_lifted_input_files(project_name: str) -> None:
         dest.symlink_to(source)
 
 
+def _run_trace_setup(trace: TraceParams, cwd: Path) -> None:
+    if not trace.setup:
+        return
+
+    logger.info("running setup actions")
+    script = "\n".join(trace.setup)
+    subprocess.run(["/bin/bash", "--noprofile"], input=script.encode(), cwd=str(cwd))
+    logger.info("setup actions completed")
+
+
+def _run_trace_teardown(trace: TraceParams, cwd: Path) -> None:
+    if not trace.teardown:
+        return
+
+    logger.info("running teardown actions")
+    script = "\n".join(trace.teardown)
+    subprocess.run(["/bin/bash", "--noprofile"], input=script.encode(), cwd=str(cwd))
+    logger.info("teardown actions completed")
+
+
 def validate_lift_result(project: str, trace: TraceParams) -> None:
     """
     Compare the original binary against the lifted binary for a given sample of
@@ -122,7 +142,6 @@ def validate_lift_result(project: str, trace: TraceParams) -> None:
     # We link to the binary we are running to make sure argv[0] is the same
     # for the original and the lifted program.
     os.link(original, target)
-    logger.debug(">> running original sample with args: %s", trace.concrete_args)
 
     trace.setup_input_file_directory(project)
     _link_lifted_input_files(project)
@@ -136,6 +155,8 @@ def validate_lift_result(project: str, trace: TraceParams) -> None:
     else:
         raise NotImplementedError("stdin content is not currently supported")
 
+    _run_trace_setup(trace, merged_dir)
+    logger.debug(">> running original sample with args: %s", trace.concrete_args)
     original_proc = subprocess.Popen(
         [target] + trace.concrete_args,
         stdout=subprocess.PIPE,
@@ -152,11 +173,16 @@ def validate_lift_result(project: str, trace: TraceParams) -> None:
     original_proc.wait()
     os.remove(target)
 
+    _run_trace_teardown(trace, merged_dir)
+
     original_stdout = original_proc.stdout.read()  # type: ignore
     original_stderr = original_proc.stderr.read()  # type: ignore
 
     os.link(lifted, target)
+    _run_trace_setup(trace, merged_dir)
+
     logger.debug(">> running recovered sample with args: %s", trace.concrete_args)
+
     lifted_proc = subprocess.Popen(
         [target] + trace.concrete_args,
         stdout=subprocess.PIPE,
@@ -172,6 +198,8 @@ def validate_lift_result(project: str, trace: TraceParams) -> None:
     # lifted_proc.stdin.close()  # type: ignore
     lifted_proc.wait()
     os.remove(target)
+
+    _run_trace_teardown(trace, merged_dir)
 
     lifted_stdout = lifted_proc.stdout.read()  # type: ignore
     lifted_stderr = lifted_proc.stderr.read()  # type: ignore

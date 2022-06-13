@@ -2,7 +2,7 @@ import json
 import shlex
 from dataclasses import InitVar, dataclass, field
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Optional, TextIO, Union
 
 from .env import (
     INPUT_FILES_DIRNAME,
@@ -13,6 +13,8 @@ from .env import (
 )
 
 GET_TRACE_INPUT_FILES_FUNCTION = "get_trace_input_files"
+SETUP_FUNCTION = "setup_trace"
+TEARDOWN_FUNCTION = "teardown_trace"
 
 #: The bash variable name for the trace concrete arguments
 TRACE_CONCRETE_ARGS_VAR = "TRACE_ARGS"
@@ -43,9 +45,11 @@ source ./{TRACE_CONFIG_FILENAME}
 """
 
 #: Patched bash script to call the ``execute`` function
-BOOTSTRAP_PATCH_CALL_EXECUTE = """
+BOOTSTRAP_PATCH_CALL_EXECUTE = f"""
 # binrec patch #
-execute "${TARGET_PATH}"
+{SETUP_FUNCTION}
+execute "${{TARGET_PATH}}"
+{TEARDOWN_FUNCTION}
 ################
 """
 
@@ -169,6 +173,8 @@ class TraceParams:
     match_stdout: Union[bool, str] = True
     match_stderr: Union[bool, str] = True
     input_files: List[TraceInputFile] = field(default_factory=list)
+    setup: List[str] = field(default_factory=list)
+    teardown: List[str] = field(default_factory=list)
 
     @property
     def symbolic_args(self) -> str:
@@ -192,25 +198,62 @@ class TraceParams:
         :param project: project name
         """
         filename = trace_config_filename(project)
-        symbolic_args = shlex.quote(self.symbolic_args)
-        args = " ".join(shlex.quote(arg) for arg in self.concrete_args)
 
         with open(filename, "w") as fp:
             print("#!/bin/bash", file=fp)
-            print(f"export {TRACE_SYMBOLIC_ARGS_VAR}={symbolic_args}", file=fp)
-            print(f"export {TRACE_CONCRETE_ARGS_VAR}=({args})", file=fp)
-            print(file=fp)
-            print(f"function {GET_TRACE_INPUT_FILES_FUNCTION}() {{", file=fp)
-            print(f"  mkdir ./{INPUT_FILES_DIRNAME}", file=fp)
-            print(f"  cd ./{INPUT_FILES_DIRNAME}", file=fp)
-            for file_input in self.input_files:
-                print(
-                    file_input.get_file_script(s2e_get_var="../${S2EGET}", indent="  "),
-                    file=fp,
-                )
+            self._write_variables(fp)
+            self._write_get_input_files_function(fp)
+            self._write_setup_function(fp)
+            self._write_teardown_function(fp)
 
-            print("  cd ..", file=fp)
-            print("}", file=fp)
+    def _write_variables(self, file: TextIO) -> None:
+        """
+        Write the bash config variables used by binrec and S2E when executing the
+        sample.
+        """
+        symbolic_args = shlex.quote(self.symbolic_args)
+        args = " ".join(shlex.quote(arg) for arg in self.concrete_args)
+        print(f"export {TRACE_SYMBOLIC_ARGS_VAR}={symbolic_args}", file=file)
+        print(f"export {TRACE_CONCRETE_ARGS_VAR}=({args})", file=file)
+        print(file=file)
+
+    def _write_get_input_files_function(self, file: TextIO) -> None:
+        """
+        Write the bash function to download all input files into the analysis VM and
+        store them in the ``./input_files`` directory.
+        """
+        print(f"function {GET_TRACE_INPUT_FILES_FUNCTION}() {{", file=file)
+        print(f"  mkdir ./{INPUT_FILES_DIRNAME}", file=file)
+        print(f"  cd ./{INPUT_FILES_DIRNAME}", file=file)
+        for file_input in self.input_files:
+            print(
+                file_input.get_file_script(s2e_get_var="../${S2EGET}", indent="  "),
+                file=file,
+            )
+
+        print("  cd ..", file=file)
+        print("}", file=file)
+        print(file=file)
+
+    def _write_setup_function(self, file: TextIO) -> None:
+        """
+        Write the bash function that executes every setup action.
+        """
+        print(f"function {SETUP_FUNCTION}() {{", file=file)
+        for action in self.setup:
+            print(f"  {action}", file=file)
+        print("}", file=file)
+        print(file=file)
+
+    def _write_teardown_function(self, file: TextIO) -> None:
+        """
+        Write the bash function that executes every teardown action.
+        """
+        print(f"function {TEARDOWN_FUNCTION}() {{", file=file)
+        for action in self.teardown:
+            print(f"  {action}", file=file)
+        print("}", file=file)
+        print(file=file)
 
     @classmethod
     def load_dict(cls, item: dict) -> "TraceParams":
@@ -219,6 +262,8 @@ class TraceParams:
         match_stdout = item.get("match_stdout", True)
         match_stderr = item.get("match_stderr", True)
         files = item.get("input_files") or []
+        setup = item.get("setup") or []
+        teardown = item.get("teardown") or []
 
         if not isinstance(files, list):
             raise ValueError("the 'files' entry must be an array")
@@ -238,6 +283,8 @@ class TraceParams:
             match_stdout=match_stdout,
             match_stderr=match_stderr,
             input_files=input_files,
+            setup=setup,
+            teardown=teardown,
         )
 
     def setup_input_file_directory(self, project: str, cleanup: bool = True) -> None:
