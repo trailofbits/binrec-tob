@@ -13,6 +13,7 @@ namespace binrec {
         std::string librt_filename;
         std::string ld_script_filename;
         std::string output_filename;
+        std::string dependencies_filename;
 
         LinkContext() = default;
         LinkContext(const LinkContext &) = delete;

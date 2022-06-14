@@ -45,9 +45,28 @@ Key to Flags:
 """
 
 
-OBJDUMP_OUTPUT = b"""
+OBJDUMP_SYM_OUTPUT = b"""
 abc12340 <foo@plt>:
     retl 0
+"""
+
+OBJDUMP_DEP_OUTPUT = b"""
+not matched
+  NEEDED      libselinux.so.1
+other
+  NEEDED      libc.so.6
+  NEEDED      libnotfound.so.1
+other
+"""
+
+LDD_DEP_OUTPUT = b"""
+	linux-gate.so.1 (0xf7f10000)
+	libselinux.so.1 => /lib/i386-linux-gnu/libselinux.so.1 (0xf7ec3000)
+	libc.so.6 => /lib/i386-linux-gnu/libc.so.6 (0xf7cd4000)
+	libpcre2-8.so.0 => /lib/i386-linux-gnu/libpcre2-8.so.0 (0xf7c3d000)
+	libdl.so.2 => /lib/i386-linux-gnu/libdl.so.2 (0xf7c37000)
+	/lib/ld-linux.so.2 (0xf7f12000)
+	libpthread.so.0 => /lib/i386-linux-gnu/libpthread.so.0 (0xf7c14000)
 """
 
 class TestLifting:
@@ -59,7 +78,7 @@ class TestLifting:
 
         symbols_path = trace_dir / "symbols"
 
-        mock_run.return_value.stdout = OBJDUMP_OUTPUT
+        mock_run.return_value.stdout = OBJDUMP_SYM_OUTPUT
 
         lift._extract_binary_symbols(trace_dir)
 
@@ -278,6 +297,7 @@ class TestLifting:
             runtime_library=libbinrec_rt,
             linker_script=i386_ld,
             destination=str(trace_dir / "recovered"),
+            dependencies_filename=str(trace_dir / "dependencies")
         )
 
     def test_link_recovered_binary_error(self, mock_lib_module):
@@ -291,6 +311,7 @@ class TestLifting:
     @patch.object(lift, "_extract_binary_symbols")
     @patch.object(lift, "_extract_data_imports")
     @patch.object(lift, "_extract_sections")
+    @patch.object(lift, "_extract_dependencies")
     @patch.object(lift, "_clean_bitcode")
     @patch.object(lift, "_apply_fixups")
     @patch.object(lift, "_lift_bitcode")
@@ -311,6 +332,7 @@ class TestLifting:
         mock_lift,
         mock_apply,
         mock_clean,
+        mock_deps,
         mock_sections,
         mock_data_imports,
         mock_extract,
@@ -330,9 +352,11 @@ class TestLifting:
         mock_link.assert_called_once_with(trace_dir)
         mock_data_imports.assert_called_once_with(trace_dir)
         mock_sections.assert_called_once_with(trace_dir)
+        mock_deps.assert_called_once_with(trace_dir)
 
     @patch.object(lift, "_extract_binary_symbols")
     @patch.object(lift, "_extract_sections")
+    @patch.object(lift, "_extract_dependencies")
     @patch.object(lift, "_clean_bitcode")
     @patch.object(lift, "_apply_fixups")
     @patch.object(lift, "_lift_bitcode")
@@ -353,6 +377,7 @@ class TestLifting:
         mock_lift,
         mock_apply,
         mock_clean,
+        mock_deps,
         mock_sections,
         mock_extract,
     ):
@@ -370,6 +395,7 @@ class TestLifting:
         mock_compile.assert_not_called()
         mock_link.assert_not_called()
         mock_sections.assert_not_called()
+        mock_deps.assert_not_called()
 
     @patch("sys.argv", ["merge", "hello"])
     @patch.object(sys, "exit")
@@ -411,3 +437,39 @@ class TestLifting:
             logging.DEBUG
         )
         mock_audit.assert_called_once()
+
+    @patch("builtins.open", new_callable=mock.mock_open)
+    @patch.object(lift, "print")
+    @patch.object(lift.subprocess, "check_output")
+    def test_extract_dependencies(self, mock_check, mock_print, mock_file):
+        trace_dir = MockPath(name="asdf")
+        deps_path = trace_dir / "dependencies"
+        binary = trace_dir / "binary"
+        mock_check.side_effect = [OBJDUMP_DEP_OUTPUT, LDD_DEP_OUTPUT]
+
+        lift._extract_dependencies(trace_dir)
+
+        mock_file.assert_called_once_with(deps_path, "w")
+        handle = mock_file()
+        assert mock_print.call_args_list == [
+            call("/lib/i386-linux-gnu/libselinux.so.1", file=handle),
+	        call("/lib/i386-linux-gnu/libc.so.6", file=handle)
+        ]
+        assert mock_check.call_args_list == [
+            call(["objdump", "--private-headers", str(binary)]),
+            call(["ldd", str(binary)])
+        ]
+    
+    @patch.object(lift.subprocess, "check_output")
+    def test_extract_dependencies_objdump_err(self, mock_check):
+        trace_dir = MockPath(name="asdf")
+        mock_check.side_effect = [subprocess.CalledProcessError(-1, ""), b""]
+        with pytest.raises(BinRecError):
+            lift._extract_dependencies(trace_dir)
+
+    @patch.object(lift.subprocess, "check_output")
+    def test_extract_dependencies_ldd_err(self, mock_check):
+        trace_dir = MockPath(name="asdf")
+        mock_check.side_effect = [OBJDUMP_DEP_OUTPUT, subprocess.CalledProcessError(-1, "")]
+        with pytest.raises(BinRecError):
+            lift._extract_dependencies(trace_dir)

@@ -24,7 +24,7 @@ static void raise_error(const llvm::Error &error)
 PyDoc_STRVAR(
     binrec_link__doc__,
     "link(binary_filename: str, recovered_filename: str, runtime_library: str, "
-    "linker_script: str, destination: str) -> None\n\n"
+    "linker_script: str, destination: str, dependencies_filename: str = None) -> None\n\n"
     "Recover and link a binary from a merged trace.\n\n"
     ":param binary_filename: the S2E binary filename, which must match the merged "
     "trace directory, ``s2e-out-{binary_filename}``\n"
@@ -35,7 +35,9 @@ PyDoc_STRVAR(
     ":param linker_script: LD linker script filename, typically "
     "``{BINREC_LINK_LD}/i386.ld``\n"
     ":param destination: the output filename for the recovered binary, typically "
-    "``{trace_dir}/recovered``\n");
+    "``{trace_dir}/recovered``\n"
+    ":param dependencies_filename: a file containing the list of dependency libraries "
+    " to link against\n");
 static PyObject *binrec_link(PyObject *self, PyObject *args, PyObject *kwargs)
 {
     static const char *kwlist[] = {
@@ -44,6 +46,7 @@ static PyObject *binrec_link(PyObject *self, PyObject *args, PyObject *kwargs)
         "runtime_library",
         "linker_script",
         "destination",
+        "dependencies_filename",
         NULL};
 
     const char *binary_filename = NULL;
@@ -51,18 +54,20 @@ static PyObject *binrec_link(PyObject *self, PyObject *args, PyObject *kwargs)
     const char *runtime_library = NULL;
     const char *linker_script = NULL;
     const char *destination = NULL;
+    const char *dependencies_filename = NULL;
     binrec::LinkContext ctx;
 
     if (!PyArg_ParseTupleAndKeywords(
             args,
             kwargs,
-            "sssss",
+            "sssss|s",
             const_cast<char **>(kwlist),
             &binary_filename,
             &recovered_filename,
             &runtime_library,
             &linker_script,
-            &destination))
+            &destination,
+            &dependencies_filename))
     {
         return NULL;
     }
@@ -86,6 +91,10 @@ static PyObject *binrec_link(PyObject *self, PyObject *args, PyObject *kwargs)
     ctx.librt_filename = runtime_library;
     ctx.ld_script_filename = linker_script;
     ctx.output_filename = destination;
+
+    if (dependencies_filename) {
+        ctx.dependencies_filename = dependencies_filename;
+    }
 
     try {
         if (auto err = binrec::run_link(ctx)) {

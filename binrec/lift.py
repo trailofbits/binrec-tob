@@ -6,6 +6,7 @@ import subprocess
 import tempfile
 from contextlib import suppress
 from pathlib import Path
+from typing import List, Tuple
 
 from . import project
 from .env import BINREC_LIB, BINREC_LINK_LD, BINREC_RUNLIB, llvm_command
@@ -164,6 +165,84 @@ def _extract_data_imports(trace_dir: Path) -> None:
     with open(data_imports, "w") as file:
         for match in DATA_IMPORT_PATTERN.finditer(readelf.decode()):
             print(" ".join(match.groups()), file=file)
+
+
+def _extract_dependencies(trace_dir: Path) -> None:
+    """
+    Extract the list of dependency libraries from the original binary and write them
+    to a file. This function gets the absolute file path for every direct dependency
+    of the binary.
+
+    **Inputs:** trace_dir / "binary"
+
+    **Outputs:** trace_dir / "dependencies"
+
+    :param trace_dir: binrec binary trace directory
+    :raises BinRecError: operation failed
+    :raises OSError: I/O error
+    """
+    binary = trace_dir / "binary"
+
+    # first, get the list of direct dependencies. direct_deps will be a list of library
+    # _filenames_ (e.g.- libselinux.so.1).
+    direct_deps = []
+    try:
+        objdump = subprocess.check_output(["objdump", "--private-headers", str(binary)])
+    except subprocess.CalledProcessError:
+        raise BinRecError(
+            f"failed to extract direct dependencies from binary: {trace_dir.name}"
+        )
+
+    for line in objdump.decode().splitlines(keepends=False):
+        parts = line.strip().split(maxsplit=1)
+        if len(parts) == 2 and parts[0] == "NEEDED":
+            # line: NEEDED <lib_filename>
+            lib_name = parts[1]
+            direct_deps.append(lib_name)
+
+    # next, get all dependencies, both direct and indirect. all_deps will be a list
+    # of tuples: (lib_name, lib_path)
+    all_deps: List[Tuple[str, str]] = []
+    try:
+        ldd = subprocess.check_output(["ldd", str(binary)])
+    except subprocess.CalledProcessError:
+        raise BinRecError(
+            f"failed to extract all dependencies from binary: {trace_dir.name}"
+        )
+
+    for line in ldd.decode().splitlines(keepends=False):
+        parts = line.strip().split("=>", 1)
+        if len(parts) == 2:
+            # line: lib_name  =>  lib_path  (hex_address)
+            lib_name = parts[0].strip()
+            lib_path = parts[1].rpartition("(")[0].strip()
+            all_deps.append((lib_name, lib_path))
+
+    # We have the list of direct dependency library names and the full path to every
+    # dependency. Resolve each direct dependency to its full path.
+    result = []
+    for lib_name, lib_path in all_deps:
+        if lib_name in direct_deps:
+            result.append(lib_path)
+            direct_deps.remove(lib_name)
+
+    if direct_deps:
+        # We have any remaining direct dependencies that could not be resolved
+        # to an absolute file path. This most likely means that the lifted bitcode
+        # will not link.
+        logger.warn(
+            "failed to resolve %d dependencies, linking may fail: %s",
+            len(direct_deps),
+            ", ".join(direct_deps),
+        )
+
+    # Save dependencies to trace_dir/dependencies, one per line
+    logger.debug(
+        "discovered %d direct dependencies: %s", len(result), ", ".join(result)
+    )
+    with open(trace_dir / "dependencies", "w") as fp:
+        for lib_path in result:
+            print(lib_path, file=fp)
 
 
 def _extract_sections(trace_dir: Path) -> None:
@@ -424,6 +503,7 @@ def _link_recovered_binary(trace_dir: Path) -> None:
             runtime_library=libbinrec_rt,
             linker_script=i386_ld,
             destination=str(trace_dir / "recovered"),
+            dependencies_filename=str(trace_dir / "dependencies"),
         )
     except Exception as err:
         raise convert_lib_error(err, "failed to link recovered binary")
@@ -443,10 +523,11 @@ def lift_trace(project_name: str) -> None:
             f"nothing to lift: directory does not exist: {merged_trace_dir}"
         )
 
-    # Step 1: extract symbols and data imports
+    # Step 1: extract symbols, data imports, sections, and dependencies
     _extract_binary_symbols(merged_trace_dir)
     _extract_data_imports(merged_trace_dir)
     _extract_sections(merged_trace_dir)
+    _extract_dependencies(merged_trace_dir)
 
     # Step 2: clean captured LLVM bitcode
     _clean_bitcode(merged_trace_dir)

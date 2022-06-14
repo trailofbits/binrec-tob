@@ -4,4 +4,5 @@ def link(
     runtime_library: str,
     linker_script: str,
     destination: str,
+    dependencies_filename: str = None,
 ) -> None: ...
