@@ -108,7 +108,7 @@ def run_test(plan: BatchTraceParams) -> None:
     merge_traces(plan.project)
 
     # Lift
-    lift.lift_trace(plan.project)
+    lift.lift_trace(plan.project, OptimizationLevel.NORMAL)
 
     logger.info("successfully ran and merged %d traces; verifying recovered binary",
                 len(plan.traces))

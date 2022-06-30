@@ -189,8 +189,8 @@ merge-traces project:
   pipenv run python -m binrec.merge -vv "{{project}}"
 
 # Lift a recovered binary from a trace (ex. hello)
-lift-trace project:
-  pipenv run python -m binrec.lift -vv "{{project}}"
+lift-trace project optimize="":
+  pipenv run python -m binrec.lift {{optimize}} -vv  "{{project}}"
 
 list-projects:
   pipenv run python -m binrec.project list
