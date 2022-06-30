@@ -261,6 +261,12 @@ def validate_lift_result_batch_file(project: str, batch_file: Path) -> None:
     params = BatchTraceParams.load(binary, batch_file, project=project)
     validate_lift_result_batch_params(params)
 
+def get_optimized_bitcode_size(project: str) -> int:
+    optimized_bc = merged_trace_dir(project) / "optimized.bc"
+    file_size_bytes = optimized_bc.stat().st_size
+
+    return file_size_bytes
+
 
 def run_project(project: str, args: List[str] = None) -> None:
     """

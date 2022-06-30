@@ -340,7 +340,7 @@ class TestLifting:
         mock_project.merged_trace_dir.return_value = trace_dir = MockPath(
             "s2e-out", is_dir=True
         )
-        lift.lift_trace("hello", OptimizationLevel.NORMAL)
+        lift.lift_trace("hello", lift.OptimizationLevel.NORMAL)
         mock_extract.assert_called_once_with(trace_dir)
         mock_clean.assert_called_once_with(trace_dir)
         mock_apply.assert_called_once_with(trace_dir)
@@ -383,7 +383,7 @@ class TestLifting:
     ):
         mock_project.merged_trace_dir.return_value = MockPath("s2e-out", exists=False)
         with pytest.raises(BinRecError):
-            lift.lift_trace("hello", OptimizationLevel.NORMAL)
+            lift.lift_trace("hello", lift.OptimizationLevel.NORMAL)
 
         mock_extract.assert_not_called()
         mock_clean.assert_not_called()

@@ -3,6 +3,7 @@ import os
 import subprocess
 import shutil
 import sys
+import pprint
 from typing import List, Optional, Tuple
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -83,11 +84,16 @@ def test_sample(binary: Path, test_plan_file: Path, real_lib_module):
     patch_body = {
         name: getattr(real_lib_module, name) for name in real_lib_module.__all__
     }
+    stats = {}
     with patch.multiple(lift, **patch_body):
-        run_test(plan)
+        stats.update(run_test(plan, stats))
+
+    pretty_stats = pprint.pformat(stats) 
+    logger.info("Integration test statistics:")
+    logger.info(pretty_stats)
 
 
-def run_test(plan: BatchTraceParams) -> None:
+def run_test(plan: BatchTraceParams, stats: dict) -> dict:
     """
     Run a test binary, merge results, and lift the results. The binary may be executed
     multiple times depending on how many items are in the ``plan.traces`` parameter.
@@ -108,9 +114,16 @@ def run_test(plan: BatchTraceParams) -> None:
     merge_traces(plan.project)
 
     # Lift
-    lift.lift_trace(plan.project, OptimizationLevel.NORMAL)
+    lift.lift_trace(plan.project, lift.OptimizationLevel.NORMAL)
 
     logger.info("successfully ran and merged %d traces; verifying recovered binary",
                 len(plan.traces))
     project.validate_lift_result_batch_params(plan)
+    
+    # get the per-project stats
+    proj_stats = stats.get(plan.project, {})
+    proj_stats['bitcode_size'] = project.get_optimized_bitcode_size(plan.project)
+
     logger.info("verified recovered binary")
+
+    return stats
