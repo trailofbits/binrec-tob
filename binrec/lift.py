@@ -7,6 +7,7 @@ import tempfile
 from contextlib import suppress
 from pathlib import Path
 from typing import List, Tuple
+from enum import Enum
 
 from . import project
 from .env import BINREC_LIB, BINREC_LINK_LD, BINREC_RUNLIB, llvm_command
@@ -376,7 +377,11 @@ def _lift_bitcode(trace_dir: Path) -> None:
         )
 
 
-def _optimize_bitcode(trace_dir: Path) -> None:
+class OptimizationLevel(Enum):
+    NORMAL = 1
+    HIGH = 2
+
+def _optimize_bitcode(trace_dir: Path, opt_level: OptimizationLevel) -> None:
     """
     Optimize the lifted LLVM module.
 
@@ -390,9 +395,20 @@ def _optimize_bitcode(trace_dir: Path) -> None:
     :param trace_dir: binrec binary trace directory
     :raises BinRecError: operation failed
     """
+    optimizers = {
+        OptimizationLevel.NORMAL: binrec_lift.optimize,
+        OptimizationLevel.HIGH: binrec_lift.optimize_better,
+    }
+
     logger.debug("optimizing lifted bitcode: %s", trace_dir.name)
+
+    if opt_level not in optimizers:
+        raise BinRecError(f"Unknown optimization level: {opt_level}")
+
+    optimizer = optimizers[opt_level]
+
     try:
-        binrec_lift.optimize(
+        optimizer(
             trace_filename="lifted.bc",
             destination="optimized",
             memssa_check_limit=100000,
@@ -509,13 +525,14 @@ def _link_recovered_binary(trace_dir: Path) -> None:
         raise convert_lib_error(err, "failed to link recovered binary")
 
 
-def lift_trace(project_name: str) -> None:
+def lift_trace(project_name: str, opt_level=OptimizationLevel.NORMAL) -> None:
     """
     Lift and recover a binary from a binrec trace. This lifts, compiles, and links
     capture bitcode to a recovered binary. This method works on the binrec trace
     directory, ``s2e-out-<binary>``.
 
-    :param binary: binary name
+    :param project_name: name of the s2e project to operate on
+    :param opt_level: How much effort to put into optimizing lifted bitcode
     """
     merged_trace_dir = project.merged_trace_dir(project_name)
     if not merged_trace_dir.is_dir():
@@ -539,7 +556,7 @@ def lift_trace(project_name: str) -> None:
     _lift_bitcode(merged_trace_dir)
 
     # Step 5: optimize the lifted bitcode
-    _optimize_bitcode(merged_trace_dir)
+    _optimize_bitcode(merged_trace_dir, opt_level)
 
     # Step 6: disassemble optimized bitcode
     _disassemble_bitcode(merged_trace_dir)
@@ -572,6 +589,9 @@ def main() -> None:
     parser.add_argument(
         "-v", "--verbose", action="count", help="enable verbose logging"
     )
+    parser.add_argument(
+        "-o", "--optimize", action="store_true", help="Enable extra lifted bitcode optimizations"
+    )
     parser.add_argument("project_name", help="lift and compile the binary trace")
 
     args = parser.parse_args()
@@ -582,7 +602,12 @@ def main() -> None:
 
             enable_python_audit_log()
 
-    lift_trace(args.project_name)
+    opt_level = OptimizationLevel.NORMAL
+    if args.optimize:
+        logger.debug("Enabling optimized bitcode emission")
+        opt_level = OptimizationLevel.HIGH
+
+    lift_trace(args.project_name, opt_level)
     sys.exit(0)
 
 

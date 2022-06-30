@@ -215,7 +215,7 @@ class TestLifting:
     def test_optimize_bitcode(self, mock_lib_module):
         trace_dir = MockPath("asdf")
 
-        lift._optimize_bitcode(trace_dir)
+        lift._optimize_bitcode(trace_dir, lift.OptimizationLevel.NORMAL)
 
         mock_lib_module.binrec_lift.optimize(
             trace_filename="lifted.bc",
@@ -228,7 +228,7 @@ class TestLifting:
         mock_lib_module.binrec_lift.optimize.side_effect = OSError()
         mock_lib_module.convert_lib_error.return_value = BinRecError('asdf')
         with pytest.raises(BinRecError):
-            lift._optimize_bitcode(MockPath("asdf"))
+            lift._optimize_bitcode(MockPath("asdf"), lift.OptimizationLevel.NORMAL)
 
         mock_lib_module.convert_lib_error.assert_called_once()
 
@@ -340,7 +340,7 @@ class TestLifting:
         mock_project.merged_trace_dir.return_value = trace_dir = MockPath(
             "s2e-out", is_dir=True
         )
-        lift.lift_trace("hello")
+        lift.lift_trace("hello", OptimizationLevel.NORMAL)
         mock_extract.assert_called_once_with(trace_dir)
         mock_clean.assert_called_once_with(trace_dir)
         mock_apply.assert_called_once_with(trace_dir)
@@ -383,7 +383,7 @@ class TestLifting:
     ):
         mock_project.merged_trace_dir.return_value = MockPath("s2e-out", exists=False)
         with pytest.raises(BinRecError):
-            lift.lift_trace("hello")
+            lift.lift_trace("hello", OptimizationLevel.NORMAL)
 
         mock_extract.assert_not_called()
         mock_clean.assert_not_called()
