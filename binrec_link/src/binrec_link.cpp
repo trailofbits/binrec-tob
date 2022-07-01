@@ -13,7 +13,7 @@ using namespace std;
 
 // Load dependencies from a file. The file must contain one library dependency per
 // line.
-auto load_dependencies(const string &filename, vector<StringRef> &input_paths) -> Error
+auto load_dependencies(const string &filename, vector<std::string> &input_paths) -> Error
 {
     auto buf_or_error = MemoryBuffer::getFile(filename);
     if (error_code ec = buf_or_error.getError()) {
@@ -21,7 +21,7 @@ auto load_dependencies(const string &filename, vector<StringRef> &input_paths) -
     }
 
     for (line_iterator iter{*buf_or_error.get()}; !iter.is_at_end(); ++iter) {
-        input_paths.push_back(*iter);
+        input_paths.push_back((*iter).str());
     }
 
     return Error::success();
@@ -30,7 +30,7 @@ auto load_dependencies(const string &filename, vector<StringRef> &input_paths) -
 
 auto binrec::run_link(LinkContext &ctx) -> Error
 {
-    SmallString<128> original_object_filename = ctx.work_dir;
+    std::string original_object_filename = ctx.work_dir.c_str();
     original_object_filename += "/original.o";
 
     auto sections_or_err = elf_exe_to_obj(original_object_filename, ctx);
@@ -42,7 +42,7 @@ auto binrec::run_link(LinkContext &ctx) -> Error
     SmallString<128> temp_output_path = ctx.work_dir;
     temp_output_path += "/output";
 
-    vector<StringRef> input_paths{
+    vector<std::string> input_paths{
         ctx.recovered_filename,
         ctx.librt_filename,
         original_object_filename,
@@ -61,7 +61,7 @@ auto binrec::run_link(LinkContext &ctx) -> Error
     if (auto err = link_recovered_binary(
             sections,
             ctx.ld_script_filename,
-            temp_output_path,
+            temp_output_path.c_str(),
             input_paths,
             ctx))
     {

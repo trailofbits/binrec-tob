@@ -25,7 +25,7 @@ auto CompilerCommand::run() -> error_code
     // TODO this function assumes 32-bit, add support for 64-bit
     string gcc32_path = GCC_LIB + "/32";
 
-    arg_buffers.push_back(compiler_exe.str());
+    arg_buffers.push_back(compiler_exe);
 
     arg_buffers.emplace_back("-g");
     arg_buffers.emplace_back("-m32");
@@ -43,14 +43,14 @@ auto CompilerCommand::run() -> error_code
     if (!linker_script_path.empty()) {
         string ld_script_arg{"-Wl,-T"};
         ld_script_arg += linker_script_path;
-        arg_buffers.push_back(move(ld_script_arg));
+        arg_buffers.push_back(ld_script_arg);
     }
 
     arg_buffers.emplace_back("-o");
-    arg_buffers.emplace_back(output_path.str());
+    arg_buffers.emplace_back(output_path);
 
-    for (StringRef path : input_paths) {
-        arg_buffers.emplace_back(path.str());
+    for (auto path : input_paths) {
+        arg_buffers.emplace_back(path);
     }
 
     if (mode == CompilerCommandMode::Link) {

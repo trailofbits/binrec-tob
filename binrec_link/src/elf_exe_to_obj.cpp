@@ -161,7 +161,7 @@ make_object(const vector<SectionFile> &section_files, StringRef object_filename,
 
     CompilerCommand cc{CompilerCommandMode::Compile};
     cc.output_path = object_filename;
-    cc.input_paths.push_back(assembly_filename);
+    cc.input_paths.push_back(assembly_filename.c_str());
 
     return cc.run();
 }

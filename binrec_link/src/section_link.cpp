@@ -11,9 +11,9 @@ using namespace std;
 
 auto binrec::link_recovered_binary(
     const vector<SectionInfo> &sections,
-    StringRef ld_script_path,
-    StringRef output_path,
-    const vector<StringRef> &input_paths,
+    std::string ld_script_path,
+    std::string output_path,
+    const vector<std::string> &input_paths,
     LinkContext &ctx) -> Error
 {
     auto ld_script_template_buf_or_err = MemoryBuffer::getFile(ld_script_path);
@@ -58,7 +58,7 @@ auto binrec::link_recovered_binary(
     linker_script.close();
 
     CompilerCommand cc{CompilerCommandMode::Link};
-    cc.linker_script_path = linker_script_filename;
+    cc.linker_script_path = linker_script_filename.c_str();
     cc.output_path = output_path;
     cc.input_paths = input_paths;
 

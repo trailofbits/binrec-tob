@@ -7,9 +7,9 @@
 namespace binrec {
     auto link_recovered_binary(
         const std::vector<SectionInfo> &sections,
-        llvm::StringRef ld_script_path,
-        llvm::StringRef output_path,
-        const std::vector<llvm::StringRef> &input_paths,
+        std::string ld_script_path,
+        std::string output_path,
+        const std::vector<std::string> &input_paths,
         LinkContext &ctx) -> llvm::Error;
 } // namespace binrec
 
