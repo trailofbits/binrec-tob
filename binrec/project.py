@@ -460,7 +460,9 @@ def main() -> None:
     elif args.current_parser == "set-args":
         set_project_args(args.project, args.args or [])
     elif args.current_parser == "validate":
-        validate_lift_result(args.project, TraceParams(args.args or []))
+        params = [""]
+        params.extend(args.args or [])
+        validate_lift_result(args.project, TraceParams(params))
     elif args.current_parser == "validate-batch":
         validate_lift_result_batch_file(args.project, Path(args.batch_file))
     else:

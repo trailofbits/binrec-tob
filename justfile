@@ -180,9 +180,9 @@ set-args project-name *args:
 validate project-name *args:
   pipenv run python -m binrec.project validate "$@"
 
-# Validate a lifted binary against the original with respect to a bacth file of arguments (add --skip_first if you are using the tracing batch file for validation)
-validate-batch project-name batch-file *flags:
-  pipenv run python -m binrec.project validate-batch "{{project-name}}" "{{batch-file}}" {{flags}}
+# Validate a lifted binary against the original with respect to a bacth file of arguments
+validate-batch project-name batch-file:
+  pipenv run python -m binrec.project validate-batch "{{project-name}}" "{{batch-file}}"
 
 # Recursively merge all captures and traces for a project (ex. hello)
 merge-traces project:
