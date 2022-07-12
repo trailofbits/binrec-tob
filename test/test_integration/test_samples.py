@@ -21,7 +21,11 @@ TEST_SAMPLES_DIR = BINREC_ROOT / "test" / "benchmark" / "samples"
 TEST_BUILD_DIR = BINREC_ROOT / "test" / "benchmark" / "samples" / "bin" / "x86"
 
 logger = logging.getLogger("binrec.test.test_samples")
+logger.setLevel(logging.DEBUG)
 
+stats_logger = logging.getLogger("binrec.tests.test_samples.stats")
+stats_logger.addHandler(logging.FileHandler("integration-test-stats.log"))
+stats_logger.setLevel(logging.DEBUG)
 
 def load_sample_test_cases(func: callable) -> callable:
     """
@@ -56,6 +60,7 @@ def pytest_generate_tests(metafunc: Metafunc):
     """
     This method is called by pytest to generate test cases for this module.
     """
+
     if isinstance(sys.modules["__real_binrec.lib"].binrec_lift, MagicMock):
         pytest.skip(
             "Unable to run integration tests: _binrec_lift module is unavailable."
@@ -79,19 +84,17 @@ def pytest_generate_tests(metafunc: Metafunc):
 
 @pytest.mark.flaky(reruns=1)
 @load_sample_test_cases
-def test_sample(binary: Path, test_plan_file: Path, real_lib_module):
+def test_sample(pytestconfig, binary: Path, test_plan_file: Path, real_lib_module):
+    
     plan = BatchTraceParams.load(binary, test_plan_file)
     patch_body = {
         name: getattr(real_lib_module, name) for name in real_lib_module.__all__
     }
-    stats = {}
     with patch.multiple(lift, **patch_body):
-        stats.update(run_test(plan, stats))
-
-    pretty_stats = pprint.pformat(stats) 
-    logger.info("Integration test statistics:")
-    logger.info(pretty_stats)
-
+        stats = run_test(plan, {})
+        pretty_stats = pprint.pformat(stats) 
+        if pytestconfig.getoption('verbose') > 0:
+            stats_logger.debug(pretty_stats)
 
 def run_test(plan: BatchTraceParams, stats: dict) -> dict:
     """
@@ -123,6 +126,7 @@ def run_test(plan: BatchTraceParams, stats: dict) -> dict:
     # get the per-project stats
     proj_stats = stats.get(plan.project, {})
     proj_stats['bitcode_size'] = project.get_optimized_bitcode_size(plan.project)
+    stats[plan.project] = proj_stats
 
     logger.info("verified recovered binary")
 
