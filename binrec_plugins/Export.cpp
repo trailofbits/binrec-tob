@@ -52,8 +52,7 @@ namespace s2e::plugins {
 
     static inline auto fileExists(const string &name) -> bool
     {
-        struct stat buffer {
-        };
+        struct stat buffer {};
         return stat(name.c_str(), &buffer) == 0;
     }
 
@@ -103,13 +102,13 @@ namespace s2e::plugins {
     {
         auto it = m_bbCounts.find(pc);
         unsigned npassed = it == m_bbCounts.end() ? 0 : it->second;
-        Function *f = nullptr;
+        S2ETranslationBlock *se_tb = nullptr;
 
         // only export a block twice (the second time, check for differences and
         // use the second version)
         if (npassed == 0) {
             s2e()->getDebugStream(state) << "[ExportELF] Export block " << hexval(pc) << ".\n";
-            f = forceCodeGen(state);
+            se_tb = forceCodeGen(state);
 
             // regenerating BBS breaks symbex, so don't regen and assume the
             // generated block is correct (should be since it is evaluated)
@@ -118,19 +117,30 @@ namespace s2e::plugins {
             //} else if (npassed == 1 && m_regenerateBlocks) {
         } else if (m_regenerateBlocks && !m_bbFinalized[pc]) {
             s2e()->getDebugStream(state) << "[ExportELF] Regen block " << hexval(pc) << ".\n";
-            f = regenCode(state, m_bbFuns[pc]);
+            se_tb = regenCode(state, getBB(pc));
             m_bbCounts[pc] += 1;
         }
 
-        if (!f) {
+        if (!se_tb) {
             s2e()->getDebugStream(state) << "[ExportELF] nullptr f " << hexval(pc) << ".\n";
             return false;
         }
 
-
+        //
         // clone LLVM funcion from translation block
-        m_bbFuns[pc] = f;
+        //
+        // We store a S2ETranslationBlockPtr here, which is a smart pointer with a reference
+        // count (boost:intrusive_ptr<S2ETranslationBlock>). S2E does periodic garbage collection
+        // which can removed unused or unreferenced disassembled functions. By using a smart
+        // pointer here, we assure that S2E won't garbage collect the functions we've traced.
+        //
+        // This changed was due to an issue found in binrec,
+        // https://github.com/trailofbits/binrec-prerelease/issues/201, and then confirmed by
+        // the S2E maintainers, https://github.com/S2E/s2e-env/issues/462.
+        //
+        m_tbs.emplace(pc, se_tb);
 
+        Function *f = se_tb->translationBlock;
         if (!m_module)
             m_module = f->getParent();
         else
@@ -204,7 +214,7 @@ namespace s2e::plugins {
         return pc;
     }
 
-    auto Export::forceCodeGen(S2EExecutionState *state) -> Function *
+    auto Export::forceCodeGen(S2EExecutionState *state) -> S2ETranslationBlock *
     {
         TranslationBlock *tb = state->getTb();
         if (tb->llvm_function == NULL) {
@@ -230,10 +240,12 @@ namespace s2e::plugins {
             // clearLLVMFunction(tb);
         }
 
-        Function *f = static_cast<Function *>(tb->llvm_function);
-        // clearLLVMFunction(tb);
+        S2ETranslationBlock *se_tb = static_cast<S2ETranslationBlock *>(tb->se_tb);
+        assert(
+            se_tb && se_tb->translationBlock == tb->llvm_function &&
+            "Inconsistent state: S2E translation block does not reference disassembled function");
 
-        return f;
+        return se_tb;
     }
 
     namespace {
@@ -428,7 +440,7 @@ namespace s2e::plugins {
         tb->llvm_function = nullptr;
     }
 
-    auto Export::regenCode(S2EExecutionState *state, Function *old) -> Function *
+    auto Export::regenCode(S2EExecutionState *state, Function *old) -> S2ETranslationBlock *
     {
         TranslationBlock *tb = state->getTb();
 
@@ -476,18 +488,21 @@ namespace s2e::plugins {
 
         old->eraseFromParent();
 
-        return static_cast<Function *>(tb->llvm_function);
-
         // FIXME: enable this?
-        // Function *f = tb->llvm_function;
         // clearLLVMFunction(tb);
-        // return f;
+
+        S2ETranslationBlock *se_tb = static_cast<S2ETranslationBlock *>(tb->se_tb);
+        assert(
+            se_tb && se_tb->translationBlock == tb->llvm_function &&
+            "Inconsistent state: S2E translation block does not reference disassembled function");
+
+        return se_tb;
     }
 
     auto Export::getBB(uint64_t pc) -> Function *
     {
-        bb_map_t::iterator it = m_bbFuns.find(pc);
-        return it == m_bbFuns.end() ? NULL : it->second;
+        auto iter = m_tbs.find(pc);
+        return iter != m_tbs.end() ? iter->second->translationBlock : nullptr;
     }
 
     auto Export::addSuccessor(uint64_t predPc, uint64_t pc) -> bool
@@ -504,10 +519,8 @@ namespace s2e::plugins {
 
     auto Export::getMetadataInst(uint64_t pc) -> Instruction *
     {
-        if (m_bbFuns.find(pc) == m_bbFuns.end())
-            return nullptr;
-
-        return m_bbFuns[pc]->getEntryBlock().getTerminator();
+        auto func = getBB(pc);
+        return func ? func->getEntryBlock().getTerminator() : nullptr;
     }
 
     void Export::stopRegeneratingBlocks()

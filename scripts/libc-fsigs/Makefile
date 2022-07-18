@@ -17,4 +17,4 @@ fsigs: fnames knownsigs
 	sh getsigs.sh < $< | cat - knownsigs > $@
 
 argsizes: fsigs parse-fsigs.py
-	python parse-fsigs.py $< | grep -v error: > $@
+	python3 parse-fsigs.py $< | grep -v error: > $@

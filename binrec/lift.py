@@ -111,7 +111,7 @@ def _extract_binary_symbols(trace_dir: Path) -> None:
     """
     plt_entry_re = r"^([0-9a-f]+) <(.+)@plt>:$"
     output_file = trace_dir / "symbols"
-    logger.debug("extracting symbols from binary: %s", trace_dir.name)
+    logger.debug("extracting symbols from binary: %s", trace_dir.parent.name)
     # TODO(artem): Objdump should be parametrized by target file architecture.
     # e.g.: i686-linux-gnu-objdump. We will need it for multiarch support
     try:
@@ -132,7 +132,9 @@ def _extract_binary_symbols(trace_dir: Path) -> None:
                 symbols.write(f"{plt_addr} {plt_name}\n")
 
     except subprocess.CalledProcessError:
-        raise BinRecError(f"failed to extract symbols from trace: {trace_dir.name}")
+        raise BinRecError(
+            f"failed to extract symbols from trace: {trace_dir.parent.name}"
+        )
 
 
 def _extract_data_imports(trace_dir: Path) -> None:
@@ -153,13 +155,13 @@ def _extract_data_imports(trace_dir: Path) -> None:
     binary = trace_dir / "binary"
     data_imports = trace_dir / "data_imports"
 
-    logger.debug("extracting data imports from binary: %s", trace_dir.name)
+    logger.debug("extracting data imports from binary: %s", trace_dir.parent.name)
 
     try:
         readelf = subprocess.check_output(["readelf", "--dyn-sym", str(binary)])
     except subprocess.CalledProcessError:
         raise BinRecError(
-            f"failed to extract data imports from binary: {trace_dir.name}"
+            f"failed to extract data imports from binary: {trace_dir.parent.name}"
         )
 
     with open(data_imports, "w") as file:
@@ -190,7 +192,8 @@ def _extract_dependencies(trace_dir: Path) -> None:
         objdump = subprocess.check_output(["objdump", "--private-headers", str(binary)])
     except subprocess.CalledProcessError:
         raise BinRecError(
-            f"failed to extract direct dependencies from binary: {trace_dir.name}"
+            f"failed to extract direct dependencies from binary: "
+            f"{trace_dir.parent.name}"
         )
 
     for line in objdump.decode().splitlines(keepends=False):
@@ -207,7 +210,7 @@ def _extract_dependencies(trace_dir: Path) -> None:
         ldd = subprocess.check_output(["ldd", str(binary)])
     except subprocess.CalledProcessError:
         raise BinRecError(
-            f"failed to extract all dependencies from binary: {trace_dir.name}"
+            f"failed to extract all dependencies from binary: {trace_dir.parent.name}"
         )
 
     for line in ldd.decode().splitlines(keepends=False):
@@ -263,12 +266,14 @@ def _extract_sections(trace_dir: Path) -> None:
     binary = trace_dir / "binary"
     sections = trace_dir / "sections"
 
-    logger.debug("extracting sections from binary: %s", trace_dir.name)
+    logger.debug("extracting sections from binary: %s", trace_dir.parent.name)
 
     try:
         readelf = subprocess.check_output(["readelf", "--section-headers", str(binary)])
     except subprocess.CalledProcessError:
-        raise BinRecError(f"failed to extract sections from binary: {trace_dir.name}")
+        raise BinRecError(
+            f"failed to extract sections from binary: {trace_dir.parent.name}"
+        )
 
     with open(sections, "w") as file:
         for match in ELF_SECTION_PATTERN.finditer(readelf.decode()):
@@ -292,7 +297,7 @@ def _clean_bitcode(trace_dir: Path) -> None:
     :param trace_dir: binrec binary trace directory
     :raises BinRecError: operation failed
     """
-    logger.debug("cleaning captured bitcode: %s", trace_dir.name)
+    logger.debug("cleaning captured bitcode: %s", trace_dir.parent.name)
     try:
         binrec_lift.clean(
             trace_filename="captured.bc",
@@ -301,7 +306,7 @@ def _clean_bitcode(trace_dir: Path) -> None:
         )
     except Exception as err:
         raise convert_lib_error(
-            err, f"failed to clean captured LLVM bitcode: {trace_dir.name}"
+            err, f"failed to clean captured LLVM bitcode: {trace_dir.parent.name}"
         )
 
 
@@ -318,7 +323,7 @@ def _apply_fixups(trace_dir: Path) -> None:
     :param trace_dir: binrec binary trace directory
     :raises BinRecError: operation failed
     """
-    logger.debug("applying fixups to captured bitcode: %s", trace_dir.name)
+    logger.debug("applying fixups to captured bitcode: %s", trace_dir.parent.name)
     try:
         subprocess.check_call(
             [
@@ -332,7 +337,7 @@ def _apply_fixups(trace_dir: Path) -> None:
         )
     except subprocess.CalledProcessError:
         raise BinRecError(
-            f"failed to apply fixups to captured LLVM bitcode: {trace_dir.name}"
+            f"failed to apply fixups to captured LLVM bitcode: {trace_dir.parent.name}"
         )
 
     try:
@@ -361,7 +366,7 @@ def _lift_bitcode(trace_dir: Path) -> None:
     :raises BinRecError: operation failed
     """
     logger.debug(
-        "performing initial lifting of captured LLVM bitcode: %s", trace_dir.name
+        "performing initial lifting of captured LLVM bitcode: %s", trace_dir.parent.name
     )
     try:
         binrec_lift.lift(
@@ -372,7 +377,9 @@ def _lift_bitcode(trace_dir: Path) -> None:
         )
     except Exception as err:
         raise convert_lib_error(
-            err, f"failed to perform initial lifting of LLVM bitcode: {trace_dir.name}"
+            err,
+            f"failed to perform initial lifting of LLVM bitcode: "
+            f"{trace_dir.parent.name}",
         )
 
 
@@ -390,7 +397,7 @@ def _optimize_bitcode(trace_dir: Path) -> None:
     :param trace_dir: binrec binary trace directory
     :raises BinRecError: operation failed
     """
-    logger.debug("optimizing lifted bitcode: %s", trace_dir.name)
+    logger.debug("optimizing lifted bitcode: %s", trace_dir.parent.name)
     try:
         binrec_lift.optimize(
             trace_filename="lifted.bc",
@@ -400,7 +407,7 @@ def _optimize_bitcode(trace_dir: Path) -> None:
         )
     except Exception as err:
         raise convert_lib_error(
-            err, f"failed to optimized lifted LLVM bitcode: {trace_dir.name}"
+            err, f"failed to optimized lifted LLVM bitcode: {trace_dir.parent.name}"
         )
 
 
@@ -415,14 +422,14 @@ def _disassemble_bitcode(trace_dir: Path) -> None:
     :param trace_dir: binrec binary trace directory
     :raises BinRecError: operation failed
     """
-    logger.debug("disassembling optimized bitcode: %s", trace_dir.name)
+    logger.debug("disassembling optimized bitcode: %s", trace_dir.parent.name)
     try:
         subprocess.check_call(
             [llvm_command("llvm-dis"), "optimized.bc"], cwd=str(trace_dir)
         )
     except subprocess.CalledProcessError:
         raise BinRecError(
-            f"failed to disassemble captured LLVM bitcode: {trace_dir.name}"
+            f"failed to disassemble captured LLVM bitcode: {trace_dir.parent.name}"
         )
 
 
@@ -440,7 +447,9 @@ def _recover_bitcode(trace_dir: Path) -> None:
     :param trace_dir: binrec binary trace directory
     :raises BinRecError: operation failed
     """
-    logger.debug("lowering optimized LLVM bitcode for compilation: %s", trace_dir.name)
+    logger.debug(
+        "lowering optimized LLVM bitcode for compilation: %s", trace_dir.parent.name
+    )
     try:
         binrec_lift.compile_prep(
             trace_filename="optimized.bc",
@@ -449,7 +458,7 @@ def _recover_bitcode(trace_dir: Path) -> None:
         )
     except Exception as err:
         raise convert_lib_error(
-            err, f"failed to lower optimized LLVM bitcode: {trace_dir.name}"
+            err, f"failed to lower optimized LLVM bitcode: {trace_dir.parent.name}"
         )
 
 
@@ -464,7 +473,7 @@ def _compile_bitcode(trace_dir: Path) -> None:
     :param trace_dir: binrec binary trace directory
     :raises BinRecError: operation failed
     """
-    logger.debug("compiling recovered LLVM bitcode: %s", trace_dir.name)
+    logger.debug("compiling recovered LLVM bitcode: %s", trace_dir.parent.name)
     try:
         subprocess.check_call(
             [
@@ -478,7 +487,9 @@ def _compile_bitcode(trace_dir: Path) -> None:
             cwd=str(trace_dir),
         )
     except subprocess.CalledProcessError:
-        raise BinRecError(f"failed to compile recovered LLVM bitcode: {trace_dir.name}")
+        raise BinRecError(
+            f"failed to compile recovered LLVM bitcode: {trace_dir.parent.name}"
+        )
 
 
 def _link_recovered_binary(trace_dir: Path) -> None:
@@ -495,7 +506,7 @@ def _link_recovered_binary(trace_dir: Path) -> None:
     i386_ld = str(BINREC_LINK_LD / "i386.ld")
     libbinrec_rt = str(BINREC_LIB / "libbinrec_rt.a")
 
-    logger.debug("linking recovered binary: %s", trace_dir.name)
+    logger.debug("linking recovered binary: %s", trace_dir.parent.name)
     try:
         binrec_link.link(
             binary_filename=str(trace_dir / "binary"),

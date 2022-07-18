@@ -98,6 +98,16 @@ def argsize(s):
     return sizes.get(t, '<error: %s>' % t)
 
 
+def retsize(s):
+    size = argsize(s)
+    if isinstance(size, int) and size > 0 and size < 4:
+        # coerce i8 and i16 to i32 on 32-bit systems
+        # see issue #204 for more information:
+        # https://github.com/trailofbits/binrec-prerelease/issues/204
+        size = 4
+    return size
+
+
 if __name__ == '__main__':
     # print '<name> <isfloat> <retsize> <argsizes> for each function
     for line in fileinput.input():
@@ -118,5 +128,5 @@ if __name__ == '__main__':
                 continue
 
         isfloat = 'float' in ftypename or 'double' in ftypename
-        print('%s %d %s%s' % (fname, int(isfloat), argsize(ftypename),
+        print('%s %d %s%s' % (fname, int(isfloat), retsize(ftypename),
                               ''.join(' ' + str(argsize(x)) for x in args)))

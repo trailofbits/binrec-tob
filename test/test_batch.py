@@ -131,6 +131,7 @@ class TestTraceParams:
         assert mock_print.call_args_list == [
             call("function setup_trace() {", file=handle),
             call("  asdf", file=handle),
+            call("  return", file=handle),
             call("}", file=handle),
             call(file=handle)
         ]
@@ -144,6 +145,7 @@ class TestTraceParams:
         assert mock_print.call_args_list == [
             call("function teardown_trace() {", file=handle),
             call("  asdf", file=handle),
+            call("  return", file=handle),
             call("}", file=handle),
             call(file=handle)
         ]

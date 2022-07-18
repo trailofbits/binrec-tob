@@ -242,6 +242,10 @@ class TraceParams:
         print(f"function {SETUP_FUNCTION}() {{", file=file)
         for action in self.setup:
             print(f"  {action}", file=file)
+
+        # This function could be empty if no setup actions are being performed. Add a
+        # return statement to make sure bash is happy
+        print("  return", file=file)
         print("}", file=file)
         print(file=file)
 
@@ -252,6 +256,10 @@ class TraceParams:
         print(f"function {TEARDOWN_FUNCTION}() {{", file=file)
         for action in self.teardown:
             print(f"  {action}", file=file)
+
+        # This function could be empty if no setup actions are being performed. Add a
+        # return statement to make sure bash is happy
+        print("  return", file=file)
         print("}", file=file)
         print(file=file)
 

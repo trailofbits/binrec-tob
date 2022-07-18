@@ -1,6 +1,7 @@
 a64l 0 4 4
 abort 0 0
 abs 0 4 4
+accept 0 4 4 4 4
 access 0 4 4 4
 acct 0 4 4
 addmntent 0 4 4 4
@@ -492,7 +493,7 @@ nanosleep 0 4 4 4
 nl_langinfo 0 4 4
 nrand48 0 4 4
 ntohl 0 4 4
-ntohs 0 2 2
+ntohs 0 4 2
 on_exit 0 4 4 4 4
 openat 0 4 4 4 4
 opendir 0 4 4
