@@ -38,7 +38,7 @@ _install-dependencies:
     sudo apt-get update
     sudo apt-get install -y bison cmake flex g++ g++-multilib gcc gcc-multilib git libglib2.0-dev liblua5.1-dev \
         libsigc++-2.0-dev lua5.3 nasm nlohmann-json3-dev pkg-config subversion curl pipenv git-lfs doxygen graphviz \
-        binutils libcap-dev \
+        binutils libc6-dbg:i386 \
         python3.9-dev python3.9-venv # For s2e-env (and compatibility with Python 3.9 from Pipfile): http://s2e.systems/docs/s2e-env.html#id2
 
     git lfs install
@@ -138,6 +138,10 @@ s2e-insert-binrec-plugins:
 # Execute a s2e command with the s2e environment active
 _s2e-command command *args:
   pipenv run s2e {{command}} {{args}}
+
+# Rebuild the libc-argsizes database
+rebuild-libc-argsizes:
+  pipenv run python -m binrec.sigs "{{env_var('BINREC_LIBC_MODULE')}}" "{{justdir}}/runlib/libc-argsizes"
 
 ########## End: Build Recipes ##########
 
@@ -241,7 +245,9 @@ _lint-python: _lint-mypy _lint-black _lint-flake8 _lint-isort
 
 # Runs Python static code checking with flake8
 _lint-flake8:
-  pipenv run flake8 --max-line-length 88 binrec
+  # E203 conflicts with black (whitespace around slice operator)
+  # W503 conflicts with black (binary operator at start of line)
+  pipenv run flake8 --max-line-length 88 --ignore E203,W503 binrec
 
 # Runs Python type checking with mypy
 _lint-mypy:

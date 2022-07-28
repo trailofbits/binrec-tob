@@ -78,6 +78,10 @@ BINREC_LINK_LD = Path(os.environ["BINREC_LINK_LD"]).absolute()
 BINREC_LIB = Path(os.environ["BINREC_LIB"]).absolute()
 #: The aboslute path to the BinRec S2E projects directory
 BINREC_PROJECTS = Path(os.environ["BINREC_PROJECTS"]).absolute()
+#: The absolute path to the libc module used during analysis
+BINREC_LIBC_MODULE = Path(os.environ["BINREC_LIBC_MODULE"]).absolute()
+#: The absolute path to the qemu guest filesystem root
+BINREC_GUESTFS_ROOT = Path(os.environ["BINREC_GUESTFS_ROOT"]).absolute()
 
 #: The default filename for the binrec trace config script
 TRACE_CONFIG_FILENAME = "binrec_trace_config.sh"

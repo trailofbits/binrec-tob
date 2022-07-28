@@ -1,0 +1,6 @@
+from builtins import RuntimeError
+from typing import Optional
+
+def execute(cmd: str, to_string: bool = False) -> str: ...
+
+class error(RuntimeError): ...

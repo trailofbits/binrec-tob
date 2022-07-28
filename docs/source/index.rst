@@ -18,6 +18,7 @@ Welcome to BinRec's documentation!
    errors
    auditing
    batch
+   sigs
    lib
 
 

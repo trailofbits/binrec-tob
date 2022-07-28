@@ -233,7 +233,7 @@ def _extract_dependencies(trace_dir: Path) -> None:
         # We have any remaining direct dependencies that could not be resolved
         # to an absolute file path. This most likely means that the lifted bitcode
         # will not link.
-        logger.warn(
+        logger.warning(
             "failed to resolve %d dependencies, linking may fail: %s",
             len(direct_deps),
             ", ".join(direct_deps),
