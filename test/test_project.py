@@ -5,7 +5,7 @@ from unittest.mock import patch, mock_open, call, MagicMock
 import pytest
 
 from binrec import project
-from binrec.env import BINREC_PROJECTS
+from binrec.env import (BINREC_PROJECTS, IMAGE_NAME)
 from binrec.errors import BinRecError
 from helpers.mock_path import MockPath
 
@@ -152,7 +152,7 @@ class TestProject:
         project_dir = mock_project_dir.return_value = MockPath("/asdf", exists=False)
         input_files_dir = mock_input_files_dir.return_value = MockPath("/asdf/input_files", exists=False)
         assert project.new_project("asdf", MockPath("/binary")) is project_dir
-        mock_check_call.assert_called_once_with(["s2e", "new_project", "--name", "asdf", "/binary"])
+        mock_check_call.assert_called_once_with(["s2e", "new_project", "--name", "asdf", "-i", IMAGE_NAME, "/binary"])
         mock_file.assert_called_once_with(project_dir / "s2e-config.lua", "a")
         handle = mock_file()
         handle.write.assert_called_once_with(f"""
@@ -186,7 +186,7 @@ table.insert(pluginsConfig.HostFiles.baseDirs, "{input_files_dir}")
         mock_project_dir.return_value = MockPath("/asdf", exists=False)
         mock_input_files_dir.return_value = MockPath("/asdf/input_files", exists=False)
         project.new_project("asdf", MockPath("/binary"), "1 2", ["one", "two"])
-        mock_check_call.assert_called_once_with(["s2e", "new_project", "--name", "asdf", "/binary"])
+        mock_check_call.assert_called_once_with(["s2e", "new_project", "--name", "asdf", "-i", IMAGE_NAME, "/binary"])
         mock_patch.assert_called_once_with("asdf")
         mock_set_args.assert_called_once_with("asdf", ["1 2", "one", "two"])
 
