@@ -96,8 +96,8 @@ clean-binrec:
 _clean-s2e:
     rm -rf ./s2e/build
 
-# Build an s2e image. Default is x86 Debian-9.2.1.
-build-s2e-image image="debian-9.2.1-i386":
+# Build an s2e image. Default is x86 Debian-11.3-i386.
+build-s2e-image image="debian-11.3-i386":
   just _s2e-command image_build -d \"{{image}}\"
 
 # This will trigger a rebuild of libs2e, which contains the plugins

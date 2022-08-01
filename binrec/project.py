@@ -10,6 +10,7 @@ from typing import Iterable, List, Optional
 from binrec.batch import BatchTraceParams, TraceParams, patch_s2e_project
 
 from .env import (
+    IMAGE_NAME,
     INPUT_FILES_DIRNAME,
     input_files_dir,
     merged_trace_dir,
@@ -329,7 +330,15 @@ def new_project(
         )
 
     logger.info("Creating project: %s", project_name)
-    callargs = ["s2e", "new_project", "--name", project_name, str(binary_filename)]
+    callargs = [
+        "s2e",
+        "new_project",
+        "--name",
+        project_name,
+        "-i",
+        IMAGE_NAME,
+        str(binary_filename),
+    ]
 
     try:
         subprocess.check_call(callargs)
