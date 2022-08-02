@@ -90,7 +90,7 @@ TRACE_CONFIG_FILENAME = "binrec_trace_config.sh"
 INPUT_FILES_DIRNAME = "input_files"
 
 #: The default image name
-IMAGE_NAME = "debian-11.3.-i386"
+IMAGE_NAME = "debian-11.3-i386"
 
 
 def project_dir(project_name: str) -> Path:
