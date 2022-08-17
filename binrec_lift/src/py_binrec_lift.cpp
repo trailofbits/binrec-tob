@@ -45,9 +45,6 @@ static void set_memssa_check_limit(int limit)
     llvm::StringMap<llvm::cl::Option *> &opts = llvm::cl::getRegisteredOptions();
     auto option = (llvm::cl::opt<unsigned> *)opts["memssa-check-limit"];
     option->setValue(limit);
-
-    auto log_opt = (llvm::cl::opt<logging::Level> *)opts["loglevel"];
-    log_opt->setValue(logging::DEBUG);
 }
 
 /**
@@ -60,7 +57,7 @@ static void reset_llvm_options()
     option->setValue(option->getDefault().getValue());
 
     auto log_opt = (llvm::cl::opt<logging::Level> *)opts["loglevel"];
-    log_opt->setValue(logging::INFO);
+    log_opt->setValue(logging::DEBUG);
 }
 
 /**

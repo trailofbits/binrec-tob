@@ -1,7 +1,7 @@
 LLC := llc
 LLVM_DIS := llvm-dis
 CLANG := clang
-CLANGXX := clang++
+CLANGXX := ${S2E_BIN}/clang++
 BIN := custom-helpers.bc replacemain.so op_helper.bc replaceFuncs.o
 SRC := op_helper.ll custom-helpers.ll
 QEMU_BUILD=../build/s2e/qemu

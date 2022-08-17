@@ -220,9 +220,9 @@ void __attribute__((always_inline)) virtualize_return_i64(uint64_t ret)
 
 /* ABI for atexit() function. Binrec does not currently support callbacks, so we remove
  * this functionality. */
-int __cxa_atexit(void *, void*, void*) {
-    return 0;
-}
+// int __cxa_atexit(void *, void*, void*) {
+//     return 0;
+// }
 
 void helper_break()
 {

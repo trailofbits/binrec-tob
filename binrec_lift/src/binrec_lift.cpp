@@ -13,6 +13,7 @@
 #include "lifting/fix_cfg.hpp"
 #include "lifting/fix_overlaps.hpp"
 #include "lifting/global_env_to_alloca.hpp"
+#include "lifting/globalize_callback_addresses.hpp"
 #include "lifting/globalize_data_imports.hpp"
 #include "lifting/implement_lib_call_stubs.hpp"
 #include "lifting/implement_lib_calls_new_plt.hpp"
@@ -34,6 +35,7 @@
 #include "lifting/replace_dynamic_symbols.hpp"
 #include "lifting/successor_lists.hpp"
 #include "lifting/unalign_stack.hpp"
+#include "replace_local_function_pointers.hpp"
 #include "lowering/halt_on_declarations.hpp"
 #include "lowering/internalize_debug_helpers.hpp"
 #include "lowering/remove_sections.hpp"
@@ -67,6 +69,7 @@
 #include <llvm/Transforms/Scalar/DCE.h>
 #include <llvm/Transforms/Scalar/GVN.h>
 #include <llvm/Transforms/Scalar/LICM.h>
+#include "lifting/debug_print_callback.hpp"
 
 using namespace llvm;
 using namespace llvm::cl;
@@ -115,17 +118,28 @@ namespace binrec {
             mpm.addPass(FixOverlapsPass{});
             mpm.addPass(PruneTriviallyDeadSuccsPass{});
             mpm.addPass(InsertCallsPass{});
+            mpm.addPass(GlobalizeCallbackAddresses{});
+            // mpm.addPass(ReplaceLocalFunctionPointers{});
+            mpm.addPass(DebugPrintCallback{"after_globalize", true});
             mpm.addPass(AddMemArrayPass{});
+            // mpm.addPass(DebugPrintCallback{"after_mem_array"});
             mpm.addPass(createModuleToFunctionPassAdaptor(ExternPLTPass{}));
+            // mpm.addPass(DebugPrintCallback{"after_extern_plt"});
             mpm.addPass(AddDebugPass{});
             mpm.addPass(AlwaysInlinerPass{});
+            // mpm.addPass(DebugPrintCallback{"after_always_inline"});
             mpm.addPass(InlineStubsPass{});
+            // mpm.addPass(DebugPrintCallback{"after_inline_stubs"});
             mpm.addPass(PcJumpsPass{});
+            // mpm.addPass(DebugPrintCallback{"after_fix_cfg"});
             mpm.addPass(FixCFGPass{});
             mpm.addPass(InsertTrampForRecFuncsPass{});
             mpm.addPass(InlineLibCallArgsPass{});
+            // mpm.addPass(DebugPrintCallback{"after_inline_lib_call"});
             mpm.addPass(createModuleToFunctionPassAdaptor(DCEPass{}));
+            // mpm.addPass(DebugPrintCallback{"after_dce"});
             mpm.addPass(AlwaysInlinerPass{});
+            // mpm.addPass(DebugPrintCallback{"after_always_inline_2"});
             if (!ctx.skip_link) {
                 mpm.addPass(ReplaceDynamicSymbolsPass{});
                 mpm.addPass(LibCallNewPLTPass{});
@@ -138,15 +152,22 @@ namespace binrec {
             if (ctx.trace_calls) {
                 mpm.addPass(CallTracerPass{});
             }
+            // mpm.addPass(DebugPrintCallback{"after_ctx.skip_link"});
             mpm.addPass(createModuleToFunctionPassAdaptor(InternalizeFunctionsPass{}));
+            mpm.addPass(DebugPrintCallback{"after_internalize_functions", true});
+            mpm.addPass(ReplaceLocalFunctionPointers{});
             mpm.addPass(GlobalDCEPass{});
+            mpm.addPass(DebugPrintCallback{"after_dce_2"});
             mpm.addPass(UnalignStackPass{});
             mpm.addPass(RemoveMetadataPass{});
             mpm.addPass(GlobalDCEPass{});
             mpm.addPass(createModuleToFunctionPassAdaptor(DCEPass{}));
             mpm.addPass(IntrinsicCleanerPass{});
+            mpm.addPass(DebugPrintCallback{"after_intrinsic_cleaner"});
             mpm.addPass(FunctionRenamingPass{});
+            mpm.addPass(DebugPrintCallback{"after_func_rename"});
             mpm.addPass(GlobalizeDataImportsPass{});
+            mpm.addPass(DebugPrintCallback{"after_always_inline_2"});
         }
 
         if (ctx.optimize) {

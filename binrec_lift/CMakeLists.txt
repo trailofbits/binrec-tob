@@ -15,6 +15,7 @@ add_library(binrec_lift_static STATIC
         src/lifting/fix_overlaps.cpp src/lifting/fix_overlaps.hpp
         src/lifting/global_env_to_alloca.cpp src/lifting/global_env_to_alloca.hpp
         src/lifting/globalize_data_imports.cpp src/lifting/globalize_data_imports.hpp
+        src/lifting/globalize_callback_addresses.cpp src/lifting/globalize_callback_addresses.hpp
         src/lifting/implement_lib_call_stubs.cpp src/lifting/implement_lib_call_stubs.hpp
         src/lifting/implement_lib_calls_new_plt.cpp src/lifting/implement_lib_calls_new_plt.hpp
         src/lifting/inline_lib_call_args.cpp src/lifting/inline_lib_call_args.hpp
@@ -38,6 +39,7 @@ add_library(binrec_lift_static STATIC
         src/lifting/replace_dynamic_symbols.cpp src/lifting/replace_dynamic_symbols.hpp
         src/lifting/successor_lists.cpp src/lifting/successor_lists.hpp
         src/lifting/unalign_stack.cpp src/lifting/unalign_stack.hpp
+        src/lifting/debug_print_callback.hpp
 
         src/lowering/halt_on_declarations.cpp src/lowering/halt_on_declarations.hpp
         src/lowering/internalize_debug_helpers.cpp src/lowering/internalize_debug_helpers.hpp
