@@ -13,7 +13,7 @@ import pytest
 from binrec.env import BINREC_ROOT
 from binrec.merge import merge_traces
 from binrec import lift, project
-from binrec.batch import BatchTraceParams, TraceParams
+from binrec.campaign import Campaign, TraceParams
 
 TEST_SAMPLE_SOURCES = ("binrec", "coreutils", "debian")
 TEST_SAMPLES_DIR = BINREC_ROOT / "test" / "benchmark" / "samples"
@@ -38,9 +38,10 @@ def load_sample_test_cases(func: callable) -> callable:
             continue
 
         for filename in sorted(os.listdir(input_dir)):
-            binary = build_dir / filename
-            if binary.suffix.lower() == ".json":
-                binary = binary.with_suffix("")
+            if not filename.lower().endswith(".json"):
+                continue
+
+            binary = (build_dir / filename).with_suffix("")
 
             if not binary.is_file():
                 continue
@@ -79,7 +80,7 @@ def pytest_generate_tests(metafunc: Metafunc):
 @pytest.mark.flaky(reruns=1)
 @load_sample_test_cases
 def test_sample(binary: Path, test_plan_file: Path, real_lib_module):
-    plan = BatchTraceParams.load(binary, test_plan_file)
+    plan = Campaign.load_json(binary, test_plan_file)
     patch_body = {
         name: getattr(real_lib_module, name) for name in real_lib_module.__all__
     }
@@ -87,7 +88,7 @@ def test_sample(binary: Path, test_plan_file: Path, real_lib_module):
         run_test(plan)
 
 
-def run_test(plan: BatchTraceParams) -> None:
+def run_test(plan: Campaign) -> None:
     """
     Run a test binary, merge results, and lift the results. The binary may be executed
     multiple times depending on how many items are in the ``plan.traces`` parameter.
@@ -100,9 +101,9 @@ def run_test(plan: BatchTraceParams) -> None:
     if os.path.isdir(project_dir):
         shutil.rmtree(project_dir, ignore_errors=True)
 
-    project_dir = project.new_project(plan.project, plan.binary)
+    project_dir = project.new_project(plan.project, plan.binary, plan)
 
-    project.run_project_batch_params(plan)
+    project.run_campaign(plan)
 
     # Merge traces
     merge_traces(plan.project)
@@ -112,5 +113,5 @@ def run_test(plan: BatchTraceParams) -> None:
 
     logger.info("successfully ran and merged %d traces; verifying recovered binary",
                 len(plan.traces))
-    project.validate_lift_result_batch_params(plan)
+    project.validate_campaign(plan)
     logger.info("verified recovered binary")

@@ -1,5 +1,5 @@
 import subprocess
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 import pytest
 
@@ -87,3 +87,24 @@ class TestEnv:
 
     def test_input_files_dirs(self):
         assert env.input_files_dir("asdf") == env.BINREC_PROJECTS / "asdf" / "input_files"
+
+    @patch.object(env, "project_dir")
+    def test_campaign_filename(self, mock_proj):
+        mock_proj.return_value = MockPath("/project")
+        assert env.campaign_filename("asdf") == mock_proj.return_value / "campaign.json"
+        mock_proj.assert_called_once_with("asdf")
+
+    @patch.object(env, "project_dir")
+    def test_s2e_config_file(self, mock_proj):
+        mock_proj.return_value = MockPath("/project")
+        assert env.s2e_config_filename("asdf") == mock_proj.return_value / "s2e-config.lua"
+        mock_proj.assert_called_once_with("asdf")
+
+    @patch.object(env, "project_dir")
+    def test_project_binary_filename(self, mock_proj):
+        mock_proj.return_value = MockPath("/project")
+        binary = mock_proj.return_value / "binary"
+        binary.readlink = MagicMock()
+        assert env.project_binary_filename("asdf") == binary.readlink.return_value
+        mock_proj.assert_called_once_with("asdf")
+        binary.readlink.assert_called_once()

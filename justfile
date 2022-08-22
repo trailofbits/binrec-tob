@@ -165,28 +165,54 @@ _pipenv-update:
 ########## Section: End-User API Recipes ##########
 
 # Create a new analysis project
-new-project name binary symargs *args:
-  pipenv run python -m binrec.project new "{{name}}" "{{binary}}" "{{symargs}}" {{args}}
+new-project name binary template="":
+  pipenv run python -m binrec.project new "{{name}}" "{{binary}}" "{{template}}"
 
-# Run an S2E analysis project. Override sample command line arguments by passing "--args ARGS ARGS"
-run project-name *args:
-  pipenv run python -m binrec.project run "$@"
+# Add a new trace to an existing project
+add-trace project-name name symbolic-indexes args:
+  pipenv run python -m binrec.project add-trace --name "{{name}}" --symbolic-indexes "{{symbolic-indexes}}" "{{project-name}}" {{args}}
 
-# Run an S2E analysis project multiple times with a batch of inputs
-run-batch project-name batch-file:
-  pipenv run python -m binrec.project run-batch "{{project-name}}" "{{batch-file}}"
+# Remove a trace by name from an existing project
+remove-trace project-name trace-name:
+  pipenv run python -m binrec.project remove-trace "{{project-name}}" "{{trace-name}}"
 
-# Set an S2E analysis project command line arguments.
-set-args project-name *args:
-  pipenv run python -m binrec.project --verbose set-args "$@"
+# Remove a trace by ID from an existing project
+remove-trace-id project-name trace-id:
+  pipenv run python -m binrec.project remove-trace --id "{{project-name}}" "{{trace-id}}"
 
-# Validate a lifted binary against the original with respect to provided arguments
-validate project-name *args:
-  pipenv run python -m binrec.project validate "$@"
+remove-all-traces project-name:
+  pipenv run python -m binrec.project remove-trace "{{project-name}}" --all
 
-# Validate a lifted binary against the original with respect to a bacth file of arguments
-validate-batch project-name batch-file:
-  pipenv run python -m binrec.project validate-batch "{{project-name}}" "{{batch-file}}"
+# Run all project traces
+run project-name:
+  pipenv run python -m binrec.project run "{{project-name}}"
+
+# Run a single project trace by name
+run-trace project-name trace-name:
+  pipenv run python -m binrec.project run-trace "{{project-name}}" "{{trace-name}}"
+
+# Run a single project trace by id
+run-trace-id project-name trace-id:
+  pipenv run python -m binrec.project run-trace --id "{{project-name}}" "{{trace-id}}"
+
+# Validate the recovered binary against an entire project
+validate project-name:
+  pipenv run python -m binrec.project validate "{{project-name}}"
+
+# Validate the recovered binary against a single trace by name
+validate-trace project-name trace-name:
+  pipenv run python -m binrec.project validate-trace "{{project-name}}" "{{trace-name}}"
+
+# Validate the recovered binary against a single trace by id
+validate-trace-id project-name trace-name:
+  pipenv run python -m binrec.project validate-trace --id "{{project-name}}" "{{trace-name}}"
+
+validate-args project-name *args:
+  pipenv run python -m binrec.project validate-args "$@"
+
+# Describe the project and all registered traces
+describe project-name:
+  pipenv run python -m binrec.project describe "{{project-name}}"
 
 # Recursively merge all captures and traces for a project (ex. hello)
 merge-traces project:
@@ -196,14 +222,17 @@ merge-traces project:
 lift-trace project:
   pipenv run python -m binrec.lift -vv "{{project}}"
 
+recover project-name:
+  just run "{{project-name}}"
+  just merge-traces "{{project-name}}"
+  just lift-trace "{{project-name}}"
+  just validate "{{project-name}}"
+
+clear-trace-data project-name:
+  pipenv run python -m binrec.project clear-trace-data "{{project-name}}"
+
 list-projects:
-  pipenv run python -m binrec.project list
-
-list-traces project:
-  pipenv run python -m binrec.project list-traces "{{project}}"
-
-list-merged project:
-  pipenv run python -m binrec.project list-merged "{{project}}"
+  pipenv run python -m binrec.project list-projects
 
 ########## End: End-User API Recipes ##########
 
