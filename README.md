@@ -13,7 +13,7 @@ Key Dependencies and Environment
 
 Binrec has been developed for and tested against the following environments and major dependencies:
 
-- Ubuntu: 20.04.03
+- Ubuntu 20.04.03 or Debian 11.3
 - LLVM (Clang): 14
 - Python 3.9
 - s2e-env @4bd6a45
