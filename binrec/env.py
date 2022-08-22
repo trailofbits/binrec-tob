@@ -154,7 +154,7 @@ def project_binary_filename(project_name: str) -> Path:
     :returns: the filename of the project analysis binary
     """
     binary = project_dir(project_name) / "binary"
-    return binary.readlink()
+    return binary.readlink()  # type: ignore
 
 
 def get_trace_dirs(project_name: str) -> List[Path]:

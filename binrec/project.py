@@ -351,6 +351,7 @@ def _validate_campaign_trace(campaign: Campaign, trace: TraceParams) -> None:
         str(trace.command_line_args),
     )
 
+
 def new_project(
     project_name: str, binary_filename: Path, template: Union[Path, Campaign] = None
 ) -> Path:

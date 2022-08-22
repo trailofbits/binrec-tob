@@ -81,7 +81,7 @@ def prep_bitcode_for_linkage(
             err, f"failed first stage of linkage prep for bitcode: {source}"
         )
 
-    shutil.move(str(tmp_bc), destination)
+    shutil.move(tmp_bc, destination)  # type: ignore
     try:
         binrec_lift.link_prep_2(trace_filename=dest, destination=tmp, working_dir=cwd)
     except Exception as err:
@@ -94,7 +94,7 @@ def prep_bitcode_for_linkage(
             err, f"failed second stage of linkage prep for bitcode: {source}"
         )
 
-    shutil.move(str(tmp_bc), destination)
+    shutil.move(tmp_bc, destination)  # type: ignore
     os.remove(tmp)
 
 
@@ -403,7 +403,7 @@ def _optimize_bitcode(trace_dir: Path, opt_level: OptimizationLevel) -> None:
     :param trace_dir: binrec binary trace directory
     :raises BinRecError: operation failed
     """
-    
+
     optimizers = {
         OptimizationLevel.NORMAL: binrec_lift.optimize,
         OptimizationLevel.HIGH: binrec_lift.optimize_better,
@@ -415,7 +415,6 @@ def _optimize_bitcode(trace_dir: Path, opt_level: OptimizationLevel) -> None:
         raise BinRecError(f"Unknown optimization level: {opt_level}")
 
     optimizer = optimizers[opt_level]
-
 
     logger.debug("optimizing lifted bitcode: %s", trace_dir.parent.name)
 
