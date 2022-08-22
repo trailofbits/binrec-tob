@@ -24,7 +24,7 @@ logger = logging.getLogger("binrec.test.test_samples")
 logger.setLevel(logging.DEBUG)
 
 stats_logger = logging.getLogger("binrec.tests.test_samples.stats")
-stats_logger.addHandler(logging.FileHandler("integration-test-stats.log"))
+stats_logger.addHandler(logging.FileHandler("integration-test-stats.log", mode="a"))
 stats_logger.setLevel(logging.DEBUG)
 
 def load_sample_test_cases(func: callable) -> callable:
@@ -81,22 +81,28 @@ def pytest_generate_tests(metafunc: Metafunc):
             ids=["_".join(binary.parts[-2:]) for binary, _ in test_plans],
         )
 
-
-@pytest.mark.flaky(reruns=1)
-@load_sample_test_cases
-def test_sample(pytestconfig, binary: Path, test_plan_file: Path, real_lib_module):
-    
+def run_sample_common(pytestconfig, opt_level: lift.OptimizationLevel, binary: Path, test_plan_file: Path, real_lib_module):
     plan = BatchTraceParams.load(binary, test_plan_file)
     patch_body = {
         name: getattr(real_lib_module, name) for name in real_lib_module.__all__
     }
     with patch.multiple(lift, **patch_body):
-        stats = run_test(plan, {})
+        stats = run_test(plan, opt_level, {})
         pretty_stats = pprint.pformat(stats) 
         if pytestconfig.getoption('verbose') > 0:
             stats_logger.debug(pretty_stats)
 
-def run_test(plan: BatchTraceParams, stats: dict) -> dict:
+@pytest.mark.flaky(reruns=1)
+@load_sample_test_cases
+def test_sample_normal(pytestconfig, binary: Path, test_plan_file: Path, real_lib_module):
+    return run_sample_common(pytestconfig, lift.OptimizationLevel.NORMAL, binary, test_plan_file, real_lib_module)
+
+@pytest.mark.flaky(reruns=1)
+@load_sample_test_cases
+def test_sample_optimized(pytestconfig, binary: Path, test_plan_file: Path, real_lib_module):
+    return run_sample_common(pytestconfig, lift.OptimizationLevel.HIGH, binary, test_plan_file, real_lib_module)
+
+def run_test(plan: BatchTraceParams, opt_level: lift.OptimizationLevel, stats: dict) -> dict:
     """
     Run a test binary, merge results, and lift the results. The binary may be executed
     multiple times depending on how many items are in the ``plan.traces`` parameter.
@@ -117,7 +123,7 @@ def run_test(plan: BatchTraceParams, stats: dict) -> dict:
     merge_traces(plan.project)
 
     # Lift
-    lift.lift_trace(plan.project, lift.OptimizationLevel.NORMAL)
+    lift.lift_trace(plan.project, opt_level)
 
     logger.info("successfully ran and merged %d traces; verifying recovered binary",
                 len(plan.traces))
@@ -125,7 +131,7 @@ def run_test(plan: BatchTraceParams, stats: dict) -> dict:
     
     # get the per-project stats
     proj_stats = stats.get(plan.project, {})
-    proj_stats['bitcode_size'] = project.get_optimized_bitcode_size(plan.project)
+    proj_stats['bitcode_size_{}'.format(opt_level.name)] = project.get_optimized_bitcode_size(plan.project)
     stats[plan.project] = proj_stats
 
     logger.info("verified recovered binary")
