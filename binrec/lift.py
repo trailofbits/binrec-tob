@@ -5,9 +5,9 @@ import shutil
 import subprocess
 import tempfile
 from contextlib import suppress
+from enum import Enum
 from pathlib import Path
 from typing import List, Tuple
-from enum import Enum
 
 from . import project
 from .env import BINREC_LIB, BINREC_LINK_LD, BINREC_RUNLIB, llvm_command
@@ -81,7 +81,7 @@ def prep_bitcode_for_linkage(
             err, f"failed first stage of linkage prep for bitcode: {source}"
         )
 
-    shutil.move(tmp_bc, destination)
+    shutil.move(str(tmp_bc), destination)
     try:
         binrec_lift.link_prep_2(trace_filename=dest, destination=tmp, working_dir=cwd)
     except Exception as err:
@@ -94,7 +94,7 @@ def prep_bitcode_for_linkage(
             err, f"failed second stage of linkage prep for bitcode: {source}"
         )
 
-    shutil.move(tmp_bc, destination)
+    shutil.move(str(tmp_bc), destination)
     os.remove(tmp)
 
 
@@ -381,6 +381,7 @@ class OptimizationLevel(Enum):
     NORMAL = 1
     HIGH = 2
 
+
 def _optimize_bitcode(trace_dir: Path, opt_level: OptimizationLevel) -> None:
     """
     Optimize the lifted LLVM module.
@@ -590,7 +591,10 @@ def main() -> None:
         "-v", "--verbose", action="count", help="enable verbose logging"
     )
     parser.add_argument(
-        "-o", "--optimize", action="store_true", help="Enable extra lifted bitcode optimizations"
+        "-o",
+        "--optimize",
+        action="store_true",
+        help="Enable extra lifted bitcode optimizations",
     )
     parser.add_argument("project_name", help="lift and compile the binary trace")
 
