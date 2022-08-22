@@ -308,8 +308,16 @@ _unit-test-cpp:
 
 # Runs integration tests, which may take several minutes to complete
 run-integration-tests: erase-test-coverage _integration-test-python
+run-integration-tests-all: erase-test-coverage _integration-test-python-all
+run-integration-tests-opt: erase-test-coverage _integration-test-python-opt
 
 _integration-test-python:
+  pipenv run coverage run --append --source=binrec -m pytest --verbose -k  "test_integration and test_sample_normal" -rs
+
+_integration-test-python-opt:
+  pipenv run coverage run --append --source=binrec -m pytest --verbose -k  "test_integration and test_sample_optimized" -rs
+
+_integration-test-python-all:
   pipenv run coverage run --append --source=binrec -m pytest --verbose -k  "test_integration" -rs
 
 # Print the last test run code coverage report
@@ -319,6 +327,7 @@ print-coverage-report:
 # Erase the last test code coverage report
 erase-test-coverage:
   pipenv run coverage erase
+  rm -f integration-test-stats.log
 
 # Unit test command for Github CI
 _ci-unit-tests: _unit-test-python print-coverage-report
