@@ -1,77 +1,63 @@
 # Using BinRec to Debloat a Target Program
 
 In this short walkthrough, we take you through a sample BinRec project: debloating a program binary. Our goal in the walkthrough is to exercise the target binary with a set of concrete and/or symbolic inputs. BinRec will trace the execution of the program on these inputs,
-merge the traces, lift the merged trace to LLVM IR, and then recompile the IR to a debloated program. 
+merge the traces, lift the merged trace to LLVM IR, and then recompile the IR to a debloated program.
 
-1. Create a new analysis project by specifying the target binary, arguments to treat as symbolic, and the first set of concrete inputs:
-
-   ```bash
-   # just new-project <project_name> <path_to_target_binary> <sym_args> <concrete_args_list>
-   
-   # Concrete arguments only (sym_args = "")
-   $ just new-project eqproj test/benchmark/samples/bin/x86/binrec/eq "" 3 2
-
-   # OR
-
-   # First argument (3) is a symbolic argument
-   $ just new-project eqproj test/benchmark/samples/bin/x86/binrec/eq "1" 3 2
-
-   # OR
-
-   # Both arguments (3 and 2) are symbolic argument
-   $ just new-project eqproj test/benchmark/samples/bin/x86/binrec/eq "1 2" 3 2
-
-   ```
- 
-   This will create a project folder located at `s2e/projects/eqproj/` where traces and output associated with this project will be kept.
-
-2. Run the project:
-
-   ```bash  
-   # just run <project_name>
-   $ just run eqproj
-   ```
-
-3. For each additional set of concrete or symbolic inputs to trace, re-run the project with new arguments:
+1. Create a new analysis project by specifying the target binary
 
    ```bash
-   # just set-args <project_name> <concrete_args_list>
-   # just run <project_name>
-   $ just set-args eqproj  "" 2 2
-   $ just run eqproj
-   
-   # OR
-
-   # just run <project_name> --args <concrete_args_list>
-   just run eqproj --args "" 0 10
+   # just new-project <project_name> <path_to_target_binary>
+   $ just new-project eqproj test/benchmark/samples/bin/x86/binrec/eq
    ```
 
-4. Next, merge the traces, optionally specifying the specific trace numbers to merge:
+   This will create a project folder located at `s2e/projects/eqproj/` where project settings, trace data, outputs, and other resources associated with this project will be kept.
 
-   ```bash 
-   # just merge-traces <project_name>
-   $ just merge-traces eqproj
-   ```
+2. Add one or more sets of arguments to invoke the target binary with during tracing. These are recorded in the project settings file (`campaign.json`) in the project folder. Adding a set of arguments requires three components: a name for the trace, a space-separated list of
+   of argument numbers that should be considered symbolic, and a space-separated set of concrete arguments.
 
-
-5. Finally, lift the merged trace:
+   Here's an example with only concrete arguments:
 
    ```bash
-   # just lift-tace <project_name>
-   $ just lift-trace eqproj
+   # just add-trace <project_name> <trace_name> <symbolic-indexes> <args>
+   $ just add-trace eqproj tr1 "" "1 2"
+   $ just add-trace eqproj tr2 "" "2 2"
    ```
 
-   This will create a `s2e-out` subdirectory in the project folder. It contains the debloated program binary (`recovered`) as well the binary's associated LLVM IR (`recovered.bc` and `recovered.ll`).
+   Note in this case we leave the list of symbolic argument numbers empty (i.e., `""`).
 
-6. To validate the debloated program outputs match the original:
+
+   Here's an example using symbolic arguments:
+
+   ```bash
+   # just add-trace <project_name> <trace_name> <symbolic-indexes> <args>
+   $ just add-trace eqproj tr1 "1" "3 2"
+   ```
+
+   Note in this case to mark the first argument (i.e., the value `3`) as a symbolic argument, we provide the list `"1"` for our `symbolic-indexes`. During tracing, BinRec will ignore the actual value `3` and treat this argument as a wildcard. However, the valuer `3` will be used during validation (covered in Step 4). 
+
+
+3. Run the recovery process on the project:
+
+   ```bash
+   # just recover <project_name>
+   $ just recover eqproj
+   ```
+
+   This will execute the target binary with each set of concrete arguments and collect execution traces of each. It will then merge the two traces, lift the result, and recompile it to a recovered binary.
+
+   The recovered binary is located in the `s2e-out` subdirectory in the project folder. In addition to the debloated program binary (`recovered`), the folder also contains the binary's associated LLVM IR (`recovered.bc` and `recovered.ll`).
+
+   The recovery process also validates that the recovered binary's output matches the original binary's with respect to the provided concrete arguments.
+
+4. To validate the debloated program outputs match the original for aditional inputs:
 
    ```bash
    # just validate <project_name> <concrete_args>
-   $ just validate eqproj 3 2
+   $ just validate-args eqproj 3 2
 
-   $ just validate eqproj 2 2
+   $ just validate-args eqproj 2 2
 
-   $ just validate eqproj 0 10
+   $ just validate-args eqproj 0 10
    ```
 
    **NOTE:** At this time, validation only supports equivalence checks for `stdout`, `stderrr`, and the return code.

@@ -60,135 +60,50 @@ BATCH_WITHOUT_ARGS = ""
 
 class TestProject:
 
-    @patch.object(project, "TraceParams")
-    def test_set_project_args(self, mock_params_cls):
-        pass
-
-    @patch.object(project, "TraceParams")
-    def test_set_project_args_no_args(self, mock_params_cls):
-        pass
-
-    @patch.object(project, "TraceParams")
-    def test_set_project_args_empty_quote_args0(self, mock_params_cls):
-        pass
-
-    @patch.object(project, "BatchTraceParams")
-    @patch.object(project, "validate_lift_result")
-    def test_validate_batch_project(self, mock_validate_lift_result, mock_params_cls):
+    @patch.object(project, "Campaign")
+    @patch.object(project, "_validate_campaign_trace")
+    def test_validate_campaign(self, mock_validate_lift_result, mock_params_cls):
         binary = BINREC_PROJECTS / "asdf" / "s2e-out" / "binary"
-        mock_params_cls.load.return_value = MagicMock(traces=[1, 2, 3], project="asdf")
+        c = mock_params_cls.load_project.return_value = MagicMock(traces=[1, 2, 3], project="asdf")
 
-        project.validate_lift_result_batch_file("asdf", "./myfile.txt")
+        project.validate_campaign("asdf")
 
-        mock_params_cls.load.assert_called_once_with(binary, "./myfile.txt", project="asdf")
-        calls = [call("asdf", 1), call("asdf", 2), call("asdf", 3)]
+        mock_params_cls.load_project.assert_called_once_with("asdf")
+        calls = [call(c, 1), call(c, 2), call(c, 3)]
         mock_validate_lift_result.assert_has_calls(calls, any_order=False)
-    
+
     @patch.object(project, "subprocess")
     def test_run_trace_setup(self, mock_subproc):
         trace = MagicMock(setup=['asdf', 'qwer'])
-        project._run_trace_setup(trace, Path("path"))
+        project._run_trace_setup(MagicMock(), trace, Path("path"))
         mock_subproc.run.assert_called_once_with(["/bin/bash", "--noprofile"], input=b"asdf\nqwer", cwd="path")
-    
+
     @patch.object(project, "subprocess")
     def test_run_trace_setup_empty(self, mock_subproc):
         trace = MagicMock(setup=[])
-        project._run_trace_setup(trace, Path("path"))
+        project._run_trace_setup(MagicMock(setup=[]), trace, Path("path"))
         mock_subproc.run.assert_not_called()
 
     @patch.object(project, "subprocess")
     def test_run_trace_teardown(self, mock_subproc):
         trace = MagicMock(teardown=['asdf', 'qwer'])
-        project._run_trace_teardown(trace, Path("path"))
+        project._run_trace_teardown(MagicMock(), trace, Path("path"))
         mock_subproc.run.assert_called_once_with(["/bin/bash", "--noprofile"], input=b"asdf\nqwer", cwd="path")
-    
+
     @patch.object(project, "subprocess")
     def test_run_trace_teardown_empty(self, mock_subproc):
         trace = MagicMock(teardown=[])
-        project._run_trace_teardown(trace, Path("path"))
+        project._run_trace_teardown(MagicMock(teardown=[]), trace, Path("path"))
         mock_subproc.run.assert_not_called()
 
     @patch.object(project.subprocess, "check_call")
-    def test_run_project(self, mock_check_call):
-        project.run_project("asdf")
-        mock_check_call.assert_called_once_with(["s2e", "run", "--no-tui", "asdf"])
-
-    @patch.object(project.subprocess, "check_call")
-    @patch.object(project, "set_project_args")
-    def test_run_project_args(self, mock_set_args, mock_check_call):
-        project.run_project("asdf", ["qwer"])
-        mock_set_args.assert_called_once_with("asdf", ["qwer"])
-        mock_check_call.assert_called_once_with(["s2e", "run", "--no-tui", "asdf"])
-
-    @patch.object(project.subprocess, "check_call")
-    def test_run_project_error(self, mock_check_call):
-        mock_check_call.side_effect = subprocess.CalledProcessError(1, "zxcv")
-        with pytest.raises(BinRecError):
-            project.run_project("asdf")
-
-    @patch.object(project, "BatchTraceParams")
-    @patch.object(project, "run_project")
-    def test_run_batch_project(self, mock_run_project, mock_params_cls):
-        binary = BINREC_PROJECTS / "asdf" / "binary"
-        invocations = [line.strip().split() for line in BATCH_WITH_ARGS.split("\n")]
-        params = mock_params_cls.load.return_value = MagicMock(traces=[MagicMock(args=args) for args in invocations], project="asdf")
-        project.run_project_batch_file("asdf", "./myfile.txt")
-        mock_params_cls.load.assert_called_once_with(binary, "./myfile.txt", project="asdf")
-
-        for trace in params.traces:
-            trace.setup_input_file_directory.assert_called_once_with("asdf")
-            trace.write_config_script.assert_called_once_with("asdf")
-
-        calls = [call("asdf", None), call("asdf", None), call("asdf", None)]
-        mock_run_project.assert_has_calls(calls, any_order=False)
-
-    @patch.object(project, "project_dir")
-    @patch.object(project, "input_files_dir")
-    @patch.object(project.subprocess, "check_call")
-    @patch.object(project, "open", new_callable=mock_open)
-    @patch.object(project, "set_project_args")
-    @patch.object(project, "patch_s2e_project")
-    def test_new_project(self, mock_patch, mock_set_args, mock_file, mock_check_call, mock_input_files_dir, mock_project_dir):
-        project_dir = mock_project_dir.return_value = MockPath("/asdf", exists=False)
-        input_files_dir = mock_input_files_dir.return_value = MockPath("/asdf/input_files", exists=False)
-        assert project.new_project("asdf", MockPath("/binary")) is project_dir
-        mock_check_call.assert_called_once_with(["s2e", "new_project", "--name", "asdf", "/binary"])
-        mock_file.assert_called_once_with(project_dir / "s2e-config.lua", "a")
-        handle = mock_file()
-        handle.write.assert_called_once_with(f"""
-add_plugin(\"ELFSelector\")
-add_plugin(\"FunctionMonitor\")
-add_plugin(\"FunctionLog\")
-add_plugin(\"ExportELF\")
-pluginsConfig.ExportELF = {{
-    baseDirs = {{
-        "{project_dir}"
-    }},
-    exportInterval = 1000 -- export every 1000 basic blocks
-}}
-
-table.insert(pluginsConfig.HostFiles.baseDirs, "{input_files_dir}")
-"""
-        )
-        mock_patch.assert_called_once_with("asdf")
-        mock_set_args.assert_called_once_with("asdf", [""])
-        mock_input_files_dir.assert_called_once_with("asdf")
-        input_files_dir.mkdir.assert_called_once()
-        (project_dir / "binary").symlink_to.assert_called_once_with(project_dir / "binary")
-
-    @patch.object(project, "project_dir")
-    @patch.object(project, "input_files_dir")
-    @patch.object(project.subprocess, "check_call")
-    @patch.object(project, "open", new_callable=mock_open)
-    @patch.object(project, "set_project_args")
-    @patch.object(project, "patch_s2e_project")
-    def test_new_project_args(self, mock_patch, mock_set_args, mock_file, mock_check_call, mock_input_files_dir, mock_project_dir):
-        mock_project_dir.return_value = MockPath("/asdf", exists=False)
-        mock_input_files_dir.return_value = MockPath("/asdf/input_files", exists=False)
-        project.new_project("asdf", MockPath("/binary"), "1 2", ["one", "two"])
-        mock_check_call.assert_called_once_with(["s2e", "new_project", "--name", "asdf", "/binary"])
-        mock_patch.assert_called_once_with("asdf")
-        mock_set_args.assert_called_once_with("asdf", ["1 2", "one", "two"])
+    def test_run_campaign_trace(self, mock_check_call):
+        c = MagicMock()
+        trace = MagicMock()
+        project._run_campaign_trace(c, trace)
+        trace.setup_input_file_directory.assert_called_once_with(c.project)
+        trace.write_config_script.assert_called_once_with(c.project)
+        mock_check_call.assert_called_once_with(["s2e", "run", "--no-tui", c.project])
 
     @patch.object(project, "project_dir")
     @patch.object(project.subprocess, "check_call")

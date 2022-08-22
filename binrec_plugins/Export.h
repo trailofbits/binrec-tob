@@ -16,7 +16,7 @@ namespace s2e::plugins {
     class Export : public Plugin {
         using bb_count_t = std::map<uint64_t, unsigned int>;
         using bb_finalize_t = std::map<uint64_t, bool>;
-        using bb_map_t = std::map<uint64_t, llvm::Function *>;
+        using tb_map_t = std::map<uint64_t, S2ETranslationBlockPtr>;
 
     protected:
         explicit Export(S2E *s2e);
@@ -42,7 +42,7 @@ namespace s2e::plugins {
         // PC->LLVM cache
         bb_finalize_t m_bbFinalized;
         bb_count_t m_bbCounts;
-        bb_map_t m_bbFuns;
+        tb_map_t m_tbs;
 
         std::shared_ptr<binrec::TraceInfo> ti;
 
@@ -57,8 +57,8 @@ namespace s2e::plugins {
             llvm::Function *oldFunc,
             bool *aIsValid,
             bool *bIsValid);
-        auto forceCodeGen(S2EExecutionState *state) -> llvm::Function *;
-        auto regenCode(S2EExecutionState *state, llvm::Function *old) -> llvm::Function *;
+        auto forceCodeGen(S2EExecutionState *state) -> S2ETranslationBlock *;
+        auto regenCode(S2EExecutionState *state, llvm::Function *old) -> S2ETranslationBlock *;
         auto getFirstStoredPc(llvm::Function *f) -> uint64_t;
         bool m_regenerateBlocks;
 

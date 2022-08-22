@@ -30,6 +30,11 @@ jobs:
       - name: 'Init Python'
         run: |
           pipenv sync --dev
+      
+      - name: 'Init LLVM 14'
+        run: |
+          curl -sSL https://github.com/llvm/llvm-project/releases/download/llvmorg-14.0.0/clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz -o - | tar -xJ
+          cp clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04/bin/clang-format "${HOME}/.local/bin"
 
       - name: 'Lint'
         run: |

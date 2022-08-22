@@ -1,20 +1,662 @@
+_Exit 0 0 4
+_IO_adjust_column 0 4 4 4 4
+_IO_adjust_wcolumn 0 4 4 4 4
+_IO_default_doallocate 0 4 4
+_IO_default_finish 0 0 4 4
+_IO_default_pbackfail 0 4 4 4
+_IO_default_uflow 0 4 4
+_IO_default_xsgetn 0 4 4 4 4
+_IO_default_xsputn 0 4 4 4 4
+_IO_do_write 0 4 4 4 4
+_IO_doallocbuf 0 0 4
+_IO_enable_locks 0 0
+_IO_fclose 0 4 4
+_IO_fdopen 0 4 4 4
+_IO_feof 0 4 4
+_IO_ferror 0 4 4
+_IO_fflush 0 4 4
+_IO_fgetpos 0 4 4 4
+_IO_fgetpos64 0 4 4 4
+_IO_fgets 0 4 4 4 4
+_IO_file_attach 0 4 4 4
+_IO_file_close 0 4 4
+_IO_file_close_it 0 4 4
+_IO_file_doallocate 0 4 4
+_IO_file_finish 0 0 4 4
+_IO_file_fopen 0 4 4 4 4 4
+_IO_file_init 0 0 4
+_IO_file_open 0 4 4 4 4 4 4 4
+_IO_file_overflow 0 4 4 4
+_IO_file_read 0 4 4 4 4
+_IO_file_seek 0 8 4 8 4
+_IO_file_seekoff 0 8 4 8 4 4
+_IO_file_setbuf 0 4 4 4 4
+_IO_file_stat 0 4 4 4
+_IO_file_sync 0 4 4
+_IO_file_underflow 0 4 4
+_IO_file_write 0 4 4 4 4
+_IO_file_xsputn 0 4 4 4 4
+_IO_flockfile 0 0 4
+_IO_flush_all 0 4
+_IO_flush_all_linebuffered 0 0
+_IO_fopen 0 4 4 4
+_IO_fputs 0 4 4 4
+_IO_fread 0 4 4 4 4 4
+_IO_free_backup_area 0 0 4
+_IO_free_wbackup_area 0 0 4
+_IO_fsetpos 0 4 4 4
+_IO_fsetpos64 0 4 4 4
+_IO_ftell 0 4 4
+_IO_ftrylockfile 0 4 4
+_IO_funlockfile 0 0 4
+_IO_fwrite 0 4 4 4 4 4
+_IO_getc 0 4 4
+_IO_getline 0 4 4 4 4 4 4
+_IO_getline_info 0 4 4 4 4 4 4 4
+_IO_gets 0 4 4
+_IO_init 0 0 4 4
+_IO_init_marker 0 0 4 4
+_IO_init_wmarker 0 0 4 4
+_IO_iter_begin 0 4
+_IO_iter_end 0 4
+_IO_iter_file 0 4 4
+_IO_iter_next 0 4 4
+_IO_least_wmarker 0 4 4 4
+_IO_link_in 0 0 4
+_IO_list_lock 0 0
+_IO_list_resetlock 0 0
+_IO_list_unlock 0 0
+_IO_marker_delta 0 4 4
+_IO_marker_difference 0 4 4 4
+_IO_padn 0 4 4 4 4
+_IO_peekc_locked 0 4 4
+_IO_popen 0 4 4 4
+_IO_proc_close 0 4 4
+_IO_proc_open 0 4 4 4 4
+_IO_putc 0 4 4 4
+_IO_puts 0 4 4
+_IO_remove_marker 0 0 4
+_IO_seekmark 0 4 4 4 4
+_IO_seekoff 0 8 4 8 4 4
+_IO_seekpos 0 8 4 8 4
+_IO_seekwmark 0 4 4 4 4
+_IO_setb 0 0 4 4 4 4
+_IO_setbuffer 0 0 4 4 4
+_IO_setvbuf 0 4 4 4 4 4
+_IO_sgetn 0 4 4 4 4
+_IO_sputbackc 0 4 4 4
+_IO_sputbackwc 0 4 4 4
+_IO_str_init_readonly 0 0 4 4 4
+_IO_str_init_static 0 0 4 4 4 4
+_IO_str_overflow 0 4 4 4
+_IO_str_pbackfail 0 4 4 4
+_IO_str_seekoff 0 8 4 8 4 4
+_IO_str_underflow 0 4 4
+_IO_sungetc 0 4 4
+_IO_sungetwc 0 4 4
+_IO_switch_to_get_mode 0 4 4
+_IO_switch_to_main_wget_area 0 0 4
+_IO_switch_to_wbackup_area 0 0 4
+_IO_switch_to_wget_mode 0 4 4
+_IO_un_link 0 0 4
+_IO_ungetc 0 4 4 4
+_IO_unsave_markers 0 0 4
+_IO_unsave_wmarkers 0 0 4
+_IO_vfprintf 0 4 4 4 4
+_IO_vfscanf 0 4 4 4 4 4
+_IO_vsprintf 0 4 4 4 4
+_IO_wdefault_doallocate 0 4 4
+_IO_wdefault_finish 0 0 4 4
+_IO_wdefault_pbackfail 0 4 4 4
+_IO_wdefault_uflow 0 4 4
+_IO_wdefault_xsgetn 0 4 4 4 4
+_IO_wdefault_xsputn 0 4 4 4 4
+_IO_wdo_write 0 4 4 4 4
+_IO_wdoallocbuf 0 0 4
+_IO_wfile_overflow 0 4 4 4
+_IO_wfile_seekoff 0 8 4 8 4 4
+_IO_wfile_sync 0 4 4
+_IO_wfile_underflow 0 4 4
+_IO_wfile_xsputn 0 4 4 4 4
+_IO_wmarker_delta 0 4 4
+_IO_wsetb 0 0 4 4 4 4
+_Unwind_Find_FDE 0 4 4 4
+__adjtimex 0 4 4
+__argz_count 0 4 4 4
+__argz_next 0 4 4 4 4
+__argz_stringify 0 0 4 4 4
+__assert 0 0 4 4 4
+__assert_fail 0 0 4 4 4 4
+__assert_perror_fail 0 0 4 4 4 4
+__backtrace 0 4 4 4
+__backtrace_symbols 0 4 4 4
+__backtrace_symbols_fd 0 0 4 4 4
+__bsd_getpgrp 0 4 4
+__call_tls_dtors 0 0
+__chk_fail 0 0
+__clock_gettime 0 4 4 4
+__close 0 4 4
+__close_nocancel 0 4 4
+__cmsg_nxthdr 0 4 4 4
+__confstr_chk 0 4 4 4 4 4
+__connect 0 4 4 4 4
+__copy_grp 0 4 16 4 4 4 4
+__ctype_b_loc 0 4
+__ctype_get_mb_cur_max 0 4
+__ctype_init 0 0
+__ctype_tolower_loc 0 4
+__ctype_toupper_loc 0 4
+__cxa_at_quick_exit 0 4 4 4
+__cxa_atexit 0 4 4 4 4
+__cxa_finalize 0 0 4
+__cxa_thread_atexit_impl 0 4 4 4 4
+__cyg_profile_func_enter 0 0 4 4
+__cyg_profile_func_exit 0 0 4 4
+__dcgettext 0 4 4 4 4
+__default_morecore 0 4 4
+__deregister_frame 0 0 4
+__deregister_frame_info 0 4 4
+__deregister_frame_info_bases 0 4 4
+__dgettext 0 4 4 4
+__divdi3 0 8 8 8
+__duplocale 0 4 4
+__endmntent 0 4 4
+__errno_location 0 4
+__explicit_bzero_chk 0 0 4 4 4
+__fbufsize 0 4 4
+__fdelt_chk 0 4 4
+__fdelt_warn 0 4 4
+__ffs 0 4 4
+__fgets_chk 0 4 4 4 4 4
+__fgets_unlocked_chk 0 4 4 4 4 4
+__fgetws_chk 0 4 4 4 4 4
+__fgetws_unlocked_chk 0 4 4 4 4 4
+__flbf 0 4 4
+__fork 0 4
+__fortify_fail 0 0 4
+__fpending 0 4 4
+__fpurge 0 0 4
+__frame_state_for 0 4 4 4
+__fread_chk 0 4 4 4 4 4 4
+__fread_unlocked_chk 0 4 4 4 4 4 4
+__freadable 0 4 4
+__freading 0 4 4
+__freelocale 0 0 4
+__fseeko64 0 4 4 8 4
+__fsetlocking 0 4 4 4
+__ftello64 0 8 4
+__fwritable 0 4 4
+__fwriting 0 4 4
+__fxstat 0 4 4 4 4
+__fxstat64 0 4 4 4 4
+__fxstatat 0 4 4 4 4 4 4
+__fxstatat64 0 4 4 4 4 4 4
+__gai_sigqueue 0 4 4 4 4
+__gconv_create_spec 0 4 4 4 4
+__gconv_destroy_spec 0 0 4
+__gconv_get_alias_db 0 4
+__gconv_get_cache 0 4
+__gconv_get_modules_db 0 4
+__gconv_open 0 4 4 4 4
+__gconv_transliterate 0 4 4 4 4 4 4 4 4
+__getauxval 0 4 4
+__getcwd_chk 0 4 4 4 4
+__getdelim 0 4 4 4 4 4
+__getdomainname_chk 0 4 4 4 4
+__getgroups_chk 0 4 4 4 4
+__gethostname_chk 0 4 4 4 4
+__getlogin_r_chk 0 4 4 4 4
+__getmntent_r 0 4 4 4 4 4
+__getpagesize 0 4
+__getrlimit 0 4 4 4
+__gets_chk 0 4 4 4
+__getwd_chk 0 4 4 4
+__gmtime_r 0 4 4 4
+__h_errno_location 0 4
+__idna_from_dns_encoding 0 4 4 4
+__idna_to_dns_encoding 0 4 4 4
+__inet6_scopeid_pton 0 4 4 4 4
+__inet_aton_exact 0 4 4 4
+__inet_pton_length 0 4 4 4 4 4
+__internal_endnetgrent 0 0 4
+__internal_getnetgrent_r 0 4 4 4 4 4 4 4 4
+__internal_setnetgrent 0 4 4 4
+__isalnum_l 0 4 4 4
+__isalpha_l 0 4 4 4
+__isascii_l 0 4 4
+__isblank_l 0 4 4 4
+__iscntrl_l 0 4 4 4
+__isctype 0 4 4 4
+__isdigit_l 0 4 4 4
+__isgraph_l 0 4 4 4
+__isinf 0 4 8
+__isinff 0 4 4
+__isinfl 0 4 12
+__islower_l 0 4 4 4
+__isnan 0 4 8
+__isnanf 0 4 4
+__isnanl 0 4 12
+__isoc99_vfscanf 0 4 4 4 4
+__isoc99_vfwscanf 0 4 4 4 4
+__isoc99_vscanf 0 4 4 4
+__isoc99_vsscanf 0 4 4 4 4
+__isoc99_vswscanf 0 4 4 4 4
+__isoc99_vwscanf 0 4 4 4
+__isprint_l 0 4 4 4
+__ispunct_l 0 4 4 4
+__isspace_l 0 4 4 4
+__isupper_l 0 4 4 4
+__iswalnum_l 0 4 4 4
+__iswalpha_l 0 4 4 4
+__iswblank_l 0 4 4 4
+__iswcntrl_l 0 4 4 4
+__iswctype 0 4 4 4
+__iswctype_l 0 4 4 4 4
+__iswdigit_l 0 4 4 4
+__iswgraph_l 0 4 4 4
+__iswlower_l 0 4 4 4
+__iswprint_l 0 4 4 4
+__iswpunct_l 0 4 4 4
+__iswspace_l 0 4 4 4
+__iswupper_l 0 4 4 4
+__iswxdigit_l 0 4 4 4
+__isxdigit_l 0 4 4 4
+__ivaliduser 0 4 4 4 4 4
+__libc_alloc_buffer_alloc_array 0 4 4 4 4 4
+__libc_alloc_buffer_allocate 0 8 4 4
+__libc_alloc_buffer_copy_bytes 0 8 8 4 4
+__libc_alloc_buffer_copy_string 0 8 8 4
+__libc_alloc_buffer_create_failure 0 0 4 4
+__libc_alloca_cutoff 0 4 4
+__libc_allocate_once_slow 0 4 4 4 4 4
+__libc_allocate_rtsig 0 4 4
+__libc_allocate_rtsig_private 0 4 4
+__libc_calloc 0 4 4 4
+__libc_clntudp_bufcreate 0 4 4 4 4 8 4 4 4 4
+__libc_current_sigrtmax 0 4
+__libc_current_sigrtmax_private 0 4
+__libc_current_sigrtmin 0 4
+__libc_current_sigrtmin_private 0 4
+__libc_dlclose 0 4 4
+__libc_dlopen_mode 0 4 4 4
+__libc_dlsym 0 4 4 4
+__libc_dlvsym 0 4 4 4 4
+__libc_dynarray_at_failure 0 0 4 4
+__libc_dynarray_emplace_enlarge 0 4 4 4 4
+__libc_dynarray_finalize 0 4 4 4 4 4
+__libc_dynarray_resize 0 4 4 4 4 4
+__libc_dynarray_resize_clear 0 4 4 4 4 4
+__libc_fatal 0 0 4
+__libc_fork 0 4
+__libc_free 0 0 4
+__libc_freeres 0 0
+__libc_ifunc_impl_list 0 4 4 4 4
+__libc_init_first 0 0 4 4 4
+__libc_longjmp 0 0 4 4
+__libc_mallinfo 0 40
+__libc_malloc 0 4 4
+__libc_mallopt 0 4 4 4
+__libc_memalign 0 4 4 4
+__libc_msgrcv 0 4 4 4 4 4 4
+__libc_msgsnd 0 4 4 4 4 4
+__libc_pread 0 4 4 4 4 4
+__libc_pthread_init 0 0 4 4 4
+__libc_pvalloc 0 4 4
+__libc_pwrite 0 4 4 4 4 4
+__libc_readline_unlocked 0 4 4 4 4
+__libc_realloc 0 4 4 4
+__libc_reallocarray 0 4 4 4 4
+__libc_rpc_getport 0 4 4 4 4 4 4 4
+__libc_sa_len 0 4 2
+__libc_scratch_buffer_grow 0 4 4
+__libc_scratch_buffer_grow_preserve 0 4 4
+__libc_scratch_buffer_set_array_size 0 4 4 4 4
+__libc_secure_getenv 0 4 4
+__libc_siglongjmp 0 0 4 4
+__libc_start_main 0 4 4 4 4 4 4 4 4
+__libc_system 0 4 4
+__libc_thread_freeres 0 0
+__libc_valloc 0 4 4
+__longjmp_chk 0 0 4 4
+__lseek 0 4 4 4 4
+__lxstat 0 4 4 4 4
+__lxstat64 0 4 4 4 4
+__mbrlen 0 4 4 4 4
+__mbrtowc 0 4 4 4 4 4
+__mbsnrtowcs_chk 0 4 4 4 4 4 4 4
+__mbsrtowcs_chk 0 4 4 4 4 4 4
+__mbstowcs_chk 0 4 4 4 4 4
+__memcpy_by2 0 4 4 4 4
+__memcpy_by4 0 4 4 4 4
+__memcpy_c 0 4 4 4 4
+__memcpy_g 0 4 4 4 4
+__mempcpy_by2 0 4 4 4 4
+__mempcpy_by4 0 4 4 4 4
+__mempcpy_byn 0 4 4 4 4
+__mempcpy_small 0 4 4 1 1 1 1 2 2 4 4 4
+__memset_cc 0 4 4 4 4
+__memset_ccn_by2 0 4 4 4 4
+__memset_ccn_by4 0 4 4 4 4
+__memset_cg 0 4 4 4 4
+__memset_gcn_by2 0 4 4 1 4
+__memset_gcn_by4 0 4 4 1 4
+__memset_gg 0 4 4 1 4
+__merge_grp 0 4 4 4 4 4 4 4
+__mktemp 0 4 4
+__mmap 0 4 4 4 4 4 4 4
+__moddi3 0 8 8 8
+__monstartup 0 0 4 4
+__nanosleep 0 4 4 4
+__netlink_assert_response 0 0 4 4
+__newlocale 0 4 4 4 4
+__nl_langinfo_l 0 4 4 4
+__nss_configure_lookup 0 4 4 4
+__nss_database_lookup 0 4 4 4 4 4
+__nss_database_lookup2 0 4 4 4 4 4
+__nss_disable_nscd 0 0 4
+__nss_group_lookup 0 4 4 4 4
+__nss_group_lookup2 0 4 4 4 4 4
+__nss_hash 0 4 4 4
+__nss_hostname_digits_dots 0 4 4 4 4 4 4 4 4 4 4
+__nss_hosts_lookup 0 4 4 4 4
+__nss_hosts_lookup2 0 4 4 4 4 4
+__nss_lookup 0 4 4 4 4 4
+__nss_lookup_function 0 4 4 4
+__nss_next 0 4 4 4 4 4 4
+__nss_next2 0 4 4 4 4 4 4 4
+__nss_passwd_lookup 0 4 4 4 4
+__nss_passwd_lookup2 0 4 4 4 4 4
+__nss_services_lookup2 0 4 4 4 4 4
+__obstack_vprintf_chk 0 4 4 4 4 4
+__open64_2 0 4 4 4
+__open_2 0 4 4 4
+__open_catalog 0 4 4 4 4 4
+__openat64_2 0 4 4 4 4
+__openat_2 0 4 4 4 4
+__overflow 0 4 4 4
+__poll 0 4 4 4 4
+__poll_chk 0 4 4 4 4 4
+__posix_getopt 0 4 4 4 4
+__ppoll_chk 0 4 4 4 4 4 4
+__pread64 0 4 4 4 4 8
+__pread64_chk 0 4 4 4 4 8 4
+__pread64_nocancel 0 4 4 4 4 8
+__pread_chk 0 4 4 4 4 4 4
+__printf_fp 0 4 4 4 4
+__profile_frequency 0 4
+__ptsname_r_chk 0 4 4 4 4 4
+__pwrite64 0 4 4 4 4 8
+__read 0 4 4 4 4
+__read_chk 0 4 4 4 4 4
+__read_nocancel 0 4 4 4 4
+__readlink_chk 0 4 4 4 4 4
+__readlinkat_chk 0 4 4 4 4 4 4
+__realpath_chk 0 4 4 4 4
+__recv 0 4 4 4 4 4
+__recv_chk 0 4 4 4 4 4 4
+__recvfrom_chk 0 4 4 4 4 4 4 4 4
+__register_atfork 0 4 4 4 4 4
+__register_frame 0 0 4
+__register_frame_info 0 0 4 4
+__register_frame_info_bases 0 0 4 4 4 4
+__register_frame_info_table 0 0 4 4
+__register_frame_info_table_bases 0 0 4 4 4 4
+__register_frame_table 0 0 4
+__res_iclose 0 0 4 1
+__res_init 0 4
+__res_nclose 0 0 4
+__res_ninit 0 4 4
+__res_randomid 0 4
+__res_state 0 4
+__resolv_context_get 0 4
+__resolv_context_get_override 0 4 4
+__resolv_context_get_preinit 0 4
+__resolv_context_put 0 0 4
+__rpc_thread_createerr 0 4
+__rpc_thread_svc_fdset 0 4
+__rpc_thread_svc_max_pollfd 0 4
+__rpc_thread_svc_pollfd 0 4
+__sbrk 0 4 4
+__sched_cpualloc 0 4 4
+__sched_cpufree 0 0 4
+__secure_getenv 0 4 4
+__select 0 4 4 4 4 4 4
+__send 0 4 4 4 4 4
+__sendmmsg 0 4 4 4 4 4
+__setmntent 0 4 4 4
+__sigaction 0 4 4 4 4
+__sigaddset 0 4 4 4
+__sigdelset 0 4 4 4
+__sigismember 0 4 4 4
+__signbit 0 4 8
+__signbitf 0 4 4
+__signbitl 0 4 12
+__sigpause 0 4 4 4
+__sigsuspend 0 4 4
+__sigtimedwait 0 4 4 4 4
+__socket 0 4 4 4 4
+__stack_chk_fail 0 0
+__stpcpy_chk 0 4 4 4 4
+__stpcpy_g 0 4 4 4
+__stpcpy_small 0 4 4 2 2 4 4 4
+__stpncpy_chk 0 4 4 4 4 4
+__strcasestr 0 4 4 4
+__strcat_c 0 4 4 4
+__strcat_chk 0 4 4 4 4
+__strcat_g 0 4 4 4
+__strchr_c 0 4 4 4
+__strchr_g 0 4 4 4
+__strchrnul_c 0 4 4 4
+__strchrnul_g 0 4 4 4
+__strcmp_gg 0 4 4 4
+__strcoll_l 0 4 4 4 4
+__strcpy_chk 0 4 4 4 4
+__strcpy_g 0 4 4 4
+__strcpy_small 0 4 4 2 2 4 4 4
+__strcspn_c1 0 4 4 4
+__strcspn_c2 0 4 4 4 4
+__strcspn_c3 0 4 4 4 4 4
+__strcspn_cg 0 4 4 4
+__strcspn_g 0 4 4 4
+__strdup 0 4 4
+__strerror_r 0 4 4 4 4
+__strftime_l 0 4 4 4 4 4 4
+__strlen_g 0 4 4
+__strncat_chk 0 4 4 4 4 4
+__strncat_g 0 4 4 4 4
+__strncmp_g 0 4 4 4 4
+__strncpy_by2 0 4 4 4 4 4
+__strncpy_by4 0 4 4 4 4 4
+__strncpy_byn 0 4 4 4 4 4
+__strncpy_chk 0 4 4 4 4 4
+__strncpy_gg 0 4 4 4 4
+__strndup 0 4 4 4
+__strpbrk_c2 0 4 4 4 4
+__strpbrk_c3 0 4 4 4 4 4
+__strpbrk_cg 0 4 4 4
+__strpbrk_g 0 4 4 4
+__strrchr_c 0 4 4 4
+__strrchr_g 0 4 4 4
+__strsep_1c 0 4 4 1
+__strsep_2c 0 4 4 1 1
+__strsep_3c 0 4 4 1 1 1
+__strsep_g 0 4 4 4
+__strspn_c1 0 4 4 4
+__strspn_c2 0 4 4 4 4
+__strspn_c3 0 4 4 4 4 4
+__strspn_cg 0 4 4 4
+__strspn_g 0 4 4 4
+__strstr_cg 0 4 4 4
+__strstr_g 0 4 4 4
+__strtod_internal 1 8 4 4 4
+__strtod_l 1 8 4 4 4
+__strtod_nan 1 8 4 4 1
+__strtof128_internal 0 16 4 4 4
+__strtof128_nan 0 16 4 4 1
+__strtof_internal 1 4 4 4 4
+__strtof_l 1 4 4 4 4
+__strtof_nan 1 4 4 4 1
+__strtok_r 0 4 4 4 4
+__strtok_r_1c 0 4 4 1 4
+__strtol_internal 0 4 4 4 4 4
+__strtol_l 0 4 4 4 4 4
+__strtold_internal 1 12 4 4 4
+__strtold_l 1 12 4 4 4
+__strtold_nan 1 12 4 4 1
+__strtoll_internal 0 8 4 4 4 4
+__strtoll_l 0 8 4 4 4 4
+__strtoq_internal 0 8 4 4 4 4
+__strtoul_internal 0 4 4 4 4 4
+__strtoul_l 0 4 4 4 4 4
+__strtoull_internal 0 8 4 4 4 4
+__strtoull_l 0 8 4 4 4 4
+__strtouq_internal 0 8 4 4 4 4
+__strverscmp 0 4 4 4
+__strxfrm_l 0 4 4 4 4 4
+__sysconf 0 4 4
+__sysctl 0 4 4 4 4 4 4 4
+__sysv_signal 0 4 4 4
+__tdelete 0 4 4 4 4
+__tfind 0 4 4 4 4
+__toascii_l 0 4 4
+__tolower_l 0 4 4 4
+__toupper_l 0 4 4 4
+__towctrans 0 4 4 4
+__towctrans_l 0 4 4 4 4
+__towlower_l 0 4 4 4
+__towupper_l 0 4 4 4
+__tsearch 0 4 4 4 4
+__ttyname_r_chk 0 4 4 4 4 4
+__twalk 0 0 4 4
+__twalk_r 0 0 4 4 4
+__udivdi3 0 8 8 8
+__uflow 0 4 4
+__umoddi3 0 8 8 8
+__underflow 0 4 4
+__uselocale 0 4 4
+__vasprintf_chk 0 4 4 4 4 4
+__vdprintf_chk 0 4 4 4 4 4
+__vfprintf_chk 0 4 4 4 4 4
+__vfscanf 0 4 4 4 4
+__vfwprintf_chk 0 4 4 4 4 4
+__vprintf_chk 0 4 4 4 4
+__vsnprintf 0 4 4 4 4 4
+__vsnprintf_chk 0 4 4 4 4 4 4 4
+__vsprintf_chk 0 4 4 4 4 4 4
+__vsscanf 0 4 4 4 4
+__vswprintf_chk 0 4 4 4 4 4 4 4
+__vsyslog_chk 0 0 4 4 4 4
+__vwprintf_chk 0 4 4 4 4
+__wait 0 4 4
+__waitpid 0 4 4 4 4
+__wcpcpy_chk 0 4 4 4 4
+__wcpncpy_chk 0 4 4 4 4 4
+__wcrtomb_chk 0 4 4 4 4 4
+__wcscasecmp_l 0 4 4 4 4
+__wcscat_chk 0 4 4 4 4
+__wcscoll_l 0 4 4 4 4
+__wcscpy_chk 0 4 4 4 4
+__wcsftime_l 0 4 4 4 4 4 4
+__wcsncasecmp_l 0 4 4 4 4 4
+__wcsncat_chk 0 4 4 4 4 4
+__wcsncpy_chk 0 4 4 4 4 4
+__wcsnrtombs_chk 0 4 4 4 4 4 4 4
+__wcsrtombs_chk 0 4 4 4 4 4 4
+__wcstod_internal 1 8 4 4 4
+__wcstod_l 1 8 4 4 4
+__wcstof128_internal 0 16 4 4 4
+__wcstof_internal 1 4 4 4 4
+__wcstof_l 1 4 4 4 4
+__wcstol_internal 0 4 4 4 4 4
+__wcstol_l 0 4 4 4 4 4
+__wcstold_internal 1 12 4 4 4
+__wcstold_l 1 12 4 4 4
+__wcstoll_internal 0 8 4 4 4 4
+__wcstoll_l 0 8 4 4 4 4
+__wcstombs_chk 0 4 4 4 4 4
+__wcstoul_internal 0 4 4 4 4 4
+__wcstoul_l 0 4 4 4 4 4
+__wcstoull_internal 0 8 4 4 4 4
+__wcstoull_l 0 8 4 4 4 4
+__wcsxfrm_l 0 4 4 4 4 4
+__wctomb_chk 0 4 4 4 4
+__wctrans_l 0 4 4 4
+__wctype_l 0 4 4 4
+__wmemcpy_chk 0 4 4 4 4 4
+__wmemmove_chk 0 4 4 4 4 4
+__wmempcpy_chk 0 4 4 4 4 4
+__wmemset_chk 0 4 4 4 4 4
+__woverflow 0 4 4 4
+__write 0 4 4 4 4
+__write_nocancel 0 4 4 4 4
+__wuflow 0 4 4
+__wunderflow 0 4 4
+__xmknod 0 4 4 4 4 4
+__xmknodat 0 4 4 4 4 4 4
+__xpg_basename 0 4 4
+__xpg_sigpause 0 4 4
+__xpg_strerror_r 0 4 4 4 4
+__xstat 0 4 4 4 4
+__xstat64 0 4 4 4 4
+_authenticate 0 4 4 4
+_dl_addr 0 4 4 4 4 4
+_dl_catch_error 0 4 4 4 4 4 4
+_dl_catch_exception 0 4 4 4 4
+_dl_mcount_wrapper 0 0 4
+_dl_mcount_wrapper_check 0 0 4
+_dl_signal_error 0 0 4 4 4 4
+_dl_signal_exception 0 0 4 4 4
+_dl_sym 0 4 4 4 4
+_dl_vsym 0 4 4 4 4 4
+_exit 0 0 4
+_flushlbf 0 0
+_longjmp 0 0 4 4
+_mcleanup 0 0
+_nss_files_parse_grent 0 4 4 4 4 4 4
+_nss_files_parse_pwent 0 4 4 4 4 4 4
+_nss_files_parse_sgent 0 4 4 4 4 4 4
+_nss_files_parse_spent 0 4 4 4 4 4 4
+_obstack_allocated_p 0 4 4 4
+_obstack_begin 0 4 4 4 4 4 4
+_obstack_begin_1 0 4 4 4 4 4 4 4
+_obstack_free 0 0 4 4
+_obstack_memory_used 0 4 4
+_obstack_newchunk 0 0 4 4
+_rpc_dtablesize 0 4
+_seterr_reply 0 0 4 4
+_tolower 0 4 4
+_toupper 0 4 4
 a64l 0 4 4
 abort 0 0
 abs 0 4 4
+accept 0 4 4 4 4
+accept4 0 4 4 4 4 4
 access 0 4 4 4
 acct 0 4 4
 addmntent 0 4 4 4
 addseverity 0 4 4 4
 adjtime 0 4 4 4
 adjtimex 0 4 4
+advance 0 4 4 4
 alarm 0 4 4
 aligned_alloc 0 4 4 4
 alphasort 0 4 4 4
+alphasort64 0 4 4 4
+argp_help 0 0 4 4 4 4
+argp_parse 0 4 4 4 4 4 4 4
+argp_state_help 0 0 4 4 4
+argp_usage 0 0 4
 argz_add 0 4 4 4 4
+argz_add_sep 0 4 4 4 4 4
+argz_append 0 4 4 4 4 4
 argz_count 0 4 4 4
-argz_delete 0 4 4 4 4
+argz_create 0 4 4 4 4
+argz_create_sep 0 4 4 4 4 4
+argz_delete 0 0 4 4 4
 argz_extract 0 0 4 4 4
+argz_insert 0 4 4 4 4 4
 argz_next 0 4 4 4 4
+argz_replace 0 4 4 4 4 4 4
 argz_stringify 0 0 4 4 4
 asctime 0 4 4
 asctime_r 0 4 4 4
@@ -23,74 +665,112 @@ atof 1 8 4
 atoi 0 4 4
 atol 0 4 4
 atoll 0 8 4
+authdes_create 0 4 4 4 4 4
+authdes_getucred 0 4 4 4 4 4 4
+authdes_pk_create 0 4 4 4 4 4 4
 authnone_create 0 4
+authunix_create 0 4 4 4 4 4 4
 authunix_create_default 0 4
 backtrace 0 4 4 4
+backtrace_symbols 0 4 4 4
 backtrace_symbols_fd 0 0 4 4 4
+basename 0 4 4
 bcmp 0 4 4 4 4
 bcopy 0 0 4 4 4
 bdflush 0 4 4 4
+bind 0 4 4 4 4
+bind_textdomain_codeset 0 4 4 4
 bindresvport 0 4 4 4
 bindtextdomain 0 4 4 4
 brk 0 4 4
 bsd_signal 0 4 4 4
+bsearch 0 4 4 4 4 4 4
 btowc 0 4 4
 bzero 0 0 4 4
+c16rtomb 0 4 4 2 4
+c32rtomb 0 4 4 4 4
 calloc 0 4 4 4
+callrpc 0 4 4 4 4 4 4 4 4 4
 canonicalize_file_name 0 4 4
 capget 0 4 4 4
 capset 0 4 4 4
 catclose 0 4 4
+catgets 0 4 4 4 4 4
 catopen 0 4 4 4
+cbc_crypt 0 4 4 4 4 4 4
 cfgetispeed 0 4 4
 cfgetospeed 0 4 4
 cfmakeraw 0 0 4
-cfree 0 4 4
+cfree 0 0 4
 cfsetispeed 0 4 4 4
 cfsetospeed 0 4 4 4
 cfsetspeed 0 4 4 4
 chdir 0 4 4
+chflags 0 4 4 4
+chmod 0 4 4 4
+chown 0 4 4 4 4
+chroot 0 4 4
 clearenv 0 4
 clearerr 0 0 4
 clearerr_unlocked 0 0 4
+clnt_broadcast 0 4 4 4 4 4 4 4 4 4
+clnt_create 0 4 4 4 4 4
 clnt_pcreateerror 0 0 4
 clnt_perrno 0 0 4
-clntraw_create 0 4 4 4
+clnt_perror 0 0 4 4
 clnt_spcreateerror 0 4 4
 clnt_sperrno 0 4 4
 clnt_sperror 0 4 4 4
+clntraw_create 0 4 4 4
+clnttcp_create 0 4 4 4 4 4 4 4
+clntudp_bufcreate 0 4 4 4 4 8 4 4 4
+clntudp_create 0 4 4 4 4 8 4
+clntunix_create 0 4 4 4 4 4 4 4
+clock 0 4
 clock_getcpuclockid 0 4 4 4
 clock_getres 0 4 4 4
 clock_gettime 0 4 4 4
+clock_nanosleep 0 4 4 4 4 4
 clock_settime 0 4 4 4
 close 0 4 4
 closedir 0 4 4
 closelog 0 0
 confstr 0 4 4 4 4
+connect 0 4 4 4 4
+copy_file_range 0 4 4 4 4 4 4 4
 copysign 1 8 8 8
 copysignf 1 4 4 4
 copysignl 1 12 12 12
 creat 0 4 4 4
+creat64 0 4 4 4
 create_module 0 4 4 4
 ctermid 0 4 4
 ctime 0 4 4
 ctime_r 0 4 4 4
 cuserid 0 4 4
 daemon 0 4 4 4
+dcgettext 0 4 4 4 4
+dcngettext 0 4 4 4 4 4 4
 delete_module 0 4 4 4
 des_setparity 0 0 4
 dgettext 0 4 4 4
 difftime 1 8 4 4
 dirfd 0 4 4
+dirname 0 4 4
 div 0 8 4 4
+dl_iterate_phdr 0 4 4 4
+dngettext 0 4 4 4 4 4
 drand48 1 8
 drand48_r 0 4 4 4
 dup 0 4 4
 dup2 0 4 4 4
 dup3 0 4 4 4 4
+duplocale 0 4 4
 dysize 0 4 4
 eaccess 0 4 4 4
+ecb_crypt 0 4 4 4 4 4
 ecvt 0 4 8 4 4 4
+ecvt_r 0 4 8 4 4 4 4 4
 endaliasent 0 0
 endfsent 0 0
 endgrent 0 0
@@ -102,44 +782,60 @@ endprotoent 0 0
 endpwent 0 0
 endrpcent 0 0
 endservent 0 0
+endsgent 0 0
 endspent 0 0
 endttyent 0 4
 endusershell 0 0
 endutent 0 0
 endutxent 0 0
+envz_add 0 4 4 4 4 4
 envz_entry 0 4 4 4 4
 envz_get 0 4 4 4 4
+envz_merge 0 4 4 4 4 4 4
 envz_remove 0 0 4 4 4
 envz_strip 0 0 4 4
 epoll_create 0 4 4
 epoll_create1 0 4 4
 epoll_ctl 0 4 4 4 4 4
+epoll_pwait 0 4 4 4 4 4 4
+epoll_wait 0 4 4 4 4 4
 erand48 1 8 4
+erand48_r 0 4 4 4 4
 ether_aton 0 4 4
+ether_aton_r 0 4 4 4
 ether_hostton 0 4 4 4
+ether_line 0 4 4 4 4
 ether_ntoa 0 4 4
 ether_ntoa_r 0 4 4 4
 ether_ntohost 0 4 4 4
 euidaccess 0 4 4 4
 eventfd 0 4 4 4
+eventfd_read 0 4 4 4
+eventfd_write 0 4 4 8
 execv 0 4 4 4
+execve 0 4 4 4 4
 execvp 0 4 4 4
+execvpe 0 4 4 4 4
 exit 0 0 4
-_exit 0 0 4
-_Exit 0 0 4
+explicit_bzero 0 0 4 4
 faccessat 0 4 4 4 4 4
-__fbufsize 0 4 4
+fallocate 0 4 4 4 4 4
+fallocate64 0 4 4 4 8 8
+fanotify_init 0 4 4 4
+fanotify_mark 0 4 4 4 8 4 4
+fattach 0 4 4 4
 fchdir 0 4 4
+fchflags 0 4 4 4
 fchmod 0 4 4 4
 fchmodat 0 4 4 4 4 4
 fchown 0 4 4 4 4
-fclose 0 4 4
+fchownat 0 4 4 4 4 4 4
 fclose 0 4 4
 fcloseall 0 4
-fcntl 0 4 4 4 4
 fcvt 0 4 8 4 4 4
+fcvt_r 0 4 8 4 4 4 4 4
 fdatasync 0 4 4
-fdopen 0 4 4 4
+fdetach 0 4 4
 fdopen 0 4 4 4
 fdopendir 0 4 4
 feof 0 4 4
@@ -155,12 +851,17 @@ ffsll 0 4 8
 fgetc 0 4 4
 fgetc_unlocked 0 4 4
 fgetgrent 0 4 4
+fgetgrent_r 0 4 4 4 4 4 4
 fgetpos 0 4 4 4
-fgetpos 0 4 4 4
+fgetpos64 0 4 4 4
 fgetpwent 0 4 4
+fgetpwent_r 0 4 4 4 4 4 4
 fgets 0 4 4 4 4
-fgetspent 0 4 4
 fgets_unlocked 0 4 4 4 4
+fgetsgent 0 4 4
+fgetsgent_r 0 4 4 4 4 4 4
+fgetspent 0 4 4
+fgetspent_r 0 4 4 4 4 4 4
 fgetwc 0 4 4
 fgetwc_unlocked 0 4 4
 fgetws 0 4 4 4 4
@@ -170,18 +871,16 @@ fileno_unlocked 0 4 4
 finite 0 4 8
 finitef 0 4 4
 finitel 0 4 12
-__flbf 0 4 4
+flock 0 4 4 4
 flockfile 0 0 4
-_flushlbf 0 0
 fmemopen 0 4 4 4 4
-fnmatch 0 4 4 4 4
+fmtmsg 0 4 4 4 4 4 4 4
 fnmatch 0 4 4 4 4
 fopen 0 4 4 4
-fopen 0 4 4 4
+fopen64 0 4 4 4
+fopencookie 0 4 4 4 16
 fork 0 4
 fpathconf 0 4 4 4
-__fpending 0 4 4
-__fpurge 0 0 4
 fputc 0 4 4 4
 fputc_unlocked 0 4 4 4
 fputs 0 4 4 4
@@ -191,60 +890,85 @@ fputwc_unlocked 0 4 4 4
 fputws 0 4 4 4
 fputws_unlocked 0 4 4 4
 fread 0 4 4 4 4 4
-__freadable 0 4 4
-__freading 0 4 4
+fread_unlocked 0 4 4 4 4 4
 free 0 0 4
 freeaddrinfo 0 0 4
 freeifaddrs 0 0 4
-fremovexattr 0 4 4 4
+freelocale 0 0 4
 freopen 0 4 4 4 4
+freopen64 0 4 4 4 4
 frexp 1 8 8 4
 frexpf 1 4 4 4
 frexpl 1 12 12 4
 fseek 0 4 4 4 4
 fseeko 0 4 4 4 4
-__fsetlocking 0 4 4 4
+fseeko64 0 4 4 8 4
 fsetpos 0 4 4 4
-fsetpos 0 4 4 4
+fsetpos64 0 4 4 4
 fstatfs 0 4 4 4
+fstatfs64 0 4 4 4
 fstatvfs 0 4 4 4
+fstatvfs64 0 4 4 4
 fsync 0 4 4
 ftell 0 4 4
 ftello 0 4 4
+ftello64 0 8 4
 ftime 0 4 4
 ftok 0 4 4 4
 ftruncate 0 4 4 4
+ftruncate64 0 4 4 8
 ftrylockfile 0 4 4
+fts64_children 0 4 4 4
+fts64_close 0 4 4
+fts64_open 0 4 4 4 4
+fts64_read 0 4 4
+fts64_set 0 4 4 4 4
 fts_children 0 4 4 4
 fts_close 0 4 4
+fts_open 0 4 4 4 4
 fts_read 0 4 4
 fts_set 0 4 4 4 4
+ftw 0 4 4 4 4
+ftw64 0 4 4 4 4
 funlockfile 0 0 4
 futimens 0 4 4 4
 futimes 0 4 4 4
+futimesat 0 4 4 4 4
 fwide 0 4 4 4
-__fwritable 0 4 4
 fwrite 0 4 4 4 4 4
-__fwriting 0 4 4
+fwrite_unlocked 0 4 4 4 4 4
 gai_strerror 0 4 4
 gcvt 0 4 8 4 4
+get_avphys_pages 0 4
+get_current_dir_name 0 4
+get_kernel_syms 0 4 4
+get_myaddress 0 0 4
+get_nprocs 0 4
+get_nprocs_conf 0 4
+get_phys_pages 0 4
+getaddrinfo 0 4 4 4 4 4
 getaliasbyname 0 4 4
+getaliasbyname_r 0 4 4 4 4 4 4
 getaliasent 0 4
+getaliasent_r 0 4 4 4 4 4
 getauxval 0 4 4
 getc 0 4 4
+getc_unlocked 0 4 4
 getchar 0 4
 getchar_unlocked 0 4
 getcontext 0 4 4
-getc_unlocked 0 4 4
-get_current_dir_name 0 4
+getcpu 0 4 4 4
 getcwd 0 4 4 4
 getdate 0 4 4
 getdate_r 0 4 4 4
 getdelim 0 4 4 4 4 4
+getdents64 0 4 4 4 4
 getdirentries 0 4 4 4 4 4
+getdirentries64 0 4 4 4 4 4
 getdomainname 0 4 4 4
 getdtablesize 0 4
 getegid 0 4
+getentropy 0 4 4 4
 getenv 0 4 4
 geteuid 0 4
 getfsent 0 4
@@ -252,63 +976,106 @@ getfsfile 0 4 4
 getfsspec 0 4 4
 getgid 0 4
 getgrent 0 4
+getgrent_r 0 4 4 4 4 4
 getgrgid 0 4 4
+getgrgid_r 0 4 4 4 4 4 4
 getgrnam 0 4 4
+getgrnam_r 0 4 4 4 4 4 4
+getgrouplist 0 4 4 4 4 4
 getgroups 0 4 4 4
+gethostbyaddr 0 4 4 4 4
+gethostbyaddr_r 0 4 4 4 4 4 4 4 4 4
 gethostbyname 0 4 4
 gethostbyname2 0 4 4 4
+gethostbyname2_r 0 4 4 4 4 4 4 4 4
+gethostbyname_r 0 4 4 4 4 4 4 4
 gethostent 0 4
+gethostent_r 0 4 4 4 4 4 4
 gethostid 0 4
 gethostname 0 4 4 4
 getifaddrs 0 4 4
+getipv4sourcefilter 0 4 4 4 4 4 4 4
 getitimer 0 4 4 4
-get_kernel_syms 0 4 4
 getline 0 4 4 4 4
 getloadavg 0 4 4 4
 getlogin 0 4
 getlogin_r 0 4 4 4
 getmntent 0 4 4
-get_myaddress 0 0 4
+getmntent_r 0 4 4 4 4 4
+getmsg 0 4 4 4 4 4
+getnameinfo 0 4 4 4 4 4 4 4 4
 getnetbyaddr 0 4 4 4
+getnetbyaddr_r 0 4 4 4 4 4 4 4 4
 getnetbyname 0 4 4
+getnetbyname_r 0 4 4 4 4 4 4 4
 getnetent 0 4
+getnetent_r 0 4 4 4 4 4 4
 getnetgrent 0 4 4 4 4
-get_nprocs 0 4
-get_nprocs_conf 0 4
+getnetgrent_r 0 4 4 4 4 4 4
+getnetname 0 4 4
+getopt 0 4 4 4 4
+getopt_long 0 4 4 4 4 4 4
+getopt_long_only 0 4 4 4 4 4 4
 getpagesize 0 4
 getpass 0 4 4
 getpeername 0 4 4 4 4
 getpgid 0 4 4
 getpgrp 0 4
 getpid 0 4
+getpmsg 0 4 4 4 4 4 4
 getppid 0 4
 getpriority 0 4 4 4
 getprotobyname 0 4 4
+getprotobyname_r 0 4 4 4 4 4 4
 getprotobynumber 0 4 4
+getprotobynumber_r 0 4 4 4 4 4 4
 getprotoent 0 4
+getprotoent_r 0 4 4 4 4 4
 getpt 0 4
+getpublickey 0 4 4 4
 getpw 0 4 4 4
 getpwent 0 4
+getpwent_r 0 4 4 4 4 4
 getpwnam 0 4 4
+getpwnam_r 0 4 4 4 4 4 4
 getpwuid 0 4 4
+getpwuid_r 0 4 4 4 4 4 4
+getrandom 0 4 4 4 4
 getresgid 0 4 4 4 4
 getresuid 0 4 4 4 4
 getrlimit 0 4 4 4
-getrlimit 0 4 4 4
+getrlimit64 0 4 4 4
 getrpcbyname 0 4 4
+getrpcbyname_r 0 4 4 4 4 4 4
 getrpcbynumber 0 4 4
+getrpcbynumber_r 0 4 4 4 4 4 4
 getrpcent 0 4
+getrpcent_r 0 4 4 4 4 4
 getrpcport 0 4 4 4 4 4
 getrusage 0 4 4 4
 gets 0 4 4
+getsecretkey 0 4 4 4 4
 getservbyname 0 4 4 4
+getservbyname_r 0 4 4 4 4 4 4 4
 getservbyport 0 4 4 4
+getservbyport_r 0 4 4 4 4 4 4 4
 getservent 0 4
+getservent_r 0 4 4 4 4 4
+getsgent 0 4
+getsgent_r 0 4 4 4 4 4
+getsgnam 0 4 4
+getsgnam_r 0 4 4 4 4 4 4
 getsid 0 4 4
 getsockname 0 4 4 4 4
+getsockopt 0 4 4 4 4 4 4
+getsourcefilter 0 4 4 4 4 4 4 4 4
 getspent 0 4
+getspent_r 0 4 4 4 4 4
 getspnam 0 4 4
+getspnam_r 0 4 4 4 4 4 4
 getsubopt 0 4 4 4 4
+gettext 0 4 4
+gettid 0 4
 gettimeofday 0 4 4 4
 getttyent 0 4
 getttynam 0 4 4
@@ -317,32 +1084,49 @@ getusershell 0 4
 getutent 0 4
 getutent_r 0 4 4 4
 getutid 0 4 4
+getutid_r 0 4 4 4 4
 getutline 0 4 4
+getutline_r 0 4 4 4 4
+getutmp 0 0 4 4
+getutmpx 0 0 4 4
 getutxent 0 4
 getutxid 0 4 4
 getutxline 0 4 4
 getw 0 4 4
 getwc 0 4 4
+getwc_unlocked 0 4 4
 getwchar 0 4
 getwchar_unlocked 0 4
-getwc_unlocked 0 4 4
 getwd 0 4 4
+glob 0 4 4 4 4 4
+glob64 0 4 4 4 4 4
+glob_pattern_p 0 4 4 4
 globfree 0 0 4
+globfree64 0 0 4
 gmtime 0 4 4
 gmtime_r 0 4 4 4
+gnu_dev_major 0 4 8
+gnu_dev_makedev 0 8 4 4
+gnu_dev_minor 0 4 8
 gnu_get_libc_release 0 4
 gnu_get_libc_version 0 4
 grantpt 0 4 4
+group_member 0 4 4
 gsignal 0 4 4
+gtty 0 4 4 4
 hasmntopt 0 4 4 4
 hcreate 0 4 4
 hcreate_r 0 4 4 4
 hdestroy 0 0
 hdestroy_r 0 0 4
 herror 0 0 4
+host2netname 0 4 4 4 4
 hsearch 0 4 8 4
+hsearch_r 0 4 8 4 4 4
 hstrerror 0 4 4
 htonl 0 4 4
+htons 0 4 2
+iconv 0 4 4 4 4 4 4
 iconv_close 0 4 4
 iconv_open 0 4 4 4
 if_freenameindex 0 0 4
@@ -352,16 +1136,41 @@ if_nametoindex 0 4 4
 imaxabs 0 8 8
 imaxdiv 0 16 8 8
 index 0 4 4 4
+inet6_opt_append 0 4 4 4 4 1 4 1 4
+inet6_opt_find 0 4 4 4 4 1 4 4
+inet6_opt_finish 0 4 4 4 4
+inet6_opt_get_val 0 4 4 4 4 4
+inet6_opt_init 0 4 4 4
+inet6_opt_next 0 4 4 4 4 4 4 4
+inet6_opt_set_val 0 4 4 4 4 4
+inet6_option_alloc 0 4 4 4 4 4
+inet6_option_append 0 4 4 4 4 4
+inet6_option_find 0 4 4 4 4
+inet6_option_init 0 4 4 4 4
+inet6_option_next 0 4 4 4
+inet6_option_space 0 4 4
+inet6_rth_add 0 4 4 4
+inet6_rth_getaddr 0 4 4 4
+inet6_rth_init 0 4 4 4 4 4
+inet6_rth_reverse 0 4 4 4
+inet6_rth_segments 0 4 4
+inet6_rth_space 0 4 4 4
 inet_addr 0 4 4
 inet_aton 0 4 4 4
 inet_lnaof 0 4 4
 inet_makeaddr 0 4 4 4
 inet_netof 0 4 4
 inet_network 0 4 4
+inet_nsap_addr 0 4 4 4 4
+inet_nsap_ntoa 0 4 4 4 4
 inet_ntoa 0 4 4
+inet_ntop 0 4 4 4 4 4
 inet_pton 0 4 4 4 4
+init_module 0 4 4 4 4
 initgroups 0 4 4 4
 initstate 0 4 4 4 4
+initstate_r 0 4 4 4 4 4
+innetgr 0 4 4 4 4 4
 inotify_add_watch 0 4 4 4 4
 inotify_init 0 4
 inotify_init1 0 4 4
@@ -369,66 +1178,110 @@ inotify_rm_watch 0 4 4 4
 insque 0 0 4 4
 ioperm 0 4 4 4 4
 iopl 0 4 4
+iruserok 0 4 4 4 4 4
+iruserok_af 0 4 4 4 4 4 2
 isalnum 0 4 4
+isalnum_l 0 4 4 4
 isalpha 0 4 4
+isalpha_l 0 4 4 4
 isascii 0 4 4
+isastream 0 4 4
 isatty 0 4 4
 isblank 0 4 4
+isblank_l 0 4 4 4
 iscntrl 0 4 4
+iscntrl_l 0 4 4 4
+isctype 0 4 4 4
 isdigit 0 4 4
+isdigit_l 0 4 4 4
+isfdtype 0 4 4 4
 isgraph 0 4 4
+isgraph_l 0 4 4 4
+isinf 0 4 8
 isinff 0 4 4
 isinfl 0 4 12
 islower 0 4 4
+islower_l 0 4 4 4
+isnan 0 4 8
 isnanf 0 4 4
 isnanl 0 4 12
 isprint 0 4 4
+isprint_l 0 4 4 4
 ispunct 0 4 4
+ispunct_l 0 4 4 4
 isspace 0 4 4
+isspace_l 0 4 4 4
 isupper 0 4 4
+isupper_l 0 4 4 4
 iswalnum 0 4 4
+iswalnum_l 0 4 4 4
 iswalpha 0 4 4
+iswalpha_l 0 4 4 4
 iswblank 0 4 4
+iswblank_l 0 4 4 4
 iswcntrl 0 4 4
+iswcntrl_l 0 4 4 4
 iswctype 0 4 4 4
+iswctype_l 0 4 4 4 4
 iswdigit 0 4 4
+iswdigit_l 0 4 4 4
 iswgraph 0 4 4
+iswgraph_l 0 4 4 4
 iswlower 0 4 4
+iswlower_l 0 4 4 4
 iswprint 0 4 4
+iswprint_l 0 4 4 4
 iswpunct 0 4 4
+iswpunct_l 0 4 4 4
 iswspace 0 4 4
+iswspace_l 0 4 4 4
 iswupper 0 4 4
+iswupper_l 0 4 4 4
 iswxdigit 0 4 4
+iswxdigit_l 0 4 4 4
 isxdigit 0 4 4
+isxdigit_l 0 4 4 4
 jrand48 0 4 4
+jrand48_r 0 4 4 4 4
 key_decryptsession 0 4 4 4
+key_decryptsession_pk 0 4 4 4 4
 key_encryptsession 0 4 4 4
+key_encryptsession_pk 0 4 4 4 4
 key_gendes 0 4 4
+key_get_conv 0 4 4 4
 key_secretkey_is_set 0 4
+key_setnet 0 4 4
 key_setsecret 0 4 4
+kill 0 4 4 4
 killpg 0 4 4 4
 klogctl 0 4 4 4 4
 l64a 0 4 4
 labs 0 4 4
+lchmod 0 4 4 4
 lchown 0 4 4 4 4
 lckpwdf 0 4
 lcong48 0 0 4
+lcong48_r 0 4 4 4
 ldexp 1 8 8 4
 ldexpf 1 4 4 4
 ldexpl 1 12 12 4
 ldiv 0 8 4 4
+lfind 0 4 4 4 4 4 4
+link 0 4 4 4
+linkat 0 4 4 4 4 4 4
 listen 0 4 4 4
 llabs 0 8 8
 lldiv 0 16 8 8
-localeconv 0 4
+llseek 0 8 4 8 4
 localeconv 0 4
 localtime 0 4 4
 localtime_r 0 4 4 4
 lockf 0 4 4 4 4
-longjmp 0 0 156 4
+lockf64 0 4 4 4 8
+longjmp 0 0 4 4
 lrand48 0 4
 lrand48_r 0 4 4 4
-lremovexattr 0 4 4 4
+lsearch 0 4 4 4 4 4 4
 lseek 0 4 4 4 4
 lseek64 0 8 4 8 4
 lutimes 0 4 4 4
@@ -439,15 +1292,20 @@ malloc_get_state 0 4
 malloc_info 0 4 4 4
 malloc_set_state 0 4 4
 malloc_stats 0 0
-malloc_trim 0 0 4
+malloc_trim 0 4 4
 malloc_usable_size 0 4 4
 mallopt 0 4 4 4
 mblen 0 4 4 4
 mbrlen 0 4 4 4 4
+mbrtoc16 0 4 4 4 4 4
+mbrtoc32 0 4 4 4 4 4
 mbrtowc 0 4 4 4 4 4
 mbsinit 0 4 4
+mbsnrtowcs 0 4 4 4 4 4 4
+mbsrtowcs 0 4 4 4 4 4
 mbstowcs 0 4 4 4 4
 mbtowc 0 4 4 4 4
+mcheck 0 4 4
 mcheck_check_all 0 0
 mcheck_pedantic 0 4 4
 memalign 0 4 4 4
@@ -455,138 +1313,285 @@ memccpy 0 4 4 4 4 4
 memchr 0 4 4 4 4
 memcmp 0 4 4 4 4
 memcpy 0 4 4 4 4
+memfd_create 0 4 4 4
 memfrob 0 4 4 4
+memmem 0 4 4 4 4 4
 memmove 0 4 4 4 4
 mempcpy 0 4 4 4 4
 memrchr 0 4 4 4 4
 memset 0 4 4 4 4
 mincore 0 4 4 4 4
+mkdir 0 4 4 4
 mkdirat 0 4 4 4 4
 mkdtemp 0 4 4
+mkfifo 0 4 4 4
 mkfifoat 0 4 4 4 4
 mkostemp 0 4 4 4
+mkostemp64 0 4 4 4
 mkostemps 0 4 4 4 4
+mkostemps64 0 4 4 4 4
 mkstemp 0 4 4
+mkstemp64 0 4 4
 mkstemps 0 4 4 4
+mkstemps64 0 4 4 4
+mktemp 0 4 4
 mktime 0 4 4
 mlock 0 4 4 4
+mlock2 0 4 4 4 4
 mlockall 0 4 4
+mmap 0 4 4 4 4 4 4 4
+mmap64 0 4 4 4 4 4 4 8
 modf 1 8 8 4
 modff 1 4 4 4
 modfl 1 12 12 4
 modify_ldt 0 4 4 4 4
+moncontrol 0 0 4
+monstartup 0 0 4 4
+mount 0 4 4 4 4 4 4
 mprobe 0 4 4
 mprotect 0 4 4 4 4
 mrand48 0 4
 mrand48_r 0 4 4 4
 msgctl 0 4 4 4 4
-msgctl 0 4 4 4 4
 msgget 0 4 4 4
+msgrcv 0 4 4 4 4 4 4
 msgsnd 0 4 4 4 4 4
 msync 0 4 4 4 4
+mtrace 0 0
 munlock 0 4 4 4
 munlockall 0 4
 munmap 0 4 4 4
 muntrace 0 0
+name_to_handle_at 0 4 4 4 4 4 4
 nanosleep 0 4 4 4
+netname2host 0 4 4 4 4
+netname2user 0 4 4 4 4 4 4
+newlocale 0 4 4 4 4
+nfsservctl 0 4 4 4 4
+nftw 0 4 4 4 4 4
+nftw64 0 4 4 4 4 4
+ngettext 0 4 4 4 4
+nice 0 4 4
 nl_langinfo 0 4 4
+nl_langinfo_l 0 4 4 4
 nrand48 0 4 4
+nrand48_r 0 4 4 4 4
 ntohl 0 4 4
-ntohs 0 2 2
-on_exit 0 4 4 4 4
-openat 0 4 4 4 4
-opendir 0 4 4
-openlog 0 0 4 4 4
+ntohs 0 4 2
+ntp_adjtime 0 4 4
+ntp_gettime 0 4 4
+ntp_gettimex 0 4 4
+obstack_free 0 0 4 4
+obstack_vprintf 0 4 4 4 4
+on_exit 0 4 4 4
+open_by_handle_at 0 4 4 4 4
 open_memstream 0 4 4 4
 open_wmemstream 0 4 4 4
+opendir 0 4 4
+openlog 0 0 4 4 4
+parse_printf_format 0 4 4 4 4
 passwd2des 0 0 4 4
 pathconf 0 4 4 4
 pause 0 4
-pclose 0 4 4
 pclose 0 4 4
 perror 0 0 4
 personality 0 4 4
 pipe 0 4 4
 pipe2 0 4 4 4
+pivot_root 0 4 4 4
+pkey_alloc 0 4 4 4
+pkey_free 0 4 4
+pkey_get 0 4 4
+pkey_mprotect 0 4 4 4 4 4
+pkey_set 0 4 4 4
 pmap_getmaps 0 4 4
+pmap_getport 0 4 4 4 4 4
+pmap_rmtcall 0 4 4 4 4 4 4 4 4 4 8 4
+pmap_set 0 4 4 4 4 2
 pmap_unset 0 4 4 4
 poll 0 4 4 4 4
 popen 0 4 4 4
-popen 0 4 4 4
 posix_fadvise 0 4 4 4 4 4
+posix_fadvise64 0 4 4 8 8 4
 posix_fallocate 0 4 4 4 4
+posix_fallocate64 0 4 4 8 8
+posix_madvise 0 4 4 4 4
 posix_memalign 0 4 4 4 4
 posix_openpt 0 4 4
-prctl 0 4 4 4 4
+posix_spawn 0 4 4 4 4 4 4 4
+posix_spawn_file_actions_addchdir_np 0 4 4 4
+posix_spawn_file_actions_addclose 0 4 4 4
+posix_spawn_file_actions_adddup2 0 4 4 4 4
+posix_spawn_file_actions_addfchdir_np 0 4 4 4
+posix_spawn_file_actions_addopen 0 4 4 4 4 4 4
+posix_spawn_file_actions_destroy 0 4 4
+posix_spawn_file_actions_init 0 4 4
+posix_spawnattr_destroy 0 4 4
+posix_spawnattr_getflags 0 4 4 4
+posix_spawnattr_getpgroup 0 4 4 4
+posix_spawnattr_getschedparam 0 4 4 4
+posix_spawnattr_getschedpolicy 0 4 4 4
+posix_spawnattr_getsigdefault 0 4 4 4
+posix_spawnattr_getsigmask 0 4 4 4
+posix_spawnattr_init 0 4 4
+posix_spawnattr_setflags 0 4 4 2
+posix_spawnattr_setpgroup 0 4 4 4
+posix_spawnattr_setschedparam 0 4 4 4
+posix_spawnattr_setschedpolicy 0 4 4 4
+posix_spawnattr_setsigdefault 0 4 4 4
+posix_spawnattr_setsigmask 0 4 4 4
+posix_spawnp 0 4 4 4 4 4 4 4
+ppoll 0 4 4 4 4 4
+prctl 0 4 4 4 4 4 4
 pread 0 4 4 4 4 4
+pread64 0 4 4 4 4 8
+preadv 0 4 4 4 4 4
+preadv2 0 4 4 4 4 4 4
+preadv64 0 4 4 4 4 8
+preadv64v2 0 4 4 4 4 8 4
+printf_size 0 4 4 4 4
+printf_size_info 0 4 4 4 4
+prlimit 0 4 4 4 4 4
+process_vm_readv 0 4 4 4 4 4 4 4
+process_vm_writev 0 4 4 4 4 4 4 4
+profil 0 4 4 4 4 4
+pselect 0 4 4 4 4 4 4 4
 psiginfo 0 0 4 4
 psignal 0 0 4 4
 pthread_attr_destroy 0 4 4
 pthread_attr_getdetachstate 0 4 4 4
+pthread_attr_getinheritsched 0 4 4 4
+pthread_attr_getschedparam 0 4 4 4
 pthread_attr_getschedpolicy 0 4 4 4
 pthread_attr_getscope 0 4 4 4
 pthread_attr_init 0 4 4
-pthread_attr_init 0 4 4
 pthread_attr_setdetachstate 0 4 4 4
+pthread_attr_setinheritsched 0 4 4 4
+pthread_attr_setschedparam 0 4 4 4
 pthread_attr_setschedpolicy 0 4 4 4
 pthread_attr_setscope 0 4 4 4
+pthread_cond_broadcast 0 4 4
+pthread_cond_destroy 0 4 4
+pthread_cond_init 0 4 4 4
+pthread_cond_signal 0 4 4
+pthread_cond_timedwait 0 4 4 4 4
+pthread_cond_wait 0 4 4 4
+pthread_condattr_destroy 0 4 4
+pthread_condattr_init 0 4 4
 pthread_equal 0 4 4 4
 pthread_exit 0 0 4
+pthread_getschedparam 0 4 4 4 4
+pthread_mutex_destroy 0 4 4
+pthread_mutex_init 0 4 4 4
+pthread_mutex_lock 0 4 4
+pthread_mutex_unlock 0 4 4
 pthread_self 0 4
 pthread_setcancelstate 0 4 4 4
 pthread_setcanceltype 0 4 4 4
+pthread_setschedparam 0 4 4 4 4
 ptsname 0 4 4
 ptsname_r 0 4 4 4 4
 putc 0 4 4 4
+putc_unlocked 0 4 4 4
 putchar 0 4 4
 putchar_unlocked 0 4 4
-putc_unlocked 0 4 4 4
 putenv 0 4 4
 putgrent 0 4 4 4
+putmsg 0 4 4 4 4 4
+putpmsg 0 4 4 4 4 4 4
 putpwent 0 4 4 4
 puts 0 4 4
+putsgent 0 4 4 4
 putspent 0 4 4 4
 pututline 0 4 4
 pututxline 0 4 4
 putw 0 4 4 4
 putwc 0 4 4 4
+putwc_unlocked 0 4 4 4
 putwchar 0 4 4
 putwchar_unlocked 0 4 4
-putwc_unlocked 0 4 4 4
 pvalloc 0 4 4
 pwrite 0 4 4 4 4 4
+pwrite64 0 4 4 4 4 8
+pwritev 0 4 4 4 4 4
+pwritev2 0 4 4 4 4 4 4
+pwritev64 0 4 4 4 4 8
+pwritev64v2 0 4 4 4 4 8 4
 qecvt 0 4 12 4 4 4
+qecvt_r 0 4 12 4 4 4 4 4
 qfcvt 0 4 12 4 4 4
+qfcvt_r 0 4 12 4 4 4 4 4
 qgcvt 0 4 12 4 4
+qsort 0 0 4 4 4 4
+qsort_r 0 0 4 4 4 4 4
+query_module 0 4 4 4 4 4 4
+quick_exit 0 0 4
 quotactl 0 4 4 4 4 4
 raise 0 4 4
+rand 0 4
+rand_r 0 4 4
 random 0 4
 random_r 0 4 4 4
-rand_r 0 4 4
 rawmemchr 0 4 4 4
+rcmd 0 4 4 2 4 4 4 4
+rcmd_af 0 4 4 2 4 4 4 4 2
+re_comp 0 4 4
+re_compile_fastmap 0 4 4
+re_compile_pattern 0 4 4 4 4
+re_exec 0 4 4
+re_match 0 4 4 4 4 4 4
+re_match_2 0 4 4 4 4 4 4 4 4 4
+re_search 0 4 4 4 4 4 4 4
+re_search_2 0 4 4 4 4 4 4 4 4 4 4
+re_set_registers 0 0 4 4 4 4 4
+re_set_syntax 0 4 4
 read 0 4 4 4 4
 readahead 0 4 4 8 4
 readdir 0 4 4
+readdir64 0 4 4
+readdir64_r 0 4 4 4 4
 readdir_r 0 4 4 4 4
+readlink 0 4 4 4 4
+readlinkat 0 4 4 4 4 4
 readv 0 4 4 4 4
 realloc 0 4 4 4
-re_comp 0 4 4
+reallocarray 0 4 4 4 4
+realpath 0 4 4 4
+reboot 0 4 4
 recv 0 4 4 4 4 4
+recvfrom 0 4 4 4 4 4 4 4
+recvmmsg 0 4 4 4 4 4 4
 recvmsg 0 4 4 4 4
-re_exec 0 4 4
 regcomp 0 4 4 4 4
+regerror 0 4 4 4 4 4
+regexec 0 4 4 4 4 4 4
 regfree 0 0 4
+register_printf_function 0 4 4 4 4
+register_printf_modifier 0 4 4
+register_printf_specifier 0 4 4 4 4
+register_printf_type 0 4 4
+registerrpc 0 4 4 4 4 4 4 4
+remap_file_pages 0 4 4 4 4 4 4
 remove 0 4 4
-removexattr 0 4 4 4
 remque 0 0 4
+rename 0 4 4 4
+renameat 0 4 4 4 4 4
+renameat2 0 4 4 4 4 4 4
 res_init 0 4
+revoke 0 4 4
 rewind 0 0 4
 rewinddir 0 0 4
+rexec 0 4 4 4 4 4 4 4
+rexec_af 0 4 4 4 4 4 4 4 2
 rindex 0 4 4 4
+rmdir 0 4 4
 rpmatch 0 4 4
 rresvport 0 4 4
 rresvport_af 0 4 4 2
 rtime 0 4 4 4 4
+ruserok 0 4 4 4 4 4
+ruserok_af 0 4 4 4 4 4 2
+ruserpass 0 4 4 4 4
 sbrk 0 4 4
 scalbln 1 8 8 4
 scalblnf 1 4 4 4
@@ -594,22 +1599,34 @@ scalblnl 1 12 12 4
 scalbn 1 8 8 4
 scalbnf 1 4 4 4
 scalbnl 1 12 12 4
-sched_getcpu 0 4
-sched_getparam 0 4 4 4
+scandir 0 4 4 4 4 4
+scandir64 0 4 4 4 4 4
+scandirat 0 4 4 4 4 4 4
+scandirat64 0 4 4 4 4 4 4
 sched_get_priority_max 0 4 4
 sched_get_priority_min 0 4 4
+sched_getaffinity 0 4 4 4 4
+sched_getcpu 0 4
+sched_getparam 0 4 4 4
 sched_getscheduler 0 4 4
 sched_rr_get_interval 0 4 4 4
+sched_setaffinity 0 4 4 4 4
 sched_setparam 0 4 4 4
+sched_setscheduler 0 4 4 4 4
 sched_yield 0 4
 secure_getenv 0 4 4
 seed48 0 4 4
+seed48_r 0 4 4 4
 seekdir 0 0 4 4
+select 0 4 4 4 4 4 4
 semget 0 4 4 4 4
 semop 0 4 4 4 4
+semtimedop 0 4 4 4 4 4
 send 0 4 4 4 4 4
 sendfile 0 4 4 4 4 4
+sendmmsg 0 4 4 4 4 4
 sendmsg 0 4 4 4 4
+sendto 0 4 4 4 4 4 4 4
 setaliasent 0 0
 setbuf 0 0 4 4
 setbuffer 0 0 4 4 4
@@ -627,9 +1644,12 @@ setgroups 0 4 4 4
 sethostent 0 0 4
 sethostid 0 4 4
 sethostname 0 4 4 4
+setipv4sourcefilter 0 4 4 4 4 4 4 4
+setitimer 0 4 4 4 4
 setjmp 0 4 156
 setlinebuf 0 0 4
 setlocale 0 4 4 4
+setlogin 0 4 4
 setlogmask 0 4 4
 setmntent 0 4 4 4
 setnetent 0 0 4
@@ -645,9 +1665,13 @@ setresgid 0 4 4 4 4
 setresuid 0 4 4 4 4
 setreuid 0 4 4 4
 setrlimit 0 4 4 4
-setrlimit 0 4 4 4
+setrlimit64 0 4 4 4
 setrpcent 0 0 4
 setservent 0 0 4
+setsgent 0 0
+setsid 0 4
+setsockopt 0 4 4 4 4 4 4
+setsourcefilter 0 4 4 4 4 4 4 4 4
 setspent 0 0
 setstate 0 4 4
 setstate_r 0 4 4 4
@@ -658,12 +1682,16 @@ setusershell 0 0
 setutent 0 0
 setutxent 0 0
 setvbuf 0 4 4 4 4 4
+sgetsgent 0 4 4
+sgetsgent_r 0 4 4 4 4 4 4
 sgetspent 0 4 4
+sgetspent_r 0 4 4 4 4 4 4
 shmat 0 4 4 4 4
-shmctl 0 4 4 4 4
 shmctl 0 4 4 4 4
 shmdt 0 4 4
 shmget 0 4 4 4 4
+shutdown 0 4 4 4
+sigaction 0 4 4 4 4
 sigaddset 0 4 4 4
 sigaltstack 0 4 4 4
 sigandset 0 4 4 4 4
@@ -677,7 +1705,7 @@ sigignore 0 4 4
 siginterrupt 0 4 4 4
 sigisemptyset 0 4 4
 sigismember 0 4 4 4
-siglongjmp 0 0 156 4
+siglongjmp 0 0 4 4
 signal 0 4 4 4
 signalfd 0 4 4 4 4
 sigorset 0 4 4 4 4
@@ -689,20 +1717,31 @@ sigrelse 0 4 4
 sigreturn 0 4 4
 sigset 0 4 4 4
 sigsetmask 0 4 4
+sigstack 0 4 4 4
 sigsuspend 0 4 4
+sigtimedwait 0 4 4 4 4
 sigvec 0 4 4 4 4
+sigwait 0 4 4 4
 sigwaitinfo 0 4 4 4
+sleep 0 4 4
 sockatmark 0 4 4
 socket 0 4 4 4 4
 socketpair 0 4 4 4 4 4
+splice 0 4 4 4 4 4 4 4
+sprofil 0 4 4 4 4 4
 srand 0 0 4
 srand48 0 0 4
 srand48_r 0 4 4 4
 srandom 0 0 4
 srandom_r 0 4 4 4
 ssignal 0 4 4 4
+sstk 0 4 4
 statfs 0 4 4 4
+statfs64 0 4 4 4
 statvfs 0 4 4 4
+statvfs64 0 4 4 4
+statx 0 4 4 4 4 4 4
+step 0 4 4 4
 stime 0 4 4
 stpcpy 0 4 4 4
 stpncpy 0 4 4 4 4
@@ -713,12 +1752,24 @@ strchr 0 4 4 4
 strchrnul 0 4 4 4
 strcmp 0 4 4 4
 strcoll 0 4 4 4
+strcoll_l 0 4 4 4 4
 strcpy 0 4 4 4
 strcspn 0 4 4 4
 strdup 0 4 4
 strerror 0 4 4
+strerror_l 0 4 4 4
 strerror_r 0 4 4 4 4
+strfromd 0 4 4 4 4 8
+strfromf 0 4 4 4 4 4
+strfromf128 0 4 4 4 4 16
+strfromf32 0 4 4 4 4 4
+strfromf32x 0 4 4 4 4 8
+strfromf64 0 4 4 4 4 8
+strfromf64x 0 4 4 4 4 12
+strfroml 0 4 4 4 4 12
 strfry 0 4 4
+strftime 0 4 4 4 4 4
+strftime_l 0 4 4 4 4 4 4
 strlen 0 4 4
 strncasecmp 0 4 4 4 4
 strncat 0 4 4 4 4
@@ -728,43 +1779,81 @@ strndup 0 4 4 4
 strnlen 0 4 4 4
 strpbrk 0 4 4 4
 strptime 0 4 4 4 4
+strptime_l 0 4 4 4 4 4
 strrchr 0 4 4 4
 strsep 0 4 4 4
 strsignal 0 4 4
 strspn 0 4 4 4
 strstr 0 4 4 4
 strtod 1 8 4 4
+strtod_l 1 8 4 4 4
 strtof 1 4 4 4
+strtof128 0 16 4 4
+strtof128_l 0 16 4 4 4
+strtof32 1 4 4 4
+strtof32_l 1 4 4 4 4
+strtof32x 1 8 4 4
+strtof32x_l 1 8 4 4 4
+strtof64 1 8 4 4
+strtof64_l 1 8 4 4 4
+strtof64x 1 12 4 4
+strtof64x_l 1 12 4 4 4
+strtof_l 1 4 4 4 4
 strtoimax 0 8 4 4 4
 strtok 0 4 4 4
 strtok_r 0 4 4 4 4
 strtol 0 4 4 4 4
+strtol_l 0 4 4 4 4 4
 strtold 1 12 4 4
+strtold_l 1 12 4 4 4
 strtoll 0 8 4 4 4
+strtoll_l 0 8 4 4 4 4
+strtoq 0 8 4 4 4
 strtoul 0 4 4 4 4
+strtoul_l 0 4 4 4 4 4
+strtoull 0 8 4 4 4
+strtoull_l 0 8 4 4 4 4
 strtoumax 0 8 4 4 4
+strtouq 0 8 4 4 4
 strverscmp 0 4 4 4
 strxfrm 0 4 4 4 4
+strxfrm_l 0 4 4 4 4 4
+stty 0 4 4 4
+svc_exit 0 0
+svc_getreq 0 0 4
+svc_getreq_common 0 0 4
+svc_getreq_poll 0 0 4 4
+svc_getreqset 0 0 4
+svc_register 0 4 4 4 4 4 4
+svc_run 0 0
+svc_sendreply 0 4 4 4 4
+svc_unregister 0 0 4 4
 svcerr_auth 0 0 4 4
 svcerr_decode 0 0 4
 svcerr_noproc 0 0 4
 svcerr_noprog 0 0 4
-svcerr_progvers 0 0 4
+svcerr_progvers 0 0 4 4 4
 svcerr_systemerr 0 0 4
 svcerr_weakauth 0 0 4
-svc_getreq 0 0 4
-svc_getreqset 0 0 4
+svcfd_create 0 4 4 4 4
 svcraw_create 0 4
-svc_run 0 0
-svc_sendreply 0 4 4 4 4
+svctcp_create 0 4 4 4 4
+svcudp_bufcreate 0 4 4 4 4
 svcudp_create 0 4 4
-svc_unregister 0 0 4 4
+svcudp_enablecache 0 4 4 4
+svcunix_create 0 4 4 4 4 4
+svcunixfd_create 0 4 4 4 4
 swab 0 0 4 4 4
 swapcontext 0 4 4 4
+swapoff 0 4 4
+swapon 0 4 4 4
 symlink 0 4 4 4
 symlinkat 0 4 4 4 4
+sync 0 0
+sync_file_range 0 4 4 8 8 4
 syncfs 0 4 4
 sysconf 0 4 4
+sysctl 0 4 4 4 4 4 4 4
 sysinfo 0 4 4
 system 0 4 4
 sysv_signal 0 4 4 4
@@ -775,101 +1864,181 @@ tcgetattr 0 4 4 4
 tcgetpgrp 0 4 4
 tcgetsid 0 4 4
 tcsendbreak 0 4 4 4
+tcsetattr 0 4 4 4 4
 tcsetpgrp 0 4 4 4
+tdelete 0 4 4 4 4
 tdestroy 0 0 4 4
+tee 0 4 4 4 4 4
 telldir 0 4 4
 tempnam 0 4 4 4
 textdomain 0 4 4
+tfind 0 4 4 4 4
+tgkill 0 4 4 4 4
+thrd_current 0 4
+thrd_equal 0 4 4 4
+thrd_sleep 0 4 4 4
+thrd_yield 0 0
+time 0 4 4
 timegm 0 4 4
 timelocal 0 4 4
 timerfd_create 0 4 4 4
 timerfd_gettime 0 4 4 4
+timerfd_settime 0 4 4 4 4 4
 times 0 4 4
+timespec_get 0 4 4 4
 tmpfile 0 4
-tmpfile 0 4
+tmpfile64 0 4
 tmpnam 0 4 4
+tmpnam_r 0 4 4
 toascii 0 4 4
 tolower 0 4 4
+tolower_l 0 4 4 4
 toupper 0 4 4
+toupper_l 0 4 4 4
 towctrans 0 4 4 4
+towctrans_l 0 4 4 4 4
 towlower 0 4 4
+towlower_l 0 4 4 4
 towupper 0 4 4
+towupper_l 0 4 4 4
+tr_break 0 0
+truncate 0 4 4 4
+truncate64 0 4 4 8
+tsearch 0 4 4 4 4
 ttyname 0 4 4
 ttyname_r 0 4 4 4 4
 ttyslot 0 4
+twalk 0 0 4 4
+twalk_r 0 0 4 4 4
 tzset 0 0
 ualarm 0 4 4 4
 ulckpwdf 0 4
-ulimit 0 4 4 4
 umask 0 4 4
+umount 0 4 4
 umount2 0 4 4 4
+uname 0 4 4
 ungetc 0 4 4 4
 ungetwc 0 4 4 4
+unlink 0 4 4
 unlinkat 0 4 4 4 4
 unlockpt 0 4 4
 unsetenv 0 4 4
+unshare 0 4 4
 updwtmp 0 0 4 4
 updwtmpx 0 0 4 4
 uselib 0 4 4
+uselocale 0 4 4
+user2netname 0 4 4 4 4
 usleep 0 4 4
 ustat 0 4 8 4
 utime 0 4 4 4
+utimensat 0 4 4 4 4 4
 utimes 0 4 4 4
 utmpname 0 4 4
+utmpxname 0 4 4
 valloc 0 4 4
 vasprintf 0 4 4 4 4
 vdprintf 0 4 4 4 4
 verr 0 0 4 4 4
 verrx 0 0 4 4 4
 versionsort 0 4 4 4
+versionsort64 0 4 4 4
 vfork 0 4
 vfprintf 0 4 4 4 4
 vfscanf 0 4 4 4 4
 vfwprintf 0 4 4 4 4
+vfwscanf 0 4 4 4 4
 vhangup 0 4
+vlimit 0 4 4 4
 vm86 0 4 4 4
-vm86 0 4 4 4
+vmsplice 0 4 4 4 4 4
 vprintf 0 4 4 4
 vscanf 0 4 4 4
 vsnprintf 0 4 4 4 4 4
 vsprintf 0 4 4 4 4
 vsscanf 0 4 4 4 4
+vswprintf 0 4 4 4 4 4
+vswscanf 0 4 4 4 4
 vsyslog 0 0 4 4 4
+vtimes 0 4 4 4
 vwarn 0 0 4 4
 vwarnx 0 0 4 4
 vwprintf 0 4 4 4
+vwscanf 0 4 4 4
 wait 0 4 4
+wait3 0 4 4 4 4
+wait4 0 4 4 4 4 4
 waitid 0 4 4 4 4 4
 waitpid 0 4 4 4 4
 wcpcpy 0 4 4 4
 wcpncpy 0 4 4 4 4
 wcrtomb 0 4 4 4 4
 wcscasecmp 0 4 4 4
+wcscasecmp_l 0 4 4 4 4
 wcscat 0 4 4 4
 wcschr 0 4 4 4
+wcschrnul 0 4 4 4
 wcscmp 0 4 4 4
+wcscoll 0 4 4 4
+wcscoll_l 0 4 4 4 4
 wcscpy 0 4 4 4
 wcscspn 0 4 4 4
 wcsdup 0 4 4
+wcsftime 0 4 4 4 4 4
+wcsftime_l 0 4 4 4 4 4 4
 wcslen 0 4 4
 wcsncasecmp 0 4 4 4 4
+wcsncasecmp_l 0 4 4 4 4 4
 wcsncat 0 4 4 4 4
 wcsncmp 0 4 4 4 4
 wcsncpy 0 4 4 4 4
 wcsnlen 0 4 4 4
+wcsnrtombs 0 4 4 4 4 4 4
 wcspbrk 0 4 4 4
 wcsrchr 0 4 4 4
+wcsrtombs 0 4 4 4 4 4
 wcsspn 0 4 4 4
 wcsstr 0 4 4 4
+wcstod 1 8 4 4
+wcstod_l 1 8 4 4 4
+wcstof 1 4 4 4
+wcstof128 0 16 4 4
+wcstof128_l 0 16 4 4 4
+wcstof32 1 4 4 4
+wcstof32_l 1 4 4 4 4
+wcstof32x 1 8 4 4
+wcstof32x_l 1 8 4 4 4
+wcstof64 1 8 4 4
+wcstof64_l 1 8 4 4 4
+wcstof64x 1 12 4 4
+wcstof64x_l 1 12 4 4 4
+wcstof_l 1 4 4 4 4
 wcstoimax 0 8 4 4 4
 wcstok 0 4 4 4 4
+wcstol 0 4 4 4 4
+wcstol_l 0 4 4 4 4 4
+wcstold 1 12 4 4
+wcstold_l 1 12 4 4 4
+wcstoll 0 8 4 4 4
+wcstoll_l 0 8 4 4 4 4
 wcstombs 0 4 4 4 4
+wcstoq 0 8 4 4 4
+wcstoul 0 4 4 4 4
+wcstoul_l 0 4 4 4 4 4
+wcstoull 0 8 4 4 4
+wcstoull_l 0 8 4 4 4 4
 wcstoumax 0 8 4 4 4
+wcstouq 0 8 4 4 4
+wcswcs 0 4 4 4
 wcswidth 0 4 4 4
+wcsxfrm 0 4 4 4 4
+wcsxfrm_l 0 4 4 4 4 4
 wctob 0 4 4
 wctomb 0 4 4 4
 wctrans 0 4 4
+wctrans_l 0 4 4 4
 wctype 0 4 4
+wctype_l 0 4 4 4
 wcwidth 0 4 4
 wmemchr 0 4 4 4 4
 wmemcmp 0 4 4 4 4
@@ -879,65 +2048,78 @@ wmempcpy 0 4 4 4 4
 wmemset 0 4 4 4 4
 wordexp 0 4 4 4 4
 wordfree 0 0 4
+write 0 4 4 4 4
 writev 0 4 4 4 4
 xdecrypt 0 4 4 4
 xdr_accepted_reply 0 4 4 4
+xdr_array 0 4 4 4 4 4 4 4
+xdr_authdes_cred 0 4 4 4
+xdr_authdes_verf 0 4 4 4
 xdr_authunix_parms 0 4 4 4
 xdr_bool 0 4 4 4
-xdr_callhdr 0 0 4 4
+xdr_bytes 0 4 4 4 4 4
+xdr_callhdr 0 4 4 4
 xdr_callmsg 0 4 4 4
 xdr_char 0 4 4 4
-xdr_double 1 4 4 4
+xdr_cryptkeyarg 0 4 4 4
+xdr_cryptkeyarg2 0 4 4 4
+xdr_cryptkeyres 0 4 4 4
+xdr_des_block 0 4 4 4
+xdr_double 0 4 4 4
 xdr_enum 0 4 4 4
-xdr_float 1 4 4 4
+xdr_float 0 4 4 4
 xdr_free 0 0 4 4
+xdr_getcredres 0 4 4 4
+xdr_hyper 0 4 4 4
 xdr_int 0 4 4 4
+xdr_int16_t 0 4 4 4
+xdr_int32_t 0 4 4 4
+xdr_int64_t 0 4 4 4
+xdr_int8_t 0 4 4 4
+xdr_key_netstarg 0 4 4 4
+xdr_key_netstres 0 4 4 4
+xdr_keybuf 0 4 4 4
+xdr_keystatus 0 4 4 4
 xdr_long 0 4 4 4
+xdr_longlong_t 0 4 4 4
+xdr_netnamestr 0 4 4 4
+xdr_netobj 0 4 4 4
 xdr_opaque 0 4 4 4 4
 xdr_opaque_auth 0 4 4 4
 xdr_pmap 0 4 4 4
 xdr_pmaplist 0 4 4 4
+xdr_pointer 0 4 4 4 4 4
+xdr_quad_t 0 4 4 4
+xdr_reference 0 4 4 4 4 4
+xdr_rejected_reply 0 4 4 4
+xdr_replymsg 0 4 4 4
+xdr_rmtcall_args 0 4 4 4
+xdr_rmtcallres 0 4 4 4
+xdr_short 0 4 4 4
+xdr_sizeof 0 4 4 4
+xdr_string 0 4 4 4 4
+xdr_u_char 0 4 4 4
+xdr_u_hyper 0 4 4 4
+xdr_u_int 0 4 4 4
+xdr_u_long 0 4 4 4
+xdr_u_longlong_t 0 4 4 4
+xdr_u_quad_t 0 4 4 4
+xdr_u_short 0 4 4 4
+xdr_uint16_t 0 4 4 4
+xdr_uint32_t 0 4 4 4
+xdr_uint64_t 0 4 4 4
+xdr_uint8_t 0 4 4 4
+xdr_union 0 4 4 4 4 4 4
+xdr_unixcred 0 4 4 4
+xdr_vector 0 4 4 4 4 4 4
+xdr_void 0 4
+xdr_wrapstring 0 4 4 4
+xdrmem_create 0 0 4 4 4 4
+xdrrec_create 0 0 4 4 4 4 4 4
 xdrrec_endofrecord 0 4 4 4
 xdrrec_eof 0 4 4
 xdrrec_skiprecord 0 4 4
-xdr_rejected_reply 0 4 4 4
-xdr_replymsg 0 4 4 4
-xdr_short 0 4 4 4
 xdrstdio_create 0 0 4 4 4
-xdr_string 0 4 4 4 4
-xdr_u_char 0 4 4 4
-xdr_u_int 0 4 4 4
-xdr_u_long 0 4 4 4
-xdr_u_short 0 4 4 4
-xdr_void 0 4
-xdr_wrapstring 0 4 4 4
 xencrypt 0 4 4 4
 xprt_register 0 0 4
 xprt_unregister 0 0 4
-__memcpy_chk 0 4 4 4 4 4
-__mempcpy_chk 0 4 4 4 4 4
-__memmove_chk 0 4 4 4 4 4
-__memset_chk 0 4 4 4 4 4
-__strcpy_chk 0 4 4 4 4
-__strncpy_chk 0 4 4 4 4 4
-__stpcpy_chk 0 4 4 4 4
-__strcat_chk 0 4 4 4 4
-__strncat_chk 0 4 4 4 4 4
-__snprintf_chk 0 4 4 4 4 4
-__vsprintf_chk 0 4 4 4 4 4 4
-__vsnprintf_chk 0 4 4 4 4 4 4 4
-__vprintf 0 4 4 4 4
-__vfprintf 0 4 4 4 4 4
-__cxa_atexit 0 4 4 4 4
-fread_unlocked 0 4 4 4 4 4
-posix_fadvise64 0 4 4 4 4 4
-fopen64 0 4 4 4
-fwrite_unlocked 0 4 4 4 4 4
-getopt_long 0 4 4 4 4 4 4
-strftime 0 4 4 4 4 4
-time 0 4 4
-utmpxname 0 4 4
-__ctype_tolower_loc 0 4
-dcngettext 0 4 4 4 4
-dcgettext 0 4 4 4 4
-kill 0 4 4 4

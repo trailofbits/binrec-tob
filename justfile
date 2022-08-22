@@ -19,11 +19,11 @@ plugins_cmake := join(plugins_root, "src", "CMakeLists.txt")
 export PATH := env_var('S2E_BIN') + ":" + env_var('PATH')
 
 # S2E repos that need to be pinned to a specific commit (see issue #164)
-repo_s2e_commit               := "cbf0af205b02f3af3278584d6fcc760dfaf61288"
+repo_s2e_commit               := "5349d353f4455f5a120d0c8d9790f742c656a706"
 repo_s2e_linux_kernel_commit  := "1e2dfecfc6a3e70e7dea478184aa1f13653dcbe1"
 repo_decree_commit            := "a523ec2ec1ca1e1369b33db755bed135af57e09c"
 repo_guest_images_commit      := "2afd9e4853936c3c38088272e90a927f62c9c58c"
-repo_qemu_commit              := "50d5fe3d96ca23db005935a564a0040eb3db31ca"
+repo_qemu_commit              := "638782a47ed9bb3f280b57a3627bb4e11b2a9cf1"
 repo_scripts_commit           := "3e6e6cbffcfe2ea7f5b823d2d5509838a54b89c9"
 ########## End: Environment and Recipe Variables ##########
 
@@ -38,7 +38,7 @@ _install-dependencies:
     sudo apt-get update
     sudo apt-get install -y bison cmake flex g++ g++-multilib gcc gcc-multilib git libglib2.0-dev liblua5.1-dev \
         libsigc++-2.0-dev lua5.3 nasm nlohmann-json3-dev pkg-config subversion curl pipenv git-lfs doxygen graphviz \
-        binutils \
+        binutils libc6-dbg:i386 \
         python3.9-dev python3.9-venv # For s2e-env (and compatibility with Python 3.9 from Pipfile): http://s2e.systems/docs/s2e-env.html#id2
 
     git lfs install
@@ -52,7 +52,7 @@ _binrec-init:
     cd ./test/benchmark && git lfs pull
     cd ./s2e-env && pipenv run pip install .
     pipenv run s2e init {{justdir}}/s2e
-    # just _freeze-s2e
+    just _freeze-s2e
     just s2e-insert-binrec-plugins
 
 # Freeze all S2E repositories to commits that have been tested against
@@ -139,6 +139,10 @@ s2e-insert-binrec-plugins:
 _s2e-command command *args:
   pipenv run s2e {{command}} {{args}}
 
+# Rebuild the libc-argsizes database
+rebuild-libc-argsizes:
+  pipenv run python -m binrec.sigs "{{env_var('BINREC_LIBC_MODULE')}}" "{{justdir}}/runlib/libc-argsizes"
+
 ########## End: Build Recipes ##########
 
 ########## Section: pipenv Recipes ##########
@@ -161,28 +165,54 @@ _pipenv-update:
 ########## Section: End-User API Recipes ##########
 
 # Create a new analysis project
-new-project name binary symargs *args:
-  pipenv run python -m binrec.project new "{{name}}" "{{binary}}" "{{symargs}}" {{args}}
+new-project name binary template="":
+  pipenv run python -m binrec.project new "{{name}}" "{{binary}}" "{{template}}"
 
-# Run an S2E analysis project. Override sample command line arguments by passing "--args ARGS ARGS"
-run project-name *args:
-  pipenv run python -m binrec.project run "$@"
+# Add a new trace to an existing project
+add-trace project-name name symbolic-indexes args:
+  pipenv run python -m binrec.project add-trace --name "{{name}}" --symbolic-indexes "{{symbolic-indexes}}" "{{project-name}}" {{args}}
 
-# Run an S2E analysis project multiple times with a batch of inputs
-run-batch project-name batch-file:
-  pipenv run python -m binrec.project run-batch "{{project-name}}" "{{batch-file}}"
+# Remove a trace by name from an existing project
+remove-trace project-name trace-name:
+  pipenv run python -m binrec.project remove-trace "{{project-name}}" "{{trace-name}}"
 
-# Set an S2E analysis project command line arguments.
-set-args project-name *args:
-  pipenv run python -m binrec.project --verbose set-args "$@"
+# Remove a trace by ID from an existing project
+remove-trace-id project-name trace-id:
+  pipenv run python -m binrec.project remove-trace --id "{{project-name}}" "{{trace-id}}"
 
-# Validate a lifted binary against the original with respect to provided arguments
-validate project-name *args:
-  pipenv run python -m binrec.project validate "$@"
+remove-all-traces project-name:
+  pipenv run python -m binrec.project remove-trace "{{project-name}}" --all
 
-# Validate a lifted binary against the original with respect to a bacth file of arguments
-validate-batch project-name batch-file:
-  pipenv run python -m binrec.project validate-batch "{{project-name}}" "{{batch-file}}"
+# Run all project traces
+run project-name:
+  pipenv run python -m binrec.project run "{{project-name}}"
+
+# Run a single project trace by name
+run-trace project-name trace-name:
+  pipenv run python -m binrec.project run-trace "{{project-name}}" "{{trace-name}}"
+
+# Run a single project trace by id
+run-trace-id project-name trace-id:
+  pipenv run python -m binrec.project run-trace --id "{{project-name}}" "{{trace-id}}"
+
+# Validate the recovered binary against an entire project
+validate project-name:
+  pipenv run python -m binrec.project validate "{{project-name}}"
+
+# Validate the recovered binary against a single trace by name
+validate-trace project-name trace-name:
+  pipenv run python -m binrec.project validate-trace "{{project-name}}" "{{trace-name}}"
+
+# Validate the recovered binary against a single trace by id
+validate-trace-id project-name trace-name:
+  pipenv run python -m binrec.project validate-trace --id "{{project-name}}" "{{trace-name}}"
+
+validate-args project-name *args:
+  pipenv run python -m binrec.project validate-args "$@"
+
+# Describe the project and all registered traces
+describe project-name:
+  pipenv run python -m binrec.project describe "{{project-name}}"
 
 # Recursively merge all captures and traces for a project (ex. hello)
 merge-traces project:
@@ -192,14 +222,17 @@ merge-traces project:
 lift-trace project optimize="":
   pipenv run python -m binrec.lift {{optimize}} -vv  "{{project}}"
 
+recover project-name:
+  just run "{{project-name}}"
+  just merge-traces "{{project-name}}"
+  just lift-trace "{{project-name}}"
+  just validate "{{project-name}}"
+
+clear-trace-data project-name:
+  pipenv run python -m binrec.project clear-trace-data "{{project-name}}"
+
 list-projects:
-  pipenv run python -m binrec.project list
-
-list-traces project:
-  pipenv run python -m binrec.project list-traces "{{project}}"
-
-list-merged project:
-  pipenv run python -m binrec.project list-merged "{{project}}"
+  pipenv run python -m binrec.project list-projects
 
 ########## End: End-User API Recipes ##########
 
@@ -241,7 +274,9 @@ _lint-python: _lint-mypy _lint-black _lint-flake8 _lint-isort
 
 # Runs Python static code checking with flake8
 _lint-flake8:
-  pipenv run flake8 --max-line-length 88 binrec
+  # E203 conflicts with black (whitespace around slice operator)
+  # W503 conflicts with black (binary operator at start of line)
+  pipenv run flake8 --max-line-length 88 --ignore E203,W503 binrec
 
 # Runs Python type checking with mypy
 _lint-mypy:
