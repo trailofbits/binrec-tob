@@ -3,18 +3,27 @@ import json
 import logging
 import os
 import re
+import shutil
 import subprocess
 from pathlib import Path
-from typing import Iterable, List, Optional
+from typing import List, Optional, Union
 
-from binrec.batch import BatchTraceParams, TraceParams, patch_s2e_project
+from binrec.campaign import (
+    Campaign,
+    TraceArg,
+    TraceArgType,
+    TraceParams,
+    patch_s2e_project,
+)
 
 from .env import (
     INPUT_FILES_DIRNAME,
+    campaign_filename,
+    get_trace_dirs,
     input_files_dir,
     merged_trace_dir,
     project_dir,
-    trace_dir,
+    s2e_config_filename,
 )
 from .errors import BinRecError
 
@@ -31,60 +40,62 @@ def listing() -> List[str]:
     return d["projects"].keys()
 
 
-def _list_merge_dirs(args):
-    project = _get_project_name(args)
-    print(merged_trace_dir(project))
-
-
-def _get_project_name(args) -> str:
-    project = str(args.name[0])
-    if not project:
-        raise BinRecError("Please specify project name.")
-    return project
-
-
 def _list() -> None:
     for proj in listing():
         print(proj)
 
 
-def traces(project: str) -> Iterable[int]:
-    projdir = project_dir(project)
-    for name in os.listdir(projdir):
-        if not name.startswith("s2e-out-"):
-            continue
-        yield int(name.split("-")[-1])
-
-
-def _list_traces(args) -> None:
-    proj = _get_project_name(args)
-    for t in traces(proj):
-        print(f"{t}: {trace_dir(proj, t)}")
-
-
-def _config_file(project: str) -> Path:
-    return project_dir(project) / "s2e-config.lua"
-
-
-def set_project_args(project: str, args: List[str]) -> None:
+def add_campaign_trace(
+    project: str, args: List[str], symbolic_indexes: List[int] = None, name: str = None
+) -> TraceParams:
     """
-    Set an existing project's sample command line arguments. This method modifies
-    the project's ``bootstrap.sh`` script, changing the how the sample is executed
-    within the qemu image.
+    Add a new trace to an existing campaign.
+
+    :param project: the project name
+    :param args: the full command line arguments, including concrete and symbloic
+    :param symbolic_indexes: the list of argument indexes in ``args`` that are symbolic
+    :param name: the new trace name
+    """
+    trace_args = TraceParams.create_trace_args(args, symbolic_indexes or [])
+    params = TraceParams(trace_args, name=name)
+
+    campaign = Campaign.load_project(project, resolve_input_files=False)
+    logger.info(
+        "adding new trace to campaign %s: %s (symbolic args: %s)",
+        project,
+        params.command_line_args,
+        params.symbolic_indexes,
+    )
+    campaign.traces.append(params)
+
+    campaign.save()
+
+    return params
+
+
+def remove_campaign_trace(project: str, name_or_id: Union[str, int]) -> None:
+    """
+    Remove a trace from an existing campaign.
 
     :param project: project name
-    :param args: list of arguments, the first of which indicates symbolic arguments
+    :param name_or_id: trace name or id (see :meth:`Campaign.remove_trace`
     """
-    # Check for no arguments provided or empty quotes from batch files
-    if not args:
-        args = [""]
-    elif args[0] in ('""', "''"):
-        args = [""] + args[1:]
+    campaign = Campaign.load_project(project, resolve_input_files=False)
 
-    logger.debug("setting symbolic arguments in %s to %s", project, args[0])
-    logger.debug("setting command line arguments in %s to %s", project, args[1:])
+    logger.info("removing campaign trace: %s, %s", project, name_or_id)
+    campaign.remove_trace(name_or_id)
+    campaign.save()
 
-    TraceParams(args).write_config_script(project)
+
+def remove_campaign_all_traces(project: str) -> None:
+    """
+    Remove all traces from an existing campaign.
+    """
+    campaign = Campaign.load_project(project, resolve_input_files=False)
+
+    logger.info("removing all traces from campaign: %s", project)
+    campaign.traces = []
+    campaign.save()
 
 
 def _link_lifted_input_files(project_name: str) -> None:
@@ -99,27 +110,132 @@ def _link_lifted_input_files(project_name: str) -> None:
         dest.symlink_to(source)
 
 
-def _run_trace_setup(trace: TraceParams, cwd: Path) -> None:
-    if not trace.setup:
+def _run_trace_setup(campaign: Campaign, trace: TraceParams, cwd: Path) -> None:
+    """
+    Run the trace setup actions for a given campaign and trace. If the trace does not
+    contain any setup actions, the campaign setup actions will be run.
+
+    :param campaign: the campaign
+    :param trace: the trace
+    :param cwd: the current working directory to execute the actions from
+    """
+    setup = trace.setup or campaign.setup
+    if not setup:
         return
 
     logger.info("running setup actions")
-    script = "\n".join(trace.setup)
+    script = "\n".join(setup)
     subprocess.run(["/bin/bash", "--noprofile"], input=script.encode(), cwd=str(cwd))
     logger.info("setup actions completed")
 
 
-def _run_trace_teardown(trace: TraceParams, cwd: Path) -> None:
-    if not trace.teardown:
+def _run_trace_teardown(campaign: Campaign, trace: TraceParams, cwd: Path) -> None:
+    """
+    Run the trace teardown actions for a given campaign and trace. If the trace does not
+    contain any teardown actions, the campaign teardown actions will be run.
+
+    :param campaign: the campaign
+    :param trace: the trace
+    :param cwd: the current working directory to execute the actions from
+    """
+    teardown = trace.teardown or campaign.teardown
+    if not teardown:
         return
 
     logger.info("running teardown actions")
-    script = "\n".join(trace.teardown)
+    script = "\n".join(teardown)
     subprocess.run(["/bin/bash", "--noprofile"], input=script.encode(), cwd=str(cwd))
     logger.info("teardown actions completed")
 
 
-def validate_lift_result(project: str, trace: TraceParams) -> None:
+def run_campaign(project_or_campaign: Union[str, Campaign]) -> None:
+    """
+    Run an entire campaign and all traces.
+
+    :param project_or_campaign: the project name (``str``) or the campaign object to run
+    """
+    if isinstance(project_or_campaign, str):
+        campaign = Campaign.load_project(project_or_campaign)
+    elif isinstance(project_or_campaign, Campaign):
+        campaign = project_or_campaign
+    else:
+        raise TypeError("expected project name (str) or campaign object")
+
+    for trace in campaign.traces:
+        _run_campaign_trace(campaign, trace)
+
+
+def run_campaign_trace(project: str, trace_name_or_id: Union[int, str]) -> None:
+    """
+    Run a single trace within a campaign.
+
+    :param project: the project name
+    :param trace_name_or_id: the trace name or id to run (see
+        :meth:`Campaign.get_trace`)
+    """
+    campaign = Campaign.load_project(project)
+    trace = campaign.get_trace(trace_name_or_id)
+    _run_campaign_trace(campaign, trace)
+
+
+def _run_campaign_trace(campaign: Campaign, trace: TraceParams) -> None:
+    """
+    Internal method to run a single trace within a campaign.
+
+    :param campaign: the campaign
+    :param trace: the trace
+    """
+    trace.setup_input_file_directory(campaign.project)
+    trace.write_config_script(campaign.project)
+
+    try:
+        subprocess.check_call(["s2e", "run", "--no-tui", campaign.project])
+    except subprocess.CalledProcessError:
+        raise BinRecError(f"s2e run failed for project: {campaign.project}")
+
+
+def validate_campaign(project_or_campaign: Union[str, Campaign]) -> None:
+    """
+    Validate the lift results for an entire campaign.
+
+    :param project_or_campaign: the project name or the campaign object to validate
+    """
+    if isinstance(project_or_campaign, str):
+        campaign = Campaign.load_project(project_or_campaign)
+    elif isinstance(project_or_campaign, Campaign):
+        campaign = project_or_campaign
+    else:
+        raise TypeError("expected project name (str) or campaign object")
+
+    for trace in campaign.traces:
+        _validate_campaign_trace(campaign, trace)
+
+
+def validate_campaign_trace(project: str, trace_name_or_id: Union[int, str]) -> None:
+    """
+    Validate the lift result of a single trace within a campaign.
+
+    :param project: project name
+    :param  trace_name_or_id: the trace name or id to validate (see
+        :meth:`Campaign.get_trace`)
+    """
+    campaign = Campaign.load_project(project)
+    trace = campaign.get_trace(trace_name_or_id)
+    _validate_campaign_trace(campaign, trace)
+
+
+def validate_campaign_with_args(project: str, args: List[str]) -> None:
+    """
+    Validate the list result against the provided command line arguments.
+
+    :param args: the command line arguments to validate with
+    """
+    campaign = Campaign.load_project(project)
+    trace = TraceParams(args=[TraceArg(TraceArgType.concrete, arg) for arg in args])
+    _validate_campaign_trace(campaign, trace)
+
+
+def _validate_campaign_trace(campaign: Campaign, trace: TraceParams) -> None:
     """
     Compare the original binary against the lifted binary for a given sample of
     command line arguments. This method runs the original and the lifted binary
@@ -127,11 +243,12 @@ def validate_lift_result(project: str, trace: TraceParams) -> None:
     ``AssertionError`` is raised if any of the comparison criteria does not match
     between the original and lifted sample.
 
-    :param project: project name
-    :param trace: Set of trace parameters
+    :param campaign: the campaign
+    :param trace: the trace
     """
+    project = campaign.project
     logger.info(
-        "Validating project %s with arguments: %s", project, trace.concrete_args
+        "Validating project %s with arguments: %s", project, trace.command_line_args
     )
 
     merged_dir = merged_trace_dir(project)
@@ -155,10 +272,10 @@ def validate_lift_result(project: str, trace: TraceParams) -> None:
     else:
         raise NotImplementedError("stdin content is not currently supported")
 
-    _run_trace_setup(trace, merged_dir)
-    logger.debug(">> running original sample with args: %s", trace.concrete_args)
+    _run_trace_setup(campaign, trace, merged_dir)
+    logger.debug(">> running original sample with args: %s", trace.command_line_args)
     original_proc = subprocess.Popen(
-        [target] + trace.concrete_args,
+        [target] + trace.command_line_args,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         stdin=stdin_file,
@@ -173,18 +290,18 @@ def validate_lift_result(project: str, trace: TraceParams) -> None:
     original_proc.wait()
     os.remove(target)
 
-    _run_trace_teardown(trace, merged_dir)
+    _run_trace_teardown(campaign, trace, merged_dir)
 
     original_stdout = original_proc.stdout.read()  # type: ignore
     original_stderr = original_proc.stderr.read()  # type: ignore
 
     os.link(lifted, target)
-    _run_trace_setup(trace, merged_dir)
+    _run_trace_setup(campaign, trace, merged_dir)
 
-    logger.debug(">> running recovered sample with args: %s", trace.concrete_args)
+    logger.debug(">> running recovered sample with args: %s", trace.command_line_args)
 
     lifted_proc = subprocess.Popen(
-        [target] + trace.concrete_args,
+        [target] + trace.command_line_args,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         stdin=stdin_file,
@@ -199,7 +316,7 @@ def validate_lift_result(project: str, trace: TraceParams) -> None:
     lifted_proc.wait()
     os.remove(target)
 
-    _run_trace_teardown(trace, merged_dir)
+    _run_trace_teardown(campaign, trace, merged_dir)
 
     lifted_stdout = lifted_proc.stdout.read()  # type: ignore
     lifted_stderr = lifted_proc.stderr.read()  # type: ignore
@@ -231,101 +348,19 @@ def validate_lift_result(project: str, trace: TraceParams) -> None:
     logger.info(
         "Output from %s's original and lifted binaries match for args: %s",
         project,
-        str(trace.concrete_args),
+        str(trace.command_line_args),
     )
-
-
-def validate_lift_result_batch_params(params: BatchTraceParams) -> None:
-    """
-    Validate a project with batch trace parameters.
-
-    :param params: trace parameters
-    """
-    logger.info(
-        "validating batch results for %s with %d traces",
-        params.project,
-        len(params.traces),
-    )
-    for trace in params.traces:
-        validate_lift_result(params.project, trace)
-
-
-def validate_lift_result_batch_file(project: str, batch_file: Path) -> None:
-    """
-    Validate a project with a batch of inputs provided in a file.
-
-    :param project: project name
-    :param batch_file: file containing one or more set of command line arguments
-    """
-    binary = merged_trace_dir(project) / "binary"
-    params = BatchTraceParams.load(binary, batch_file, project=project)
-    validate_lift_result_batch_params(params)
-
-def get_optimized_bitcode_size(project: str) -> int:
-    optimized_bc = merged_trace_dir(project) / "optimized.bc"
-    file_size_bytes = optimized_bc.stat().st_size
-
-    return file_size_bytes
-
-
-def run_project(project: str, args: List[str] = None) -> None:
-    """
-    Run a project. The ``args`` parameter is optional and, when specified, changes the
-    project's command line arguments prior to running.
-
-    :param project: project name
-    :param args: project command line arguments
-    """
-    logger.info("Running project %s with arguments: %s", project, args)
-
-    if args is not None:
-        set_project_args(project, args)
-
-    try:
-        subprocess.check_call(["s2e", "run", "--no-tui", project])
-    except subprocess.CalledProcessError:
-        raise BinRecError(f"s2e run failed for project: {project}")
-
-
-def run_project_batch_params(params: BatchTraceParams) -> None:
-    """
-    Run a project with a batch trace parameters.
-
-    :param params: batch trace parameters
-    """
-    logger.info("running %s with %d traces", params.project, len(params.traces))
-    for i, trace in enumerate(params.traces, start=1):
-        trace.setup_input_file_directory(params.project)
-        trace.write_config_script(params.project)
-        run_project(params.project, None)
-
-
-def run_project_batch_file(project: str, batch_file: Path) -> None:
-    """
-    Run a project with a batch of inputs provided in a file.
-
-    :param project: project name
-    :param batch_file: file containing one or more set of command line arguments
-    """
-    binary = project_dir(project) / "binary"
-    params = BatchTraceParams.load(binary, batch_file, project=project)
-    run_project_batch_params(params)
-
 
 def new_project(
-    project_name: str,
-    binary_filename: Path,
-    sym_args: str = None,
-    args: List[str] = None,
+    project_name: str, binary_filename: Path, template: Union[Path, Campaign] = None
 ) -> Path:
     """
     Create a new S2E analysis project.
 
     :param project_name: the analysis project name
     :param binary_filename: the path to binary being analyzed
-    :param sym_args: list of symbolic arguments in the form of ``"X Y Z"``
-    :param args: list of inital command line arguments for the binary, which can be
-        set later using :func:`set_project_args`
+    :param template: a path to an existing campaign JSON file to use as the basis for
+        the new project
     :returns: the path to the project directory
     """
     project_path = project_dir(project_name)
@@ -333,6 +368,15 @@ def new_project(
         raise FileExistsError(
             errno.EEXIST, os.strerror(errno.EEXIST), str(project_path)
         )
+
+    if isinstance(template, Path):
+        campaign = Campaign.load_json(
+            binary_filename, template, resolve_input_files=True
+        )
+    elif isinstance(template, Campaign):
+        campaign = template
+    else:
+        campaign = Campaign(binary_filename, project=project_name)
 
     logger.info("Creating project: %s", project_name)
     callargs = ["s2e", "new_project", "--name", project_name, str(binary_filename)]
@@ -347,13 +391,12 @@ def new_project(
     input_files.mkdir()
 
     # link to the sample binary so we can easily reference it later on
-    binary_target = project_path / binary_filename.name
     binary = project_path / "binary"
-    binary.symlink_to(binary_target)
+    binary.symlink_to(binary_filename.absolute())
 
     # Update the configuration file to load our plugins and map in the input files
     # directory to the analysis VM
-    with open(_config_file(project_name), "a") as file:
+    with open(s2e_config_filename(project_name), "a") as file:
         file.write(
             f"""
 add_plugin(\"ELFSelector\")
@@ -371,14 +414,90 @@ table.insert(pluginsConfig.HostFiles.baseDirs, "{input_files}")
 """
         )
 
-    project_args = [sym_args or ""]
-    if args:
-        project_args.extend(args)
-
     patch_s2e_project(project_name)
-    set_project_args(project_name, project_args)
+    campaign.save()
 
     return project_path
+
+
+def describe_campaign(project_name: str) -> None:
+    """
+    Describe a campaign by printing all information to stdout.
+
+    :param project_name: the project name
+    """
+    campaign = Campaign.load_project(project_name)
+    print(campaign.project)
+    print("=" * len(campaign.project))
+    print("Campaign File:", campaign_filename(project_name))
+    print("Sample Binary:", campaign.binary)
+    if campaign.setup:
+        print(f"Global Setup ({len(campaign.setup)}):")
+        for line in campaign.setup:
+            print(" ", line)
+        print()
+
+    if campaign.teardown:
+        print(f"Global Teardown ({len(campaign.teardown)}):")
+        for line in campaign.teardown:
+            print(" ", line)
+        print()
+
+    print(f"Traces ({len(campaign.traces)}):")
+    for index, trace in enumerate(campaign.traces):
+        name = trace.name or "(anonymous trace)"
+        print(" ", name)
+        print(" ", "-" * len(name))
+        print("  Id:", index)
+        print("  Command Line Arguments:", trace.command_line_args)
+        print("  Symbolic Indexes:", ", ".join(str(i) for i in trace.symbolic_indexes))
+
+        if trace.input_files:
+            print(f"  Input Files ({len(trace.input_files)}:")
+            for input_file in trace.input_files:
+                print("   ", input_file.source)
+                if input_file.destination:
+                    print("     ", "Destination:", input_file.destination)
+                if isinstance(input_file.permissions, bool):
+                    if input_file.permissions:
+                        print("      [Preserve source permissions]")
+                    else:
+                        print("      [Use default permissions]")
+                else:
+                    print(f"      [chmod {input_file.permissions}]")
+
+        if trace.setup:
+            print(f"  Setup ({len(trace.setup)}):")
+            for line in trace.setup:
+                print("   ", line)
+            print()
+        elif campaign.setup:
+            print("  [Inherit global setup]")
+
+        if trace.teardown:
+            print(f"  Teardown ({len(trace.teardown)}):")
+            for line in trace.teardown:
+                print("   ", line)
+            print()
+        elif campaign.teardown:
+            print("  [Inherit global teardown]")
+
+        print()
+
+
+def clear_project_trace_data(project: str) -> None:
+    """
+    Delete all trace directories from the project.
+    """
+    logger.info("clearing trace directory for project: %s", project)
+    for dirname in get_trace_dirs(project):
+        logger.debug("deleting trace directory: %s", dirname)
+        shutil.rmtree(dirname)
+
+    merged = merged_trace_dir(project)
+    if merged.is_dir():
+        logger.debug("deleting merged trace directory: %s", merged)
+        shutil.rmtree(merged)
 
 
 def main() -> None:
@@ -397,80 +516,117 @@ def main() -> None:
 
     new_proj = subparsers.add_parser("new")
     new_proj.add_argument("project", help="Name of new analysis project")
-    new_proj.add_argument("binary", help="Path to binary used in analysis")
-    new_proj.add_argument(
-        "sym_args",
-        help='Symbolic args to pass to binary. E.g. "1 3" ensures makes arguments one '
-        "and three symbolic.",
-    )
-    new_proj.add_argument(
-        "args",
-        nargs="*",
-        help="Arguments to pass to binary. Use @@ to indicate a file with symbolic "
-        "content",
-    )
+    new_proj.add_argument("binary", type=Path, help="Path to binary used in analysis")
+    new_proj.add_argument("template", default="", help="create campaign from template")
 
-    subparsers.add_parser("list")
-    listtracecmd = subparsers.add_parser("list-traces")
-    listtracecmd.add_argument(
-        "name", nargs=1, type=str, help="Name of project to list traces for"
-    )
+    subparsers.add_parser("list-projects")
 
-    listtracecmd = subparsers.add_parser("list-merged")
-    listtracecmd.add_argument(
-        "name", nargs=1, type=str, help="Name of project to list merged traces for"
+    add_trace = subparsers.add_parser("add-trace")
+    add_trace.add_argument("project", help="Project name")
+    add_trace.add_argument("--name", action="store", help="trace name")
+    add_trace.add_argument(
+        "-s",
+        "--symbolic-indexes",
+        action="store",
+        help='symbolic argument indexes in the form of "ARG_1 ARG_2 ... ARG_N"',
+    )
+    add_trace.add_argument("args", nargs="*", help="command line arguments")
+
+    remove_trace = subparsers.add_parser("remove-trace")
+    remove_trace.add_argument("project", help="Project name")
+    remove_trace.add_argument(
+        "-i", "--id", action="store_true", help="treat 'name' as the trace id"
+    )
+    remove_trace.add_argument("--all", action="store_true", help="remove all traces")
+    remove_trace.add_argument(
+        "name", nargs="?", help="trace name (or trace id if --id is provided)"
     )
 
     run = subparsers.add_parser("run")
-    run.add_argument("project", help="Name of project to run")
-    run.add_argument("--args", nargs="*", help="command line arguments", default=None)
-    # TODO (hbrodin): Enable passing of additional parameters to s2e run
+    run.add_argument("project", help="project name")
 
-    run_batch = subparsers.add_parser("run-batch")
-    run_batch.add_argument("project", help="project name")
-    run_batch.add_argument("batch_file", help="file containing inputs to run")
-
-    set_args = subparsers.add_parser("set-args")
-    set_args.add_argument("project", type=str, help="project name")
-    set_args.add_argument("args", nargs="*", help="command line arguments")
+    run_trace = subparsers.add_parser("run-trace")
+    run_trace.add_argument(
+        "-i", "--id", action="store_true", help="treat 'name' as the trace id"
+    )
+    run_trace.add_argument(
+        "--last", action="store_true", help="run the last registered trace"
+    )
+    run_trace.add_argument("project", help="Project name")
+    run_trace.add_argument(
+        "name", nargs="?", help="trace name (or trace id if --id is provided)"
+    )
 
     validate = subparsers.add_parser("validate")
-    validate.add_argument("project", type=str, help="project name")
-    validate.add_argument("args", nargs="*", help="command line arguments")
+    validate.add_argument("project", help="Project name")
 
-    validate_batch = subparsers.add_parser("validate-batch")
-    validate_batch.add_argument("project", type=str, help="project name")
-    validate_batch.add_argument(
-        "batch_file", type=Path, help="file containing inputs to validate"
+    validate_args = subparsers.add_parser("validate-args")
+    validate_args.add_argument("project", help="Project name")
+    validate_args.add_argument(
+        "args", nargs="*", help="command line arguments to validate against"
     )
+
+    validate_trace = subparsers.add_parser("validate-trace")
+    validate_trace.add_argument(
+        "-i", "--id", action="store_true", help="treat 'name' as the trace id"
+    )
+    validate_trace.add_argument("project", help="Project name")
+    validate_trace.add_argument(
+        "name", help="trace name (or trace id if --id is provided)"
+    )
+
+    describe = subparsers.add_parser("describe")
+    describe.add_argument("project", help="Project name")
+
+    clear_trace_data = subparsers.add_parser("clear-trace-data")
+    clear_trace_data.add_argument("project", help="Project name")
 
     args = parser.parse_args()
 
     if args.verbose:
         logging.getLogger("binrec").setLevel(logging.DEBUG)
 
-    if args.current_parser == "run":
-        run_project(args.project, args.args)
-    elif args.current_parser == "run-batch":
-        run_project_batch_file(args.project, Path(args.batch_file))
-    elif args.current_parser == "new":
-        new_project(
-            args.project, Path(args.binary), args=args.args, sym_args=args.sym_args
-        )
-    elif args.current_parser == "list":
+    if args.current_parser == "new":
+        template = Path(args.template) if args.template else None
+        new_project(args.project, args.binary, template)
+    elif args.current_parser == "list-projects":
         _list()
-    elif args.current_parser == "list-traces":
-        _list_traces(args)
-    elif args.current_parser == "list-merged":
-        _list_merge_dirs(args)
-    elif args.current_parser == "set-args":
-        set_project_args(args.project, args.args or [])
+    elif args.current_parser == "add-trace":
+        if args.symbolic_indexes:
+            symbolic_indexes = [int(i) for i in args.symbolic_indexes.split()]
+        else:
+            symbolic_indexes = []
+        add_campaign_trace(args.project, args.args, symbolic_indexes, args.name)
+    elif args.current_parser == "remove-trace":
+        if args.name:
+            name = int(args.name) if args.id else args.name
+            remove_campaign_trace(args.project, name)
+        elif args.all:
+            remove_campaign_all_traces(args.project)
+        else:
+            parser.error("missing trace name or id")
+    elif args.current_parser == "describe":
+        describe_campaign(args.project)
+    elif args.current_parser == "run":
+        run_campaign(args.project)
+    elif args.current_parser == "run-trace":
+        if args.name:
+            name = int(args.name) if args.id else args.name
+        elif args.last:
+            name = -1
+        else:
+            parser.error("missing trace name or id")
+
+        run_campaign_trace(args.project, name)
     elif args.current_parser == "validate":
-        params = [""]
-        params.extend(args.args or [])
-        validate_lift_result(args.project, TraceParams(params))
-    elif args.current_parser == "validate-batch":
-        validate_lift_result_batch_file(args.project, Path(args.batch_file))
+        validate_campaign(args.project)
+    elif args.current_parser == "validate-trace":
+        name = int(args.name) if args.id else args.name
+        validate_campaign_trace(args.project, name)
+    elif args.current_parser == "validate-args":
+        validate_campaign_with_args(args.project, args.args)
+    elif args.current_parser == "clear-trace-data":
+        clear_project_trace_data(args.project)
     else:
         parser.print_help()
 

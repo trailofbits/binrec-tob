@@ -1,13 +1,16 @@
 import json
 import shlex
-from dataclasses import InitVar, dataclass, field
+from dataclasses import InitVar, asdict, dataclass, field
+from enum import Enum
 from pathlib import Path
-from typing import List, Optional, TextIO, Union
+from typing import Any, List, Optional, TextIO, Union
 
 from .env import (
     INPUT_FILES_DIRNAME,
     TRACE_CONFIG_FILENAME,
+    campaign_filename,
     input_files_dir,
+    project_binary_filename,
     project_dir,
     trace_config_filename,
 )
@@ -60,6 +63,9 @@ BOOTSTRAP_PATCH_EXECUTE_SAMPLE = f"""
     ################
 """  # noqa: E501
 
+#: The default value for symbolic arguments
+DEFAULT_SYMBOLIC_ARG_VALUE = "0"
+
 
 def _validate_file_permission(permissions: str) -> None:
     """
@@ -75,6 +81,75 @@ def _validate_file_permission(permissions: str) -> None:
 
     if len(permissions) != 3:
         raise ValueError("invalid permissions: must be valid 3 digit octal number")
+
+
+class CampaignJsonEncoder(json.JSONEncoder):
+    """
+    Provides JSON encoding for :class:`Campaign` objects.
+    """
+
+    def default(self, obj: Any) -> str:
+        if isinstance(obj, Enum):
+            return obj.value
+        if isinstance(obj, Path):
+            return str(obj)
+        return super().default(obj)
+
+
+class TraceArgType(Enum):
+    """
+    A trace argument type: symbolic or concrete.
+    """
+
+    symbolic = "symbolic"
+    concrete = "concrete"
+
+
+@dataclass
+class TraceArg:
+    """
+    A single trace argument containing argument type and the value.
+    """
+
+    arg_type: TraceArgType = TraceArgType.concrete
+    value: str = ""
+
+    @property
+    def is_symbolic(self) -> bool:
+        """
+        :returns: the argument is symbolic
+        """
+        return self.arg_type is TraceArgType.symbolic
+
+    @property
+    def is_concrete(self) -> bool:
+        """
+        :returns: the argument is concrete
+        """
+        return self.arg_type is TraceArgType.concrete
+
+    @property
+    def concrete_value(self) -> str:
+        """
+        :returns: the concrete value that will be used in the command line invocation of
+            the sample
+        """
+        if self.is_symbolic:
+            return self.value or DEFAULT_SYMBOLIC_ARG_VALUE
+        return self.value
+
+    @classmethod
+    def load_dict(cls, obj: dict) -> "TraceArg":
+        """
+        Load the trace argument from a dictionary.
+
+        :param obj: trace argument object
+        :returns: the parsed argument
+        """
+        return cls(
+            arg_type=TraceArgType(obj.get("arg_type") or "concrete"),
+            value=str(obj.get("value") or ""),
+        )
 
 
 @dataclass
@@ -168,32 +243,39 @@ class TraceInputFile:
 
 @dataclass
 class TraceParams:
-    args: List[str] = field(default_factory=list)
+    """
+    The parameters for running a single trace within a campaign. Each trace has a set of
+    arguments, input files, setup steps, teardown steps, and information on how to
+    validate the lifted result against the original.
+    """
+
+    args: List[TraceArg] = field(default_factory=list)
     stdin: Union[bool, str] = False
     match_stdout: Union[bool, str] = True
     match_stderr: Union[bool, str] = True
     input_files: List[TraceInputFile] = field(default_factory=list)
     setup: List[str] = field(default_factory=list)
     teardown: List[str] = field(default_factory=list)
+    name: Optional[str] = None
 
     @property
-    def symbolic_args(self) -> str:
+    def symbolic_indexes(self) -> List[int]:
         """
-        :returns: the symbolic arguments (``args[0]``)
+        :returns: the list of argument indexes that are symbolic
         """
-        return self.args[0] if self.args else ""
+        return [i for i, arg in enumerate(self.args, start=1) if arg.is_symbolic]
 
     @property
-    def concrete_args(self) -> List[str]:
+    def command_line_args(self) -> List[str]:
         """
-        :returns: the concrete arguments (``args[1:]``)
+        :returns: the command line arguments (symbolic and concrete)
         """
-        return list(self.args[1:]) if self.args else []
+        return [arg.concrete_value for arg in self.args]
 
     def write_config_script(self, project: str) -> None:
         """
         Write the trace params to the binrec trace config script. The config script
-        relies on a patched ``bootstrap.sh`` script (see :func:`patch_s2e_project``).
+        relies on a patched ``bootstrap.sh`` script (see :func:`patch_s2e_project`).
 
         :param project: project name
         """
@@ -211,9 +293,11 @@ class TraceParams:
         Write the bash config variables used by binrec and S2E when executing the
         sample.
         """
-        symbolic_args = shlex.quote(self.symbolic_args)
-        args = " ".join(shlex.quote(arg) for arg in self.concrete_args)
-        print(f"export {TRACE_SYMBOLIC_ARGS_VAR}={symbolic_args}", file=file)
+        symbolic_indexes = shlex.quote(
+            " ".join([str(i) for i in self.symbolic_indexes])
+        )
+        args = " ".join(shlex.quote(arg) for arg in self.command_line_args)
+        print(f"export {TRACE_SYMBOLIC_ARGS_VAR}={symbolic_indexes}", file=file)
         print(f"export {TRACE_CONCRETE_ARGS_VAR}=({args})", file=file)
         print(file=file)
 
@@ -242,6 +326,10 @@ class TraceParams:
         print(f"function {SETUP_FUNCTION}() {{", file=file)
         for action in self.setup:
             print(f"  {action}", file=file)
+
+        # This function could be empty if no setup actions are being performed. Add a
+        # return statement to make sure bash is happy
+        print("  return", file=file)
         print("}", file=file)
         print(file=file)
 
@@ -252,11 +340,23 @@ class TraceParams:
         print(f"function {TEARDOWN_FUNCTION}() {{", file=file)
         for action in self.teardown:
             print(f"  {action}", file=file)
+
+        # This function could be empty if no setup actions are being performed. Add a
+        # return statement to make sure bash is happy
+        print("  return", file=file)
         print("}", file=file)
         print(file=file)
 
     @classmethod
     def load_dict(cls, item: dict) -> "TraceParams":
+        """
+        Load the trace parameters from a dictionary.
+
+        :param item: trace parameters object
+        :returns: the parsed trace parameters
+        :raises ValueError: the trace parameters object is invalid and could not be
+            parsed
+        """
         args = item.get("args") or []
         stdin = item.get("stdin") or False
         match_stdout = item.get("match_stdout", True)
@@ -277,14 +377,24 @@ class TraceParams:
             else:
                 raise ValueError("items in 'files' array must be a string or object")
 
+        trace_args = []
+        for arg in args:
+            if isinstance(arg, str):
+                trace_arg = TraceArg(TraceArgType.concrete, arg)
+            else:
+                trace_arg = TraceArg.load_dict(arg)
+
+            trace_args.append(trace_arg)
+
         return cls(
-            args=args,
+            args=trace_args,
             stdin=stdin,
             match_stdout=match_stdout,
             match_stderr=match_stderr,
             input_files=input_files,
             setup=setup,
             teardown=teardown,
+            name=item.get("name"),
         )
 
     def setup_input_file_directory(self, project: str, cleanup: bool = True) -> None:
@@ -312,63 +422,152 @@ class TraceParams:
                 link = dirname / item.source.name
                 link.symlink_to(item.source)
 
+    @classmethod
+    def create_trace_args(
+        cls, args: List[str], symbolic_indexes: List[int]
+    ) -> List[TraceArg]:
+        """
+        Create a list of trace arguments from a list of argument values and a list of
+        symbolic argument indexes. For example:
+
+        .. code-block:: python
+
+            TraceParams.create_trace_args(["first", "second"], [2]) == [
+                TraceArg(TraceArgType.concrete, "first),
+                TraceArg(TraceArgType.symbolic, "second")
+            ]
+
+        :param args: concrete argument values
+        :param symbolic_indexes: symbolic argument indexes (1-based)
+        :returns: the list of ``TraceArg`` objects
+        """
+        trace_args = []
+        for i, value in enumerate(args, start=1):
+            arg_type = (
+                TraceArgType.symbolic
+                if i in symbolic_indexes
+                else TraceArgType.concrete
+            )
+            trace_args.append(TraceArg(arg_type, value))
+
+        for i in symbolic_indexes:
+            if i > len(trace_args) or i < 0:
+                raise IndexError(f"symbolic argument out of bounds: {i}")
+
+        return trace_args
+
 
 @dataclass
-class BatchTraceParams:
+class Campaign:
     """
     Parameters for executing multiple traces of a single analysis sample. This class
-    can created programmatically or loaded from a file. Two file formats are currently
-    supported:
+    can created programmatically or loaded from a JSON file.
 
-     1. Plaintext - a file where each line is a list of command line arguments.
-     2. JSON - fully-featured definition that maps to this class.
-
-    Each batch trace params targets a single sample binary, ``binary``, and a list of
-    trace parameters, ``traces``.
+    Each campaign targets a single sample binary, ``binary``, and a list of trace
+    parameters, ``traces``.
     """
 
     binary: Path
-    traces: List[TraceParams]
+    traces: List[TraceParams] = field(default_factory=list)
     project: InitVar[str] = None
+    setup: List[str] = field(default_factory=list)
+    teardown: List[str] = field(default_factory=list)
 
     def __post_init__(self, project: str = None):
-        self.project = project or self.binary.name
+        self.project = project or (self.binary.name if self.binary else "")
+
+    def save(self, file: Union[str, Path, TextIO] = None) -> None:
+        """
+        Save the campaign to disk. The ``file`` argument can be one of:
+
+        1. ``str | Path`` - save the campaign to the provied path
+        2. ``TextIO`` - save the campaign to the provide open file
+        3. ``None`` (default) - save the campaign to the default campaign path for the
+           project (see :func:`~binrec.env.campaign_filename`)
+
+        :param file: the destination file path or file object
+        """
+        if file is None:
+            file = campaign_filename(self.project)
+
+        if isinstance(file, (str, Path)):
+            fp: TextIO = open(file, "w")
+        else:
+            fp = file
+
+        body = asdict(self)
+        # remove "binary" from the JSON since we want the campaign to be reusable by
+        # being decoupled from the S2E project
+        body.pop("binary", None)
+        fp.write(json.dumps(body, indent=2, cls=CampaignJsonEncoder))
+
+    def remove_trace(self, name_or_id: Union[str, int]) -> None:
+        """
+        Remove a trace by name or id. The trace id is the index of the trace within the
+        ``traces`` list. The trace id can be negative, such as ``-1`` to remove the last
+        trace in the list.
+
+        :param name_or_id: the trace name (``str``) or id (``int``) to remove
+        :raises KeyError: the trace name does not exist within the campaign
+        :raises IndexError: the trace id does not exist within the campaign
+        """
+        if isinstance(name_or_id, int):
+            if abs(name_or_id) >= len(self.traces):
+                raise IndexError(f"invalid trace index: {name_or_id}")
+            self.traces.pop(name_or_id)
+            return
+
+        for i, trace in enumerate(self.traces):
+            if trace.name == name_or_id:
+                found = i
+                break
+        else:
+            raise KeyError(f"trace does not exist: {name_or_id}")
+
+        self.traces.pop(found)
+
+    def get_trace(self, name_or_id: Union[str, int]) -> TraceParams:
+        """
+        Get a trace by name or id. The trace id is the index of the trace within the
+        ``traces`` list. The trace id can be negative, such as ``-1`` to get the last
+        trace in the list.
+
+        :param name_or_id: the trace name (``str``) or id (``int``) to get
+        :raises KeyError: the trace name does not exist within the campaign
+        :raises IndexError: the trace id does not exist within the campaign
+        """
+        if isinstance(name_or_id, int):
+            if abs(name_or_id) >= len(self.traces):
+                raise IndexError(f"invalid trace index: {name_or_id}")
+            return self.traces[name_or_id]
+
+        for trace in self.traces:
+            if trace.name == name_or_id:
+                return trace
+
+        raise KeyError(f"trace does not exist: {name_or_id}")
 
     @classmethod
-    def load(cls, binary: Path, filename: Path, **kwargs) -> "BatchTraceParams":
-        if filename.suffix.lower() == ".json":
-            return cls.load_json(binary, filename, **kwargs)
-        return cls.load_plaintext(binary, filename, **kwargs)
-
-    @classmethod
-    def load_plaintext(
-        cls, binary: Path, filename: Path, **kwargs
-    ) -> "BatchTraceParams":
+    def load_project(cls, project_name: str, **kwargs) -> "Campaign":
         """
-        Parse a plaintext batch file that only contains trace arguments. Each line in
-        the file represents a single invocation. If the file is empty a single
-        invocation is returned with no arguments.
+        Load the campaign for a project.
 
-        :param filename: plaintext batch filename
+        :param project_name: the project
+        :param kwargs: additional arguments to pass to :meth:`load_json`
+        :returns: the parsed campaign object
         """
-        with open(filename, "r") as file:
-            # read command line invocations
-            invocations = [shlex.split(line.strip()) for line in file]
-            if not invocations:
-                # no command line arguments specified, run the test once with no
-                # arguments
-                invocations = [[""]]
-
-        return BatchTraceParams(
-            binary, [TraceParams(args) for args in invocations], **kwargs
+        return cls.load_json(
+            project_binary_filename(project_name),
+            campaign_filename(project_name),
+            **kwargs,
         )
 
     @classmethod
     def load_json(
         cls, binary: Path, filename: Path, resolve_input_files: bool = True, **kwargs
-    ) -> "BatchTraceParams":
+    ) -> "Campaign":
         """
-        Load the batch trace parameters from a JSON file.
+        Load the campaign from a JSON file.
 
         :param binary: the sample binary
         :param filename: JSON filename
@@ -380,16 +579,20 @@ class BatchTraceParams:
         with open(filename, "r") as file:
             body = json.loads(file.read().strip())
 
-        batch = BatchTraceParams(
-            binary, [TraceParams.load_dict(item) for item in body["traces"]], **kwargs
+        campaign = Campaign(
+            binary,
+            [TraceParams.load_dict(item) for item in body["traces"]],
+            setup=body.get("setup") or [],
+            teardown=body.get("teardown") or [],
+            **kwargs,
         )
 
         if resolve_input_files:  # TODO unit test this
-            for trace in batch.traces:
+            for trace in campaign.traces:
                 for input_file in trace.input_files:
                     input_file.check_source(filename.parent)
 
-        return batch
+        return campaign
 
 
 def patch_s2e_project(project: str, existing_patch_ok: bool = False) -> bool:

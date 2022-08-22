@@ -17,6 +17,15 @@ __all__ = (
     "BINREC_LIB",
     "BINREC_PROJECTS",
     "llvm_command",
+    "project_dir",
+    "merged_trace_dir",
+    "trace_dir",
+    "input_files_dir",
+    "trace_config_filename",
+    "campaign_filename",
+    "s2e_config_filename",
+    "project_binary_filename",
+    "get_trace_dirs",
 )
 
 LLVM_MAJOR_VERSION = 14
@@ -78,6 +87,10 @@ BINREC_LINK_LD = Path(os.environ["BINREC_LINK_LD"]).absolute()
 BINREC_LIB = Path(os.environ["BINREC_LIB"]).absolute()
 #: The aboslute path to the BinRec S2E projects directory
 BINREC_PROJECTS = Path(os.environ["BINREC_PROJECTS"]).absolute()
+#: The absolute path to the libc module used during analysis
+BINREC_LIBC_MODULE = Path(os.environ["BINREC_LIBC_MODULE"]).absolute()
+#: The absolute path to the qemu guest filesystem root
+BINREC_GUESTFS_ROOT = Path(os.environ["BINREC_GUESTFS_ROOT"]).absolute()
 
 #: The default filename for the binrec trace config script
 TRACE_CONFIG_FILENAME = "binrec_trace_config.sh"
@@ -120,6 +133,28 @@ def trace_config_filename(project_name: str) -> Path:
     :returns: the path to the project trace config filename
     """
     return project_dir(project_name) / TRACE_CONFIG_FILENAME
+
+
+def campaign_filename(project_name: str) -> Path:
+    """
+    :returns: the filename of the JSON campaign file for the project
+    """
+    return project_dir(project_name) / "campaign.json"
+
+
+def s2e_config_filename(project_name: str) -> Path:
+    """
+    :returns: the filename of the S2E configuration file for the project
+    """
+    return project_dir(project_name) / "s2e-config.lua"
+
+
+def project_binary_filename(project_name: str) -> Path:
+    """
+    :returns: the filename of the project analysis binary
+    """
+    binary = project_dir(project_name) / "binary"
+    return binary.readlink()
 
 
 def get_trace_dirs(project_name: str) -> List[Path]:

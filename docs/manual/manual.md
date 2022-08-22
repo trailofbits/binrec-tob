@@ -6,9 +6,9 @@ Welcome to BinRec's user manual! This document contains user-level information o
 System Overview
 ---------------
 
-BinRec is a dynamic binary recovery / recompilation tool. At a high level, it traces the execution of a target program with user provided inputs to record the code necessary to process these inputs. The traces (one for each distinct input) are then merged together and lifted to an intermediate program representation that allows for transforming the recovered code. Finally, the recovered code can then be recompiled back to a functioning binary. 
+BinRec is a dynamic binary recovery / recompilation tool. At a high level, it traces the execution of a target program with user provided inputs to record the code necessary to process these inputs. The traces (one for each distinct input) are then merged together and lifted to an intermediate program representation that allows for transforming the recovered code. Finally, the recovered code can then be recompiled back to a functioning binary.
 
-Figure 1 below provides a more detailed overview of the tool. As shown, the user provides BinRec with a target binary and one or more inputs (e.g., command line invocations) to the binary. Arguments that make up these inputs can be marked as symbolic (i.e., a wildcard) to trace all code associated with that argument, regardless of its acutal value. BinRec puts the target binary into an emulated environment where it traces the execution of the program on the provided inputs. Each trace consists of the executed code in an intermediate representation and supplmentary information about order in which the recovered code was executed. 
+Figure 1 below provides a more detailed overview of the tool. As shown, the user provides BinRec with a target binary and one or more inputs (e.g., command line invocations) to the binary. Arguments that make up these inputs can be marked as symbolic (i.e., a wildcard) to trace all code associated with that argument, regardless of its acutal value. BinRec puts the target binary into an emulated environment where it traces the execution of the program on the provided inputs. Each trace consists of the executed code in an intermediate representation and supplmentary information about order in which the recovered code was executed.
 
 In the next stage of the pipeline, all collected traces (and their supplementary info) are merged into a single representation.  This single program representation is then refined to the point where it can be re-compiled back into a functioning binary supporting the inputs provided during tracing. Prior re-compilation, the refined code can be further transformed by the user if needed (i.e., applying security hardening or performance optimization transformations).
 
@@ -38,10 +38,11 @@ Walkthroughs of Common Workflows
 --------------------------------
 
  1. [Debloating](walkthroughs/debloating.md)
- 2. [Debloating using Batch Files](walkthroughs/debloating_batch.md)
- 3. Debloating using Fuzzer to Generate Inputs |TODO|
- 4. Hardening |TODO|
- 5. (Re-)Optimization |TODO|
+ 2. [Advanced Debloating](walkthroughs/advanced_debloating.md)
+ 3. [Advanced Tracing](walkthroughs/advanced_tracing.md)
+ 4. [General Guide to Binary Recovery](walkthroughs/generalguide.md)
+ 5. Hardening |TODO|
+ 6. (Re-)Optimization |TODO|
 
 
 Known Limitations
@@ -54,6 +55,10 @@ Known Limitations
 Appendix A: Some Useful BinRec Commands
 --------------------------------------------------
  - `just` (no command): List BinRec commands and a short description of their behavior
- - `just list-projects`: Lists all BinRec project names
- - `just list-traces <project>`: Lists all the traces recorded for a project
  - `just run-all-tests`: Runs BinRec's component- and system-level tests. Useful if you suspect your installation has gone bad.
+ - `just describe <project>`: Prints all information about a given project.
+
+Appendix B: BinRec Campaign File Format
+--------------------------------------------------
+
+The campaign file format can be found [here](./campaign_schema.md).
