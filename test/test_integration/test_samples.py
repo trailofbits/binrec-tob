@@ -86,6 +86,7 @@ def run_sample_common(pytestconfig, opt_level: lift.OptimizationLevel, binary: P
     patch_body = {
         name: getattr(real_lib_module, name) for name in real_lib_module.__all__
     }
+    stats = {}
     with patch.multiple(lift, **patch_body):
         stats = run_test(plan, opt_level, {})
         pretty_stats = pprint.pformat(stats) 
