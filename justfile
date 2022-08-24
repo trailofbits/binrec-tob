@@ -14,9 +14,13 @@ justdir := justfile_directory()
 plugins_root := justdir + "/s2e/source/s2e/libs2eplugins"
 plugins_dir := join(plugins_root, "src/s2e/Plugins")
 plugins_cmake := join(plugins_root, "src", "CMakeLists.txt")
+docs_md := "README.md CONTRIBUTING.md docs/**/*.md"
 
 # Add Clang / LLVM binaries (and other dependencies) from S2E install to PATH
-export PATH := env_var('S2E_BIN') + ":" + env_var('PATH')
+# Add node.js-based markdown linters to PATH
+mdlint_bin := env_var('NODE_MODULES') + "/markdownlint-cli"
+mdspell_bin := env_var('NODE_MODULES') + "/markdown-spellcheck/bin"
+export PATH := env_var('S2E_BIN') + ":" + env_var('PATH') + ":" + mdlint_bin + ":" + mdspell_bin
 
 # S2E repos that need to be pinned to a specific commit (see issue #164)
 repo_s2e_commit               := "5349d353f4455f5a120d0c8d9790f742c656a706"
@@ -35,13 +39,18 @@ install-binrec: _install-dependencies _binrec-init build-all build-s2e-image bui
 
 # Install apt packages and git LFS. Required once before build. Requires super user privileges.
 _install-dependencies:
+    # node.js, npm for linters
+    curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
     sudo apt-get update
     sudo apt-get install -y bison cmake flex g++ g++-multilib gcc gcc-multilib git libglib2.0-dev liblua5.1-dev \
         libsigc++-2.0-dev lua5.3 nasm nlohmann-json3-dev pkg-config subversion curl pipenv git-lfs doxygen graphviz \
         binutils libc6-dbg:i386 \
+        nodejs \
         python3.9-dev python3.9-venv # For s2e-env (and compatibility with Python 3.9 from Pipfile): http://s2e.systems/docs/s2e-env.html#id2
 
     git lfs install
+
+    npm install
 
 # Initialize BinRec, S2E, LFS, pipenv, submodules. Required once before build. Requires super user privileges.
 _binrec-init:
@@ -267,7 +276,7 @@ _format-clang-dir dirname:
   find {{dirname}} -iname \*.cpp -or -iname \*.hpp -or -iname \*.h | xargs -n1 clang-format -Werror -i
 
 # Runs linting checks
-lint: _lint-python _lint-clang
+lint: _lint-python _lint-clang _lint-md _lint-rst
 
 # Runs linting checks for Python code
 _lint-python: _lint-mypy _lint-black _lint-flake8 _lint-isort
@@ -302,6 +311,24 @@ _lint-clang:
 # Run clang-format linting recursively on a directory
 _lint-clang-dir dirname:
   find {{dirname}} -iname \*.cpp -or -iname \*.hpp -or -iname \*.h | xargs -n1 clang-format -Werror --dry-run
+
+# Run linting checks for markdown
+_lint-md: _lint-md-format _lint-md-spell
+
+_lint-md-format:
+  markdownlint.js --fix {{docs_md}}
+
+_lint-md-spell:
+  mdspell -n -a --en-us {{docs_md}} 
+
+# Run linting checks for restructured text
+_lint-rst: _lint-rst-format _lint-rst-spell
+
+_lint-rst-format:
+  pipenv run doc8 docs/source
+
+_lint-rst-spell:
+  pipenv run sphinx-build -b spelling docs/source docs/build
 
 ########## End: Code Formatting Recipes ##########
 

@@ -1,0 +1,29 @@
+{
+  "name": "binrec-prerelease",
+  "version": "1.0.0",
+  "description": "BinRec: Dynamic Binary Lifting and Recompilation ================================================",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trailofbits/binrec-prerelease.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/trailofbits/binrec-prerelease/issues"
+  },
+  "homepage": "https://github.com/trailofbits/binrec-prerelease#readme",
+  "dependencies": {
+    "markdown-spellcheck": "^1.3.1",
+    "markdownlint-cli": "^0.32.2",
+    "sinon": "^1.17.7"
+  }
+}

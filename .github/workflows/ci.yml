@@ -25,7 +25,10 @@ jobs:
           pipx install pipenv
           # just command runner https://github.com/casey/just#pre-built-binaries
           curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to "${HOME}/.local/bin"
-
+          # node.js, npm for markdown linters
+          curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+          sudo apt update
+          sudo apt install -y nodejs
 
       - name: 'Init Python'
         run: |
@@ -36,9 +39,16 @@ jobs:
           curl -sSL https://github.com/llvm/llvm-project/releases/download/llvmorg-14.0.0/clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz -o - | tar -xJ
           cp clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04/bin/clang-format "${HOME}/.local/bin"
 
+      - name: 'Init node_modules'
+        run: |
+          npm install
+
       - name: 'Lint'
         run: |
-          just lint
+          just _lint-python
+          just _lint-clang
+          just _lint-md
+          just _lint-rst-format
 
   test:
     runs-on: ubuntu-20.04

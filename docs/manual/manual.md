@@ -1,38 +1,69 @@
 BinRec User Manual
 ==================
 
-Welcome to BinRec's user manual! This document contains user-level information on how to use BinRec to accomplish various binary recovery and recompilation tasks.
+Welcome to BinRec's user manual! This document contains user-level information
+on how to use BinRec to accomplish various binary recovery and recompilation
+tasks.
 
 System Overview
 ---------------
 
-BinRec is a dynamic binary recovery / recompilation tool. At a high level, it traces the execution of a target program with user provided inputs to record the code necessary to process these inputs. The traces (one for each distinct input) are then merged together and lifted to an intermediate program representation that allows for transforming the recovered code. Finally, the recovered code can then be recompiled back to a functioning binary.
+BinRec is a dynamic binary recovery / recompilation tool. At a high level,
+it traces the execution of a target program with user provided inputs to record
+the code necessary to process these inputs. The traces (one for each distinct
+input) are then merged together and lifted to an intermediate program
+representation that allows for transforming the recovered code. Finally,
+the recovered code can then be recompiled back to a functioning binary.
 
-Figure 1 below provides a more detailed overview of the tool. As shown, the user provides BinRec with a target binary and one or more inputs (e.g., command line invocations) to the binary. Arguments that make up these inputs can be marked as symbolic (i.e., a wildcard) to trace all code associated with that argument, regardless of its acutal value. BinRec puts the target binary into an emulated environment where it traces the execution of the program on the provided inputs. Each trace consists of the executed code in an intermediate representation and supplmentary information about order in which the recovered code was executed.
+Figure 1 below provides a more detailed overview of the tool. As shown,
+the user provides BinRec with a target binary and one or more inputs
+(e.g., command line invocations) to the binary. Arguments that make up these
+inputs can be marked as symbolic (i.e., a wildcard) to trace all code
+associated with that argument, regardless of its actual value. BinRec puts
+the target binary into an emulated environment where it traces the execution
+of the program on the provided inputs. Each trace consists of the executed code
+in an intermediate representation and supplementary information about order in
+which the recovered code was executed.
 
-In the next stage of the pipeline, all collected traces (and their supplementary info) are merged into a single representation.  This single program representation is then refined to the point where it can be re-compiled back into a functioning binary supporting the inputs provided during tracing. Prior re-compilation, the refined code can be further transformed by the user if needed (i.e., applying security hardening or performance optimization transformations).
-
+In the next stage of the pipeline, all collected traces (and their supplementary
+info) are merged into a single representation.  This single program
+representation is then refined to the point where it can be re-compiled back
+into a functioning binary supporting the inputs provided during tracing.
+Prior re-compilation, the refined code can be further transformed by the user
+if needed (i.e., applying security hardening or performance optimization
+transformations).
 
 ![Overview of BinRec's Operation](binrec_ov1.png)
 
-
 Installing BinRec
 ---------------
-1. BinRec uses [just](https://github.com/casey/just#installation) to automate various tasks including building BinRec. The first step in building BinRec is to install this tool (and `curl` if not already installed). We provide a simple shell script for this:
 
-        $ ./get_just.sh
+1. BinRec uses [just](https://github.com/casey/just#installation) to automate
+various tasks including building BinRec. The first step in building BinRec is
+to install this tool (and `curl` if not already installed). We provide a simple
+shell script for this:
 
-2. Next, BinRec and its dependencies can be fetched, built, and installed from the root of this repository with:
+    ```bash
+    ./get_just.sh
+    ```
 
-       $ just install-binrec
+2. Next, BinRec and its dependencies can be fetched, built, and installed from
+the root of this repository with:
 
-3. (Optional) The above command will download a pre-built QEMU virtual machine image within which target binaries will run. The default pre-built image is a Linux `x86` image (currently the only supported environment). If you want to download additional images (e.g., Linux `x64`) you can use the following command:
+    ```bash
+    just install-binrec
+    ```
+
+3. (Optional) The above command will download a prebuilt QEMU virtual machine
+image within which target binaries will run. The default prebuilt image is a
+Linux `x86` image (currently the only supported environment). If you want to
+download additional images (e.g., Linux `x64`) you can use the following
+command:
 
    ```bash
    # just build-s2e-image <image_name>
    $ just build-s2e-image debian-9.2.1-x86_64
    ```
-
 
 Walkthroughs of Common Workflows
 --------------------------------
@@ -44,19 +75,23 @@ Walkthroughs of Common Workflows
  5. Hardening |TODO|
  6. (Re-)Optimization |TODO|
 
-
 Known Limitations
 -----------------
 
- - Non-deterministic binaries may lift successfully but will not operate exactly the same as the original binary because all code paths wouldn't have been recored during execution.
- - All lifted floating point operations are done using 64-bit `double` values, which may reduce the precision for some operations.
-
+- Non-deterministic binaries may lift successfully but will not operate
+exactly the same as the original binary because all code paths wouldn't
+have been recorded during execution.
+- All lifted floating point operations are done using 64-bit `double` values,
+which may reduce the precision for some operations.
 
 Appendix A: Some Useful BinRec Commands
 --------------------------------------------------
- - `just` (no command): List BinRec commands and a short description of their behavior
- - `just run-all-tests`: Runs BinRec's component- and system-level tests. Useful if you suspect your installation has gone bad.
- - `just describe <project>`: Prints all information about a given project.
+
+- `just` (no command): List BinRec commands and a short description of
+their behavior
+- `just run-all-tests`: Runs BinRec's component- and system-level tests.
+Useful if you suspect your installation has gone bad.
+- `just describe <project>`: Prints all information about a given project.
 
 Appendix B: BinRec Campaign File Format
 --------------------------------------------------

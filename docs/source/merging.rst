@@ -1,10 +1,10 @@
 BinRec Merging
 --------------
 
-Merging is the process of combining multiple captures and traces of a binary, that
-exercise different functionality and branches, into a single trace. Merging is
-performed by the ``binrec.merge`` module, which can be used programmatically or as a
-standalone script. For example,
+Merging is the process of combining multiple captures and traces of a binary,
+that exercise different functionality and branches, into a single trace.
+Merging is performed by the ``binrec.merge`` module, which can be used
+programmatically or as a standalone script. For example,
 
 **Programmatically**
 
@@ -36,3 +36,4 @@ binrec.merge Module
 
 .. automodule:: binrec.merge
     :members:
+

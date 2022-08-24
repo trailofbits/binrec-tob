@@ -52,7 +52,7 @@ def add_campaign_trace(
     Add a new trace to an existing campaign.
 
     :param project: the project name
-    :param args: the full command line arguments, including concrete and symbloic
+    :param args: the full command line arguments, including concrete and symbolic
     :param symbolic_indexes: the list of argument indexes in ``args`` that are symbolic
     :param name: the new trace name
     """

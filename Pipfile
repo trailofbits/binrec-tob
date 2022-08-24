@@ -9,12 +9,14 @@ python-dotenv = "*"
 [dev-packages]
 black = "==22.3.0"
 flake8 = "*"
-mypy = "*"
+mypy = "==0.950"
 pytest = "*"
 isort = "*"
 coverage = "*"
 sphinx = "*"
 pytest-rerunfailures = "*"
+sphinxcontrib-spelling = "*"
+doc8 = "*"
 
 [requires]
 python_version = "3.9"

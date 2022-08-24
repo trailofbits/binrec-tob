@@ -31,3 +31,4 @@ s2e-out-*
 venv/
 .coverage
 s2e/
+node_modules/

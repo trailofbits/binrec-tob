@@ -85,7 +85,7 @@ BINREC_SCRIPTS = Path(os.environ["BINREC_SCRIPTS"]).absolute()
 BINREC_LINK_LD = Path(os.environ["BINREC_LINK_LD"]).absolute()
 #: The absolute path to the BinRec build library directory
 BINREC_LIB = Path(os.environ["BINREC_LIB"]).absolute()
-#: The aboslute path to the BinRec S2E projects directory
+#: The absolute path to the BinRec S2E projects directory
 BINREC_PROJECTS = Path(os.environ["BINREC_PROJECTS"]).absolute()
 #: The absolute path to the libc module used during analysis
 BINREC_LIBC_MODULE = Path(os.environ["BINREC_LIBC_MODULE"]).absolute()

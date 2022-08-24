@@ -1,0 +1,50 @@
+# markdown-spellcheck spelling configuration file
+# Format - lines beginning # are comments
+# global dictionary is at the start, file overrides afterwards
+# one word per line, to define a file override use ' - filename'
+# where filename is relative to this configuration file
+binrec
+llvm
+s2e
+lts
+qemu
+walkthroughs
+hardcoded
+llvm-flavored
+vscode
+plugins
+autogenerate
+submodule
+plugin
+flake8
+mypy
+isort
+stdout
+stderr
+linted
+doxygen
+e.g.
+i.e.
+wildcard
+debloating
+fuzzer
+64-bit
+executables
+runtime
+repo
+teardown
+stdin
+markdownlint-cli
+mdspell
+doc8
+rST
+sphinxcontrib.spelling
+ - README.md
+14
+3.9
+s2e-env
+4bd6a45
+20.04.03
+20.04
+ - CONTRIBUTING.md
+research-metis

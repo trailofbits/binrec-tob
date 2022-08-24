@@ -3,15 +3,17 @@ BinRec C Libraries
 
 .. module:: binrec.lib
 
-There are multiple BinRec C modules that perform the actual lifting and merging. These
-modules are wrapped in the ``binrec.lib`` module, which imports them and provides
-access to the public API. For example, the ``_binrec_link`` C module exports a ``link``
-method that is exposed in ``binrec.lib`` as ``binrec_link.link``.
+There are multiple BinRec C modules that perform the actual lifting and
+merging. These modules are wrapped in the ``binrec.lib`` module, which
+imports them and provides access to the public API. For example,
+the ``_binrec_link`` C module exports a ``link`` method that is exposed
+in ``binrec.lib`` as ``binrec_link.link``.
 
-The ``binrec.lib`` module is used as wrapper, instead of accessing the C modules
-directly, because each Binrec tool will have a corresponding C module and there may be
-necessary setup in Python for the module to work properly. The ``binrec.lib`` updates
-the :data:`sys.path` so that these modules can be imported.
+The ``binrec.lib`` module is used as wrapper, instead of accessing the C
+modules directly, because each Binrec tool will have a corresponding C module
+and there may be necessary setup in Python for the module to work properly.
+The ``binrec.lib`` updates the :data:`sys.path` so that these modules can be
+imported.
 
 ``binrec_link`` Module
 ^^^^^^^^^^^^^^^^^^^^^^^

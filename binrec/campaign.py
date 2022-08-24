@@ -56,7 +56,7 @@ execute "${{TARGET_PATH}}"
 ################
 """
 
-#: Pathced bash script to execute the sample
+#: Patched bash script to execute the sample
 BOOTSTRAP_PATCH_EXECUTE_SAMPLE = f"""
     # binrec patch #
     LD_PRELOAD="${{S2E_SO}}" "${{TARGET}}" "${{{TRACE_CONCRETE_ARGS_VAR}[@]}}" > /dev/null 2> /dev/null
@@ -175,7 +175,7 @@ class TraceInputFile:
         """
         Verify that the source file can be opened for reading. Optionally, if
         ``resolve_root`` is provided, resolve the source to an absolute path. This
-        method should be valled with a root directory to resolve relative paths against
+        method should be called with a root directory to resolve relative paths against
         prior to using the input file within a trace.
 
         :param resolve_root: root path to resolve the relative source path against
@@ -208,7 +208,7 @@ class TraceInputFile:
         s2eget. Optionally honors the ``preserve_permissions`` attribute to copy the
         source file's permissions and moves the file to the specified ``destination``.
 
-        :param s2e_get_var: the varaible or file path to the ``s2eget`` program
+        :param s2e_get_var: the variable or file path to the ``s2eget`` program
         :param indent: the amount of whitespace to indent each line in the returned
             bash script
         :returns: the bash script block for this input file
@@ -480,7 +480,7 @@ class Campaign:
         """
         Save the campaign to disk. The ``file`` argument can be one of:
 
-        1. ``str | Path`` - save the campaign to the provied path
+        1. ``str | Path`` - save the campaign to the provided path
         2. ``TextIO`` - save the campaign to the provide open file
         3. ``None`` (default) - save the campaign to the default campaign path for the
            project (see :func:`~binrec.env.campaign_filename`)
