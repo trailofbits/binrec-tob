@@ -55,12 +55,3 @@ BinRec is a versatile dynamic binary recovery and recompilation platform.
 As such, it can be used to achieve many different goals at varying levels
 of complexity. Please refer to BinRec's [User Manual](docs/manual/manual.md)
 for detailed walkthroughs of typical workflows.
-
-## Other Notes
-
-### Callbacks
-
-Support for callbacks is currently work in progress. To enable it, set the
-lift and lower option `-f unfallback`. Note this does not actually enable
-the fallback, it will use whatever fallback option you have hardcoded.
-Later the option can be made more clear.
