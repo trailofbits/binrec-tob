@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block head %}
+<title>Add Trace: {{project}}</title>
+{% endblock %}
+
+{% block body %}
+<div class="breadcrumbs">
+    <a href="{{url_for('dashboard')}}">Projects</a> /
+    <a href="{{url_for('project_details', project=project)}}">{{project}}</a> /
+</div>
+
+<h1>Add Trace: {{project}}</h1>
+{% if error %}
+    <div class="error-block">
+        {{error}}
+    </div>
+{% endif %}
+
+<form method="POST">
+    <label for="trace_name">Trace Name</label>
+    <input type='text' name="trace_name" value="{{trace_name}}">
+
+    <label for="trace_args">Command Line Arguments (concrete)</label>
+    <input type='text' name="trace_args" value="{{trace_args}}">
+
+    <input type="submit" value="Save">
+</form>
+
+{% endblock %}

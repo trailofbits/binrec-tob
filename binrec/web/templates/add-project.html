@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block head %}
+<title>BinRec: New Project</title>
+{% endblock %}
+
+{% block body %}
+<div class="breadcrumbs">
+    <a href="{{url_for('dashboard')}}">Projects</a> /
+</div>
+
+<h1>New Project</h1>
+
+{% if error %}
+    <div class="error-block">
+        {{error}}
+    </div>
+{% endif %}
+
+<form method="POST">
+    <label for="project">Project Name (optional)</label>
+    <input type="text" name="project" value="{{project}}">
+
+    <label for="binary_filename">Binary Filename</label>
+    <input type="text" name="binary_filename" value="{{binary_filename}}">
+
+    <input type="submit" value="Save">
+</form>
+{% endblock %}

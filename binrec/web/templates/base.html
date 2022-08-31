@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+  <head>
+    {% block head %}
+    {% endblock %}
+
+    <style>
+      .btn {
+        appearance: button;
+        text-decoration: none;
+        color: initial;
+        border: 1px solid #000;
+        background-color: #eee;
+        padding: 3px 6px;
+        cursor: pointer;
+        margin: 2px;
+        display: inline-block;
+        font-size: 1em;
+        font-family: serif;
+      }
+
+      .btn:hover {
+        background-color: #aaa;
+      }
+
+      .error-block {
+        border: #a00000;
+        background-color: #ff0000;
+        color: #fff;
+        padding: 10px;
+        margin: 10px;
+      }
+
+      label {
+        display: block;
+      }
+    </style>
+  </head>
+
+  <body>
+    {% block body %}
+    {% endblock %}
+  </body>
+</html>

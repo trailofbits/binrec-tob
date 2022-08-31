@@ -460,7 +460,7 @@ class TestPatchProject:
         campaign.Campaign.load_project(project_name, x=1)
         mock_campaign.assert_called_once_with(project_name)
         mock_proj.assert_called_once_with(project_name)
-        mock_load.assert_called_once_with(mock_proj.return_value, mock_campaign.return_value, project_name, x=1)
+        mock_load.assert_called_once_with(mock_proj.return_value, mock_campaign.return_value, project=project_name, x=1)
 
 
 class TestTraceInputFile:

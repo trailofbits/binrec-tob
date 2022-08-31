@@ -114,6 +114,13 @@ def merged_trace_dir(project_name: str) -> Path:
     return project_dir(project_name) / "s2e-out"
 
 
+def recovered_binary_filename(project_name: str) -> Path:
+    """
+    :returns: the path to the recovered binary filename for the project.
+    """
+    return merged_trace_dir(project_name) / "recovered"
+
+
 def trace_dir(project_name: str, trace_id: int) -> Path:
     """
     :returns: the path to a single project trace directory

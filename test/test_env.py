@@ -71,6 +71,9 @@ class TestEnv:
     def test_merged_trace_dir(self):
         assert env.merged_trace_dir("asdf") == env.BINREC_PROJECTS / "asdf" / "s2e-out"
 
+    def test_recovered_binary_filename(self):
+        assert env.recovered_binary_filename("asdf") == env.BINREC_PROJECTS / "asdf" / "s2e-out" / "recovered"
+
     def test_trace_dir(self):
         assert env.trace_dir("asdf", 100) == env.BINREC_PROJECTS / "asdf" / "s2e-out-100"
 

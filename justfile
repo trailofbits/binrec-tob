@@ -243,6 +243,10 @@ clear-trace-data project-name:
 list-projects:
   pipenv run python -m binrec.project list-projects
 
+# Starts BinRec's GUI, accessible via browser at http://localhost:8080
+run-web-server:
+  pipenv run python -m binrec.web
+
 ########## End: End-User API Recipes ##########
 
 
@@ -319,7 +323,7 @@ _lint-md-format:
   markdownlint.js --fix {{docs_md}}
 
 _lint-md-spell:
-  mdspell -n -a --en-us {{docs_md}} 
+  mdspell -n -a --en-us {{docs_md}}
 
 # Run linting checks for restructured text
 _lint-rst: _lint-rst-format _lint-rst-spell

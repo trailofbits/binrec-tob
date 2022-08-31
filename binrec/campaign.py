@@ -559,7 +559,7 @@ class Campaign:
         return cls.load_json(
             project_binary_filename(project_name),
             campaign_filename(project_name),
-            project_name,
+            project=project_name,
             **kwargs,
         )
 
