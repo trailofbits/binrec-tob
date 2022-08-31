@@ -72,8 +72,8 @@ Walkthroughs of Common Workflows
  2. [Advanced Debloating](walkthroughs/advanced_debloating.md)
  3. [Advanced Tracing](walkthroughs/advanced_tracing.md)
  4. [General Guide to Binary Recovery](walkthroughs/generalguide.md)
- 5. Hardening |TODO|
- 6. (Re-)Optimization |TODO|
+ 5. [Transforming Recovered Programs During Recompilation](walkthroughs/transformations.md)
+ 6. Using BinRec's Graphical Interface |TODO|
 
 Known Limitations
 -----------------

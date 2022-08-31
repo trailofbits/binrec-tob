@@ -265,7 +265,8 @@ class TestCampaign:
     def test_load_json(self, mock_file):
         binary = Path("/eq")
         filename = Path("thing.json")
-        assert campaign.Campaign.load_json(binary, filename) == campaign.Campaign(
+        project_name = "asdf"
+        assert campaign.Campaign.load_json(binary, filename, project_name) == campaign.Campaign(
             binary,
             traces=[
                 campaign.TraceParams(args=[
@@ -274,7 +275,8 @@ class TestCampaign:
                 campaign.TraceParams(args=[
                     campaign.TraceArg(campaign.TraceArgType.concrete, "a"),
                     campaign.TraceArg(campaign.TraceArgType.concrete, "b")]),
-            ]
+            ],
+            project=project_name
         )
         mock_file.assert_called_once_with(filename, "r")
         mock_file().read.assert_called_once_with()
@@ -284,11 +286,13 @@ class TestCampaign:
     def test_load_json_resolve_input_files(self, mock_input_file_cls, mock_file):
         binary = Path("/eq")
         filename = Path("/path/to/thing.json")
-        assert campaign.Campaign.load_json(binary, filename) == campaign.Campaign(
+        project_name = "asdf"
+        assert campaign.Campaign.load_json(binary, filename, project_name) == campaign.Campaign(
             binary,
             traces=[
                 campaign.TraceParams(input_files=[mock_input_file_cls.return_value])
-            ]
+            ],
+            project=project_name
         )
         mock_file.assert_called_once_with(filename, "r")
         mock_file().read.assert_called_once_with()
@@ -452,10 +456,11 @@ class TestPatchProject:
     @patch.object(campaign, "project_binary_filename")
     @patch.object(campaign, "campaign_filename")
     def test_load_project(self, mock_campaign, mock_proj, mock_load):
-        campaign.Campaign.load_project("asdf", x=1)
-        mock_campaign.assert_called_once_with("asdf")
-        mock_proj.assert_called_once_with("asdf")
-        mock_load.assert_called_once_with(mock_proj.return_value, mock_campaign.return_value, x=1)
+        project_name = "asdf"
+        campaign.Campaign.load_project(project_name, x=1)
+        mock_campaign.assert_called_once_with(project_name)
+        mock_proj.assert_called_once_with(project_name)
+        mock_load.assert_called_once_with(mock_proj.return_value, mock_campaign.return_value, project_name, x=1)
 
 
 class TestTraceInputFile:

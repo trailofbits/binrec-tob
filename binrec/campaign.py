@@ -559,18 +559,25 @@ class Campaign:
         return cls.load_json(
             project_binary_filename(project_name),
             campaign_filename(project_name),
+            project_name,
             **kwargs,
         )
 
     @classmethod
     def load_json(
-        cls, binary: Path, filename: Path, resolve_input_files: bool = True, **kwargs
+        cls,
+        binary: Path,
+        filename: Path,
+        project_name: str,
+        resolve_input_files: bool = True,
+        **kwargs,
     ) -> "Campaign":
         """
         Load the campaign from a JSON file.
 
         :param binary: the sample binary
         :param filename: JSON filename
+        :param project_name: the project's name
         :param resolve_input_files: for each loaded :class:`TraceInputFile` resolve
             relative filenames against the parent directory of the source JSON file,
             ``filename`` (e.g.- ``input_file.check_source(filename.parent))``). See
@@ -584,6 +591,7 @@ class Campaign:
             [TraceParams.load_dict(item) for item in body["traces"]],
             setup=body.get("setup") or [],
             teardown=body.get("teardown") or [],
+            project=project_name,
             **kwargs,
         )
 

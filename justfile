@@ -173,13 +173,13 @@ _pipenv-update:
 
 ########## Section: End-User API Recipes ##########
 
-# Create a new analysis project
+# Create a new analysis project, optionally providing an existing campaign file to copy
 new-project name binary template="":
   pipenv run python -m binrec.project new "{{name}}" "{{binary}}" "{{template}}"
 
 # Add a new trace to an existing project
-add-trace project-name name symbolic-indexes args:
-  pipenv run python -m binrec.project add-trace --name "{{name}}" --symbolic-indexes "{{symbolic-indexes}}" "{{project-name}}" {{args}}
+add-trace project-name trace-name symbolic-indexes args:
+  pipenv run python -m binrec.project add-trace --name "{{trace-name}}" --symbolic-indexes "{{symbolic-indexes}}" "{{project-name}}" {{args}}
 
 # Remove a trace by name from an existing project
 remove-trace project-name trace-name:
@@ -223,13 +223,13 @@ validate-args project-name *args:
 describe project-name:
   pipenv run python -m binrec.project describe "{{project-name}}"
 
-# Recursively merge all captures and traces for a project (ex. hello)
+# Recursively merge all captures and traces for a project
 merge-traces project:
   pipenv run python -m binrec.merge -vv "{{project}}"
 
-# Lift a recovered binary from a trace (ex. hello)
-lift-trace project:
-  pipenv run python -m binrec.lift -vv "{{project}}"
+# Lift a recovered binary from a project's merged traces. Add -o to perform extra optimizations.
+lift-trace project *flags:
+  pipenv run python -m binrec.lift -vv  "{{project}}" {{flags}} 
 
 recover project-name:
   just run "{{project-name}}"

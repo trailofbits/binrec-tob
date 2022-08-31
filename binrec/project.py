@@ -372,7 +372,7 @@ def new_project(
 
     if isinstance(template, Path):
         campaign = Campaign.load_json(
-            binary_filename, template, resolve_input_files=True
+            binary_filename, template, project_name, resolve_input_files=True
         )
     elif isinstance(template, Campaign):
         campaign = template

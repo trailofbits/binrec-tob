@@ -11,9 +11,10 @@ from _pytest.python import Metafunc
 import pytest
 
 from binrec.env import BINREC_ROOT
+from binrec.lift import OptimizationLevel
 from binrec.merge import merge_traces
 from binrec import lift, project
-from binrec.campaign import Campaign, TraceParams
+from binrec.campaign import Campaign
 
 TEST_SAMPLE_SOURCES = ("binrec", "coreutils", "debian")
 TEST_SAMPLES_DIR = BINREC_ROOT / "test" / "benchmark" / "samples"
@@ -80,7 +81,7 @@ def pytest_generate_tests(metafunc: Metafunc):
 @pytest.mark.flaky(reruns=1)
 @load_sample_test_cases
 def test_sample(binary: Path, test_plan_file: Path, real_lib_module):
-    plan = Campaign.load_json(binary, test_plan_file)
+    plan = Campaign.load_json(binary, test_plan_file, os.path.basename(binary))
     patch_body = {
         name: getattr(real_lib_module, name) for name in real_lib_module.__all__
     }
@@ -109,7 +110,7 @@ def run_test(plan: Campaign) -> None:
     merge_traces(plan.project)
 
     # Lift
-    lift.lift_trace(plan.project)
+    lift.lift_trace(plan.project, OptimizationLevel.NORMAL)
 
     logger.info("successfully ran and merged %d traces; verifying recovered binary",
                 len(plan.traces))
