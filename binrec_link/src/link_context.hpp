@@ -14,6 +14,7 @@ namespace binrec {
         std::string ld_script_filename;
         std::string output_filename;
         std::string dependencies_filename;
+        bool harden;
 
         LinkContext() = default;
         LinkContext(const LinkContext &) = delete;

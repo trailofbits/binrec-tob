@@ -110,7 +110,7 @@ def run_test(plan: Campaign) -> None:
     merge_traces(plan.project)
 
     # Lift
-    lift.lift_trace(plan.project, OptimizationLevel.NORMAL)
+    lift.lift_trace(plan.project, OptimizationLevel.NORMAL, False)
 
     logger.info("successfully ran and merged %d traces; verifying recovered binary",
                 len(plan.traces))

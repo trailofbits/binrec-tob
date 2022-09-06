@@ -24,7 +24,8 @@ static void raise_error(const llvm::Error &error)
 PyDoc_STRVAR(
     binrec_link__doc__,
     "link(binary_filename: str, recovered_filename: str, runtime_library: str, "
-    "linker_script: str, destination: str, dependencies_filename: str = None) -> None\n\n"
+    "linker_script: str, destination: str, dependencies_filename: str = None, "
+    "harden: bool = False) -> None\n\n"
     "Recover and link a binary from a merged trace.\n\n"
     ":param binary_filename: the S2E binary filename, which must match the merged "
     "trace directory, ``s2e-out-{binary_filename}``\n"
@@ -37,7 +38,9 @@ PyDoc_STRVAR(
     ":param destination: the output filename for the recovered binary, typically "
     "``{trace_dir}/recovered``\n"
     ":param dependencies_filename: a file containing the list of dependency libraries "
-    " to link against\n");
+    " to link against\n"
+    ":param harden: Option to apply security hardening passes to binary before "
+    "recompilation\n");
 static PyObject *binrec_link(PyObject *self, PyObject *args, PyObject *kwargs)
 {
     static const char *kwlist[] = {
@@ -47,6 +50,7 @@ static PyObject *binrec_link(PyObject *self, PyObject *args, PyObject *kwargs)
         "linker_script",
         "destination",
         "dependencies_filename",
+        "harden",
         NULL};
 
     const char *binary_filename = NULL;
@@ -55,19 +59,21 @@ static PyObject *binrec_link(PyObject *self, PyObject *args, PyObject *kwargs)
     const char *linker_script = NULL;
     const char *destination = NULL;
     const char *dependencies_filename = NULL;
+    int harden = 0;
     binrec::LinkContext ctx;
 
     if (!PyArg_ParseTupleAndKeywords(
             args,
             kwargs,
-            "sssss|s",
+            "sssss|sp",
             const_cast<char **>(kwlist),
             &binary_filename,
             &recovered_filename,
             &runtime_library,
             &linker_script,
             &destination,
-            &dependencies_filename))
+            &dependencies_filename,
+            &harden))
     {
         return NULL;
     }
@@ -91,6 +97,7 @@ static PyObject *binrec_link(PyObject *self, PyObject *args, PyObject *kwargs)
     ctx.librt_filename = runtime_library;
     ctx.ld_script_filename = linker_script;
     ctx.output_filename = destination;
+    ctx.harden = (bool)harden;
 
     if (dependencies_filename) {
         ctx.dependencies_filename = dependencies_filename;

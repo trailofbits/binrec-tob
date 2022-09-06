@@ -16,6 +16,7 @@ static opt<string> Recovered_Filename("r", Required, desc("<input recovered obje
 static opt<string> Librt_Filename("l", Required, desc("<binrec runtime library>"));
 static opt<string> Output_Filename("o", Required, desc("<output binary>"));
 static opt<string> Ld_Script_Filename("t", Required, desc("<linker script>"));
+static opt<bool> Harden("harden", Required, desc("<harden binary>"));
 
 
 auto main(int argc, char *argv[]) -> int
@@ -39,6 +40,7 @@ auto main(int argc, char *argv[]) -> int
     ctx.librt_filename = Librt_Filename;
     ctx.output_filename = Output_Filename;
     ctx.ld_script_filename = Ld_Script_Filename;
+    ctx.harden = Harden;
 
     int status_code = 0;
     if (auto err = run_link(ctx)) {

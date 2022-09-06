@@ -17,6 +17,7 @@ namespace binrec {
         std::string output_path;
         std::vector<std::string> input_paths;
         std::string linker_script_path;
+        bool harden;
 
     private:
         CompilerCommandMode mode;

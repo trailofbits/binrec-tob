@@ -61,6 +61,7 @@ auto binrec::link_recovered_binary(
     cc.linker_script_path = linker_script_filename.c_str();
     cc.output_path = output_path;
     cc.input_paths = input_paths;
+    cc.harden = ctx.harden;
 
     ec = cc.run();
     if (ec) {

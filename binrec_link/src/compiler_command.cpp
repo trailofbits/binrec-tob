@@ -46,6 +46,11 @@ auto CompilerCommand::run() -> error_code
         arg_buffers.push_back(ld_script_arg);
     }
 
+    if (harden) {
+        errs() << "DEBUG: Applying ASan, UBsan, and LSan before recompilation.\n";
+        arg_buffers.emplace_back("-fsanitize=address,undefined,leak");
+    }
+
     arg_buffers.emplace_back("-o");
     arg_buffers.emplace_back(output_path);
 

@@ -5,4 +5,5 @@ def link(
     linker_script: str,
     destination: str,
     dependencies_filename: str = None,
+    harden: bool = False,
 ) -> None: ...

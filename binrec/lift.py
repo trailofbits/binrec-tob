@@ -512,7 +512,7 @@ def _compile_bitcode(trace_dir: Path) -> None:
         )
 
 
-def _link_recovered_binary(trace_dir: Path) -> None:
+def _link_recovered_binary(trace_dir: Path, harden: bool = False) -> None:
     """
     Linked the recovered binary.
 
@@ -535,13 +535,16 @@ def _link_recovered_binary(trace_dir: Path) -> None:
             linker_script=i386_ld,
             destination=str(trace_dir / "recovered"),
             dependencies_filename=str(trace_dir / "dependencies"),
+            harden=harden,
         )
     except Exception as err:
         raise convert_lib_error(err, "failed to link recovered binary")
 
 
 def lift_trace(
-    project_name: str, opt_level: OptimizationLevel = OptimizationLevel.NORMAL
+    project_name: str,
+    opt_level: OptimizationLevel = OptimizationLevel.NORMAL,
+    harden: bool = False,
 ) -> None:
     """
     Lift and recover a binary from a binrec trace. This lifts, compiles, and links
@@ -550,6 +553,8 @@ def lift_trace(
 
     :param project_name: name of the s2e project to operate on
     :param opt_level: How much effort to put into optimizing lifted bitcode
+    :param harden: Whether to apply security hardening passes to the lifted bitcode.
+
     """
     merged_trace_dir = project.merged_trace_dir(project_name)
     if not merged_trace_dir.is_dir():
@@ -585,7 +590,7 @@ def lift_trace(
     _compile_bitcode(merged_trace_dir)
 
     # Step 9: Link the recovered binary
-    _link_recovered_binary(merged_trace_dir)
+    _link_recovered_binary(merged_trace_dir, harden)
 
     logger.info(
         "successfully lifted and recovered binary for project %s: %s",
@@ -612,6 +617,11 @@ def main() -> None:
         action="store_true",
         help="Enable extra performance optimizations during lifting",
     )
+    parser.add_argument(
+        "--harden",
+        action="store_true",
+        help="Enable security hardening optimizations during lifting",
+    )
     parser.add_argument("project_name", help="lift and compile the binary trace")
 
     args = parser.parse_args()
@@ -627,7 +637,7 @@ def main() -> None:
         logger.debug("Enabling extra performance optimizations during lifting")
         opt_level = OptimizationLevel.HIGH
 
-    lift_trace(args.project_name, opt_level)
+    lift_trace(args.project_name, opt_level, args.harden)
     sys.exit(0)
 
 

@@ -298,7 +298,8 @@ class TestLifting:
             runtime_library=libbinrec_rt,
             linker_script=i386_ld,
             destination=str(trace_dir / "recovered"),
-            dependencies_filename=str(trace_dir / "dependencies")
+            dependencies_filename=str(trace_dir / "dependencies"),
+            harden=False
         )
 
     def test_link_recovered_binary_error(self, mock_lib_module):
@@ -350,7 +351,7 @@ class TestLifting:
         mock_disasm.assert_called_once_with(trace_dir)
         mock_recover.assert_called_once_with(trace_dir)
         mock_compile.assert_called_once_with(trace_dir)
-        mock_link.assert_called_once_with(trace_dir)
+        mock_link.assert_called_once_with(trace_dir, False)
         mock_data_imports.assert_called_once_with(trace_dir)
         mock_sections.assert_called_once_with(trace_dir)
         mock_deps.assert_called_once_with(trace_dir)
@@ -403,7 +404,7 @@ class TestLifting:
     @patch.object(lift, "lift_trace")
     def test_main(self, mock_lift, mock_exit):
         lift.main()
-        mock_lift.assert_called_once_with("hello", OptimizationLevel.NORMAL)
+        mock_lift.assert_called_once_with("hello", OptimizationLevel.NORMAL, False)
         mock_exit.assert_called_once_with(0)
 
     @patch("sys.argv", ["lift"])

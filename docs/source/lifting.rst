@@ -17,7 +17,7 @@ as a standalone script. For example,
     >>> # Initialize the binrec library
     >>> init_binrec()
     >>> # Lift a trace for the "hello" binary
-    >>> lift_trace("hello")
+    >>> lift_trace("hello", OptimizationLevel.NORMAL, False)
 
 
 **Standlone Script**
