@@ -1,0 +1,32 @@
+{
+  "traces": [
+    {
+      "args": [],
+      "stdin": false,
+      "match_stdout": true,
+      "match_stderr": true,
+      "input_files": [
+        {
+          "source": "../../bin/x86/binrec/server",
+          "destination": null,
+          "permissions": true
+        },
+        {
+          "source": "input_files/server.sh",
+          "destination": null,
+          "permissions": true
+        }
+      ],
+      "setup": [
+        "# launch server in the background",
+        "./input_files/server.sh &",
+        "# wait for server to start listening",
+        "sleep 5"
+      ],
+      "teardown": [],
+      "name": null
+    }
+  ],
+  "setup": [],
+  "teardown": []
+}

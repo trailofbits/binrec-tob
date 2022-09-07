@@ -1,0 +1,51 @@
+{
+  "traces": [
+    {
+      "args": [
+        {
+          "arg_type": "concrete",
+          "value": "ab"
+        }
+      ],
+      "stdin": false,
+      "match_stdout": true,
+      "match_stderr": true,
+      "input_files": [],
+      "setup": [],
+      "teardown": [],
+      "name": null
+    },
+    {
+      "args": [
+        {
+          "arg_type": "concrete",
+          "value": "az"
+        }
+      ],
+      "stdin": false,
+      "match_stdout": true,
+      "match_stderr": true,
+      "input_files": [],
+      "setup": [],
+      "teardown": [],
+      "name": null
+    },
+    {
+      "args": [
+        {
+          "arg_type": "concrete",
+          "value": "zb"
+        }
+      ],
+      "stdin": false,
+      "match_stdout": true,
+      "match_stderr": true,
+      "input_files": [],
+      "setup": [],
+      "teardown": [],
+      "name": null
+    }
+  ],
+  "setup": [],
+  "teardown": []
+}

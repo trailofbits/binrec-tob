@@ -2,7 +2,3 @@
 	path = s2e-env
 	url = https://github.com/s2e/s2e-env.git
 
-[submodule "test/benchmark"]
-	path = test/benchmark
-	url = ../binrec-benchmark
-	branch = main

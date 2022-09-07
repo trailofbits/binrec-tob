@@ -1,0 +1,51 @@
+{
+  "traces": [
+    {
+      "args": [
+        {
+          "arg_type": "concrete",
+          "value": "loltest"
+        }
+      ],
+      "stdin": false,
+      "match_stdout": true,
+      "match_stderr": true,
+      "input_files": [],
+      "setup": [],
+      "teardown": [],
+      "name": null
+    },
+    {
+      "args": [
+        {
+          "arg_type": "concrete",
+          "value": "lol"
+        }
+      ],
+      "stdin": false,
+      "match_stdout": true,
+      "match_stderr": true,
+      "input_files": [],
+      "setup": [],
+      "teardown": [],
+      "name": null
+    },
+    {
+      "args": [
+        {
+          "arg_type": "concrete",
+          "value": "aaaaaaa"
+        }
+      ],
+      "stdin": false,
+      "match_stdout": true,
+      "match_stderr": true,
+      "input_files": [],
+      "setup": [],
+      "teardown": [],
+      "name": null
+    }
+  ],
+  "setup": [],
+  "teardown": []
+}

@@ -1,0 +1,16 @@
+{
+  "traces": [
+    {
+      "args": [],
+      "stdin": false,
+      "match_stdout": "^([a-z_]+:\\s+[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\\s*){4}$",
+      "match_stderr": true,
+      "input_files": [],
+      "setup": [],
+      "teardown": [],
+      "name": null
+    }
+  ],
+  "setup": [],
+  "teardown": []
+}

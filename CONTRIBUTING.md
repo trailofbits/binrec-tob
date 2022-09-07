@@ -39,7 +39,7 @@ into one. User during Merging function.
 - `docs` - BinRec autogenerate documentation infrastructure
 - `runlib` - Supplementary build files supporting recompilation
 - `scripts` - Various utilities
-- `test` - Testing infrastructure, includes benchmark repo as a submodule.
+- `test` - Testing infrastructure, includes benchmark samples.
 - `s2e-env` - Submodule for cloning, building, and interfacing with S2E.
 
 ### Environment Variables

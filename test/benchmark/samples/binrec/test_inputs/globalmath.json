@@ -1,0 +1,16 @@
+{
+  "traces": [
+    {
+      "args": [],
+      "stdin": false,
+      "match_stdout": true,
+      "match_stderr": true,
+      "input_files": [],
+      "setup": [],
+      "teardown": [],
+      "name": null
+    }
+  ],
+  "setup": [],
+  "teardown": []
+}

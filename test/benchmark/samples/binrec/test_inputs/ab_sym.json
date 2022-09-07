@@ -1,0 +1,31 @@
+{
+  "traces": [
+    {
+      "args": [
+        {
+          "arg_type": "symbolic",
+          "value": "ab"
+        }
+      ],
+      "stdin": false,
+      "match_stdout": true,
+      "match_stderr": true,
+      "input_files": [],
+      "setup": [],
+      "teardown": [],
+      "name": null
+    },
+    {
+      "args": [],
+      "stdin": false,
+      "match_stdout": true,
+      "match_stderr": true,
+      "input_files": [],
+      "setup": [],
+      "teardown": [],
+      "name": null
+    }
+  ],
+  "setup": [],
+  "teardown": []
+}

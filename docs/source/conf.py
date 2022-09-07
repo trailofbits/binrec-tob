@@ -10,15 +10,35 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).absolute().parents[2]))
 
-print(sys.path[0])
+try:
+    from binrec import lib
+except ImportError as err:
+    # We require lib when we are building documentation, not when we are only
+    # doing a spell check (-b spelling).
+    try:
+        target_flag = sys.argv.index("-b")
+        bail = sys.argv[target_flag:target_flag+2] != ["-b", "spelling"]
+    except ValueError:
+        bail = True
 
-from binrec import lib
+    if bail:
+        raise
+
+    # Mock the _binrec_lift and _binrec_link extensions so that Sphinx is
+    # still happy within CI.
+    print("Mocking _binrec_lift and _binrec_link extensions")
+
+    import types
+    sys.modules["_binrec_lift"] = types.ModuleType("_binrec_lift")
+    sys.modules["_binrec_link"] = types.ModuleType("_binrec_link")
+
+    from binrec import lib
+
 
 # -- Project information -----------------------------------------------------
 

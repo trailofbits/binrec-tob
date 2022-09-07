@@ -15,6 +15,7 @@ plugins_root := justdir + "/s2e/source/s2e/libs2eplugins"
 plugins_dir := join(plugins_root, "src/s2e/Plugins")
 plugins_cmake := join(plugins_root, "src", "CMakeLists.txt")
 docs_md := "README.md CONTRIBUTING.md docs/**/*.md"
+nvm_node_version := "v14"
 
 # Add Clang / LLVM binaries (and other dependencies) from S2E install to PATH
 # Add node.js-based markdown linters to PATH
@@ -39,18 +40,14 @@ install-binrec: _install-dependencies _binrec-init build-all build-s2e-image bui
 
 # Install apt packages and git LFS. Required once before build. Requires super user privileges.
 _install-dependencies:
-    # node.js, npm for linters
-    curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
     sudo apt-get update
     sudo apt-get install -y bison cmake flex g++ g++-multilib gcc gcc-multilib git libglib2.0-dev liblua5.1-dev \
         libsigc++-2.0-dev lua5.3 nasm nlohmann-json3-dev pkg-config subversion curl pipenv git-lfs doxygen graphviz \
         binutils libc6-dbg:i386 \
-        nodejs \
         python3.9-dev python3.9-venv # For s2e-env (and compatibility with Python 3.9 from Pipfile): http://s2e.systems/docs/s2e-env.html#id2
 
     git lfs install
-
-    npm install
+    "{{justdir}}/get_nvm.sh"
 
 # Initialize BinRec, S2E, LFS, pipenv, submodules. Required once before build. Requires super user privileges.
 _binrec-init:
@@ -58,7 +55,7 @@ _binrec-init:
     test -f Pipfile.lock || pipenv lock --dev
     pipenv sync --dev
     git submodule update --recursive --init
-    cd ./test/benchmark && git lfs pull
+    git lfs pull
     cd ./s2e-env && pipenv run pip install .
     pipenv run s2e init {{justdir}}/s2e
     just _freeze-s2e
@@ -229,7 +226,7 @@ merge-traces project:
 
 # Lift a recovered binary from a project's merged traces. Add -o to perform extra optimizations.
 lift-trace project *flags:
-  pipenv run python -m binrec.lift -vv  "{{project}}" {{flags}} 
+  pipenv run python -m binrec.lift -vv  "{{project}}" {{flags}}
 
 recover project-name:
   just run "{{project-name}}"
@@ -253,7 +250,7 @@ run-web-server:
 ########## Section: Code Formatting Recipes ##########
 
 # Format all code
-format: _format-python _format-clang
+format: _format-python _format-clang _format-markdown
 
 # Format Python Code
 _format-python: _format-black _format-isort
@@ -278,6 +275,9 @@ _format-clang:
 # Run clang-format linting recursively on a directory
 _format-clang-dir dirname:
   find {{dirname}} -iname \*.cpp -or -iname \*.hpp -or -iname \*.h | xargs -n1 clang-format -Werror -i
+
+_format-markdown:
+    . "$HOME/.nvm/nvm.sh" && nvm exec {{nvm_node_version}} npx markdownlint --fix {{docs_md}}
 
 # Runs linting checks
 lint: _lint-python _lint-clang _lint-md _lint-rst
@@ -320,10 +320,10 @@ _lint-clang-dir dirname:
 _lint-md: _lint-md-format _lint-md-spell
 
 _lint-md-format:
-  markdownlint.js --fix {{docs_md}}
+  . "$HOME/.nvm/nvm.sh" && nvm exec {{nvm_node_version}} npx markdownlint {{docs_md}}
 
 _lint-md-spell:
-  mdspell -n -a --en-us {{docs_md}}
+  . "$HOME/.nvm/nvm.sh" && nvm exec {{nvm_node_version}} npx mdspell -r -n -a --en-us {{docs_md}}
 
 # Run linting checks for restructured text
 _lint-rst: _lint-rst-format _lint-rst-spell

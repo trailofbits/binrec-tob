@@ -1,0 +1,25 @@
+{
+  "traces": [
+    {
+      "args": [
+        {
+          "arg_type": "concrete",
+          "value": "10.1"
+        },
+        {
+          "arg_type": "concrete",
+          "value": "5.2"
+        }
+      ],
+      "stdin": false,
+      "match_stdout": true,
+      "match_stderr": true,
+      "input_files": [],
+      "setup": [],
+      "teardown": [],
+      "name": null
+    }
+  ],
+  "setup": [],
+  "teardown": []
+}

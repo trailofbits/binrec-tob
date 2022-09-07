@@ -5,7 +5,7 @@ on:
       - '*'
   push:
     branches:
-      - 'master'
+      - 'main'
 
 jobs:
   lint:
@@ -25,78 +25,38 @@ jobs:
           pipx install pipenv
           # just command runner https://github.com/casey/just#pre-built-binaries
           curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to "${HOME}/.local/bin"
-          # node.js, npm for markdown linters
-          curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+          # nvm for spelling and markdown linting
+          ./get_nvm.sh
           sudo apt update
-          sudo apt install -y nodejs
+
 
       - name: 'Init Python'
         run: |
           pipenv sync --dev
-      
+
       - name: 'Init LLVM 14'
         run: |
           curl -sSL https://github.com/llvm/llvm-project/releases/download/llvmorg-14.0.0/clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz -o - | tar -xJ
           cp clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04/bin/clang-format "${HOME}/.local/bin"
-
-      - name: 'Init node_modules'
-        run: |
-          npm install
 
       - name: 'Lint'
         run: |
           just _lint-python
           just _lint-clang
           just _lint-md
-          just _lint-rst-format
+          just _lint-rst
 
   test:
     runs-on: ubuntu-20.04
     steps:
-      - name: Initialize the deploy keys
-        run: |
-          mkdir -p "${HOME}/.ssh"
-          if [[ ! -d "${HOME}/.ssh" ]] ; then
-            echo "Failed to create the .ssh directory"
-            exit 1
-          fi
-
-          chmod 700 "${HOME}/.ssh"
-          if [[ $? != 0 ]] ; then
-            echo 'Failed to set the permissions for the .ssh directory'
-            exit 1
-          fi
-
-          echo "${{ secrets.BINREC_BENCHMARK_REPO_DEPLOY_KEY }}" | base64 -d > "${HOME}/.ssh/id_rsa"
-          if [[ $? != 0 ]] ; then
-            echo "Failed to decode the deploy key for trailofbits/binrec-benchmark"
-            exit 1
-          fi
-
-          if [[ ! -f "${HOME}/.ssh/id_rsa" ]] ; then
-            echo "Failed to install the deploy key for trailofbits/binrec-benchmark"
-            exit 1
-          fi
-
-          chmod 600 "${HOME}/.ssh/id_rsa"
-          if [[ $? != 0 ]] ; then
-            echo "Failed to set the permissions for the deploy key"
-            exit 1
-          fi
-
       - uses: actions/checkout@v2
         with:
           fetch-depth: 1
-          # submodules: recursive
-
-      - name: Initialize the git submodules
-        run: |
-          git submodule set-url test/benchmark git@github.com:trailofbits/binrec-benchmark
-          git submodule update --init --recursive
 
       - uses: actions/setup-python@v2
         with:
           python-version: 3.9
+          cache: 'pipenv'
 
       - name: 'Install tools'
         run: |
@@ -113,33 +73,21 @@ jobs:
         run: |
           just _ci-unit-tests
 
-  #
-  # Building Sphinx docs is disabled until we have the ability to compile binrec and
-  # Python C modules (_binrec_link, _binrec_lift).
-  #
-  # build_docs:
-  #   runs-on: ubuntu-20.04
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #       with:
-  #         fetch-depth: 1
-  #
-  #     - uses: actions/setup-python@v2
-  #       with:
-  #         python-version: 3.9
-  #
-  #     - name: 'Install tools'
-  #       run: |
-  #         # Python virtual env management
-  #         pipx install pipenv
-  #         # just command runner https://github.com/casey/just#pre-built-binaries
-  #         curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to "${HOME}/.local/bin"
-  #
-  #     - name: 'Init Python'
-  #       run: |
-  #         pipenv sync --dev
-  #
-  #     - name: 'Build Sphinx Docs'
-  #       run: |
-  #         just build-docs
-  #
+  pip-audit:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: 'Generate requirements.txt'
+        run: |
+          pipx run pipfile-requirements Pipfile.lock > requirements.txt
+
+      - uses: pypa/gh-action-pip-audit@v1.0.0
+        with:
+          inputs: requirements.txt
