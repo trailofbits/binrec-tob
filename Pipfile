@@ -10,7 +10,7 @@ flask = "*"
 [dev-packages]
 black = "==22.8.0"
 flake8 = "*"
-mypy = "==0.950"
+mypy = "==0.971"
 pytest = "*"
 isort = "*"
 coverage = "*"

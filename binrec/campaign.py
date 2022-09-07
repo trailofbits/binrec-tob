@@ -1,6 +1,6 @@
 import json
 import shlex
-from dataclasses import InitVar, asdict, dataclass, field
+from dataclasses import asdict, dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Any, List, Optional, TextIO, Union
@@ -469,12 +469,13 @@ class Campaign:
 
     binary: Path
     traces: List[TraceParams] = field(default_factory=list)
-    project: InitVar[str] = None
+    project: str = ""
     setup: List[str] = field(default_factory=list)
     teardown: List[str] = field(default_factory=list)
 
-    def __post_init__(self, project: str = None):
-        self.project = project or (self.binary.name if self.binary else "")
+    def __post_init__(self):
+        if not self.project:
+            self.project = self.binary.name if self.binary else ""
 
     def save(self, file: Union[str, Path, TextIO] = None) -> None:
         """
@@ -499,6 +500,7 @@ class Campaign:
         # remove "binary" from the JSON since we want the campaign to be reusable by
         # being decoupled from the S2E project
         body.pop("binary", None)
+        body.pop("project", None)
         fp.write(json.dumps(body, indent=2, cls=CampaignJsonEncoder))
 
     def remove_trace(self, name_or_id: Union[str, int]) -> None:
