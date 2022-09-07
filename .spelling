@@ -28,6 +28,7 @@ i.e.
 wildcard
 debloating
 fuzzer
+32-bit
 64-bit
 executables
 runtime
@@ -48,3 +49,4 @@ s2e-env
 20.04
  - CONTRIBUTING.md
 research-metis
+x86

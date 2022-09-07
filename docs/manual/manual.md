@@ -78,6 +78,12 @@ Walkthroughs of Common Workflows
 Known Limitations
 -----------------
 
+- BinRec only supports 32-bit x86 ELF binaries.
+- BinRec does not support multi-threaded programs.
+- BinRec has very limited support for C++ programs.
+- BinRec does not support programs that make use of callbacks in external libraries.
+- BinRec cannot trace programs that require interactive user inputs
+(`stdin`, GUI, etc.)
 - Non-deterministic binaries may lift successfully but will not operate
 exactly the same as the original binary because all code paths wouldn't
 have been recorded during execution.
