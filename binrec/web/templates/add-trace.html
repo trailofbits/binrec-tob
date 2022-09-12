@@ -33,6 +33,14 @@
                 <input type='text' name="trace_args" value="{{trace_args}}" class="form-control">
             </div>
 
+            <div class="mb-3">
+                <label for="trace_symbolic_args" class="form-label">Symbolic Argument Indices</label>
+                <input type='text' name="trace_symbolic_args" value="{{trace_symbolic_args}}" class="form-control">
+                <div class="form-text">
+                    A space seperated list of argument indices that are symbolic. The first argument starts at "1".
+                </div>
+            </div>
+
             <button type="submit" class="btn btn-primary">Save</button>
         </form>
     </div>

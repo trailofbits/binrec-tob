@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="{{url_for('static', filename='bootstrap.min.css')}}" rel="stylesheet">
 
+    <style>
+        td.shrink, th.shrink {
+            white-space: nowrap;
+            width: 1%;
+        }
+    </style>
+
     {% block head %}
     {% endblock %}
   </head>

@@ -80,25 +80,85 @@
         <a class='btn btn-primary' href="{{url_for('add_trace', project=project)}}">Add Trace</a>
 
         {% for trace in campaign.traces %}
-        <h3 class="mt-3">{{trace.name or "[anonymous trace]"}} (id: {{loop.index0}})</h3>
+        <div class="card mt-3">
+            <div class="card-header">
+                <h4>
+                    {% if trace.name %}
+                    {{trace.name}}
+                    {% else %}
+                    <em>anonymous trace</em>
+                    {% endif %}
+                    (id: {{loop.index0}})
+                </h4>
+            </div>
+
+            <table class="table m-0">
+                <thead>
+                    <tr>
+                        <th class="shrink">Arguments</th>
+                        <td class="table-light"><code>{{trace.command_line_args | join(' ')}}</code></td>
+                    </tr>
+                </thead>
+                <tbody class="table-group-dividerss">
+                    {% for arg in trace.args %}
+                    <tr>
+                        <td class="shrink">
+                            {% if arg.is_symbolic %}
+                            <span class="badge rounded-pill text-bg-success">{{loop.index}}. Symbolic</span>
+                            {% else %}
+                            <span class="badge rounded-pill text-bg-secondary">{{loop.index}}. Concrete</spam>
+                            {% endif %}
+                        </td>
+                        <td class="table-light"><code>{{arg.concrete_value}}</code></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="card-footer text-end">
+                <form action="{{url_for('remove_trace', project=project, trace_id=loop.index0)}}" method="POST">
+                    <button type="submit" class="btn btn-warning btn-sm">Remove Trace</button>
+                </form>
+            </div>
+        </div>
+
+        <!--
+        <h3 class="mt-5">
+            {% if trace.name %}
+                {{trace.name}}
+            {% else %}
+                <em class="text-muted">[anonymous trace]</em>
+            {% endif %}
+            (id: {{loop.index0}})
+        </h3>
 
         <form action="{{url_for('remove_trace', project=project, trace_id=loop.index0)}}" method="POST">
-            <button type="submit" class="btn btn-warning">Remove Trace</button>
+            <button type="submit" class="btn btn-warning btn-sm">Remove Trace</button>
         </form>
 
-        <strong>Arguments:</strong> <code>{{trace.command_line_args | join(' ')}}</code>
-        <ol>
-            {% for arg in trace.args %}
-            <li>
-                <code>{{arg.concrete_value}}</code>
-                {% if arg.is_symbolic %}
-                <em>[symbolic]</em>
-                {% else %}
-                <em>[concrete]</em>
-                {% endif %}
-            </li>
-            {% endfor %}
-        </ol>
+        <table class="table table-bordered mt-3">
+            <thead>
+                <tr>
+                    <th class="shrink">Arguments</th>
+                    <td class="table-light"><code>{{trace.command_line_args | join(' ')}}</code></td>
+                </tr>
+            </thead>
+            <tbody class="table-group-divider">
+                {% for arg in trace.args %}
+                <tr>
+                    <td class="shrink">
+                        {% if arg.is_symbolic %}
+                        <span class="badge rounded-pill text-bg-success">{{loop.index}}. Symbolic</span>
+                        {% else %}
+                        <span class="badge rounded-pill text-bg-secondary">{{loop.index}}. Concrete</spam>
+                        {% endif %}
+                    </td>
+                    <td class="table-light"><code>{{arg.concrete_value}}</code></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    -->
         {% endfor %}
     </div>
 </div>

@@ -127,12 +127,37 @@ def project_details(project: str):
     )
 
 
+def _validate_trace_params(
+    name: str, command_line: str, symbolic_arg_indicies: str
+) -> TraceParams:
+    try:
+        args = shlex.split(command_line)
+    except ValueError as error:
+        raise ValueError(f"Invalid command line arguments: {error}")
+
+    try:
+        symbolic_args = [int(i) for i in symbolic_arg_indicies.split()]
+    except ValueError as error:
+        raise ValueError(f"Invalid symbolic argument indices: {error}")
+
+    try:
+        trace_args = TraceParams.create_trace_args(args, symbolic_args)
+    except IndexError as error:
+        raise ValueError(f"Invalid symbolic argument indices: {error}")
+
+    return TraceParams(name=name, args=trace_args)
+
+
 @app.route("/projects/<project>/add-trace", methods=["GET", "POST"])
 def add_trace(project: str):
     campaign = load_campaign(project)
     if request.method == "POST":
         try:
-            args = shlex.split(request.form["trace_args"])
+            trace_params = _validate_trace_params(
+                request.form["trace_name"],
+                request.form["trace_args"],
+                request.form["trace_symbolic_args"],
+            )
         except ValueError as err:
             return render_template(
                 "add-trace.html",
@@ -140,12 +165,11 @@ def add_trace(project: str):
                 campaign=campaign,
                 trace_name=request.form["trace_name"],
                 trace_args=request.form["trace_args"],
+                trace_symbolic_args=request.form["trace_symbolic_args"],
                 error=str(err),
             )
 
-        trace_args = TraceParams.create_trace_args(args, [])
-        trace_name = request.form["trace_name"]
-        campaign.traces.append(TraceParams(name=trace_name, args=trace_args))
+        campaign.traces.append(trace_params)
         campaign.save()
 
         return redirect(url_for("project_details", project=project))
