@@ -1,8 +1,10 @@
+import os
 import shlex
 import subprocess
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+from tempfile import mkstemp
 from typing import Dict, Optional, Tuple
 
 from flask import (
@@ -15,10 +17,12 @@ from flask import (
     send_file,
     url_for,
 )
+from werkzeug.utils import secure_filename
 
 from binrec.campaign import Campaign, TraceParams
 from binrec.env import (
     BINREC_PROJECTS,
+    BINREC_ROOT,
     campaign_filename,
     get_trace_dirs,
     project_dir,
@@ -26,7 +30,10 @@ from binrec.env import (
 )
 from binrec.project import clear_project_trace_data, new_project
 
+UPLOAD_DIRECTORY = Path(__file__).parent / "uploads"
+
 app = Flask(__name__)
+app.config["UPLOAD_FOLDER"] = str(UPLOAD_DIRECTORY.absolute())
 
 
 @dataclass
@@ -54,6 +61,11 @@ class AppState:
 
 
 STATE = AppState()
+
+
+def setup_web_app():
+    if not UPLOAD_DIRECTORY.is_dir():
+        UPLOAD_DIRECTORY.mkdir()
 
 
 @app.before_request
@@ -200,28 +212,48 @@ def clear_trace_data(project: str):
     return redirect(url_for("project_details", project=project))
 
 
+def _save_uploaded_file() -> Tuple[str, Path]:
+    if "binary_filename" not in request.files:
+        raise ValueError("You must provide a binary filename1")
+
+    file = request.files["binary_filename"]
+    if not file.filename:
+        raise ValueError("You must provide a binary filename2")
+
+    fd, filename = mkstemp(
+        dir=UPLOAD_DIRECTORY, prefix=f"{secure_filename(file.filename)}."
+    )
+    os.close(fd)
+
+    app.logger.info("saving uploaded file %s -> %s", file.filename, filename)
+    file.save(filename)
+
+    return file.filename, Path(filename)
+
+
 @app.route("/add-project", methods=["GET", "POST"])
 def add_project():
     if request.method == "POST":
         project = request.form["project"]
-        binary_filename = request.form["binary_filename"]
-        binary = Path(binary_filename).absolute()
-        if not binary.is_file():
+
+        try:
+            original_filename, binary = _save_uploaded_file()
+        except Exception as error:
             return render_template(
                 "add-project.html",
                 project=project,
-                binary_filename=binary_filename,
-                error="binary does not exist",
+                binary_filename="",
+                error=str(error),
             )
 
         if not project:
-            project = binary.name
+            project = original_filename
 
         if (BINREC_PROJECTS / project).is_dir():
             return render_template(
                 "add-project.html",
                 project=project,
-                binary_filename=binary_filename,
+                binary_filename="",
                 error=f"project already exists: {project}",
             )
 
