@@ -570,7 +570,7 @@ class Campaign:
         cls,
         binary: Path,
         filename: Path,
-        project_name: str,
+        project: str,
         resolve_input_files: bool = True,
         **kwargs,
     ) -> "Campaign":
@@ -579,7 +579,7 @@ class Campaign:
 
         :param binary: the sample binary
         :param filename: JSON filename
-        :param project_name: the project's name
+        :param project: the project's name
         :param resolve_input_files: for each loaded :class:`TraceInputFile` resolve
             relative filenames against the parent directory of the source JSON file,
             ``filename`` (e.g.- ``input_file.check_source(filename.parent))``). See
@@ -593,7 +593,7 @@ class Campaign:
             [TraceParams.load_dict(item) for item in body["traces"]],
             setup=body.get("setup") or [],
             teardown=body.get("teardown") or [],
-            project=project_name,
+            project=project,
             **kwargs,
         )
 
