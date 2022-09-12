@@ -451,7 +451,7 @@ class TraceParams:
             trace_args.append(TraceArg(arg_type, value))
 
         for i in symbolic_indexes:
-            if i > len(trace_args) or i < 0:
+            if i > len(trace_args) or i <= 0:
                 raise IndexError(f"symbolic argument out of bounds: {i}")
 
         return trace_args

@@ -251,9 +251,13 @@ class TestTraceParams:
             campaign.TraceArg(campaign.TraceArgType.symbolic, "second"),
         ]
 
-    def test_create_trace_args_error(self):
+    def test_create_trace_args_error_gt_len(self):
         with pytest.raises(IndexError):
             assert campaign.TraceParams.create_trace_args(["first", "second"], [3])
+
+    def test_create_trace_args_error_zero(self):
+        with pytest.raises(IndexError):
+            assert campaign.TraceParams.create_trace_args(["first", "second"], [0])
 
 
 class TestCampaign:
