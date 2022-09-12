@@ -22,7 +22,6 @@ from werkzeug.utils import secure_filename
 from binrec.campaign import Campaign, TraceParams
 from binrec.env import (
     BINREC_PROJECTS,
-    BINREC_ROOT,
     campaign_filename,
     get_trace_dirs,
     project_dir,
