@@ -5,17 +5,21 @@
 {% endblock %}
 
 {% block body %}
-<h1>Binrec - Dynamic Binary Lifting and Recompilation</h1>
+<div class="row">
+    <div class="col">
+        <h1>Binrec - Dynamic Binary Lifting and Recompilation</h1>
 
-<h2>Projects</h2>
+        <h2>Projects</h2>
 
-<a href="{{url_for('add_project')}}" class='btn'>New Project</a>
+        <a href="{{url_for('add_project')}}" class='btn btn-primary'>New Project</a>
 
-<ul>
-    {% for project in projects %}
-    <li>
-        <a href="{{url_for('project_details', project=project)}}">{{project}}</a>
-    </li>
-    {% endfor %}
-</ul>
+        <ul>
+            {% for project in projects %}
+            <li>
+                <a href="{{url_for('project_details', project=project)}}">{{project}}</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
 {% endblock %}

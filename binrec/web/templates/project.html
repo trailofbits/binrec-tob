@@ -5,93 +5,105 @@
 {% endblock %}
 
 {% block body %}
-<div class="breadcrumbs">
-    <a href="{{url_for('dashboard')}}">Projects</a> /
+<nav>
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{url_for('dashboard')}}">Projects</a></li>
+        <li class="breadcrumb-item active">{{project}}</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <div class="col">
+        <h1>Binrec Project: {{project}}</h1>
+
+        <table class="table table-bordered">
+            <tbody>
+                <tr>
+                    <th>State:</th>
+                    <td>{{state}}</td>
+                </tr>
+                <tr>
+                    <th>Collected Traces:</th>
+                    <td>
+                        {{collected_trace_count}}
+                        {% if collected_trace_count and not is_running %}
+                        <form action="{{url_for('clear_trace_data', project=project)}}" method="POST">
+                            <button type="submit" class="btn btn-danger">Clear Collected Trace Data</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+
+                <tr>
+                    <th>Previous Lift Result:</th>
+                    <td>
+                        {% if is_running %}
+                        Active
+                        {% elif previous_lift_result is none %}
+                        Unknown
+                        {% elif previous_lift_result == 0 %}
+                        Success
+                        {% else %}
+                        Error (code: {{previous_lift_result}})
+                        {% endif %}
+
+                        {% if has_worker_log and not is_running %}
+                        <a class='btn btn-info' href="{{url_for('download_worker_log', project=project)}}">
+                            Download Previous Lift Log
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+
+                <tr>
+                    <th>Available Actions:</th>
+                    <td>
+                        {% if can_recover %}
+                        <form action="{{url_for('start_recover_project', project=project)}}" method="POST">
+                            <button type="submit" class="btn btn-success">Recover Project</button>
+                        </form>
+                        {% elif trace_count %}
+                        <em>The project can be recovered after the worker finishes the current job</em>
+                        {% else %}
+                        <em>Add at least one trace to recover project.</em>
+                        {% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+
+
+
+        <h2>Traces</h2>
+
+        <a class='btn btn-primary' href="{{url_for('add_trace', project=project)}}">Add Trace</a>
+
+        {% for trace in campaign.traces %}
+        <h3 class="mt-3">{{trace.name or "[anonymous trace]"}} (id: {{loop.index0}})</h3>
+
+        <form action="{{url_for('remove_trace', project=project, trace_id=loop.index0)}}" method="POST">
+            <button type="submit" class="btn btn-warning">Remove Trace</button>
+        </form>
+
+        <strong>Arguments:</strong> <code>{{trace.command_line_args | join(' ')}}</code>
+        <ol>
+            {% for arg in trace.args %}
+            <li>
+                <code>{{arg.concrete_value}}</code>
+                {% if arg.is_symbolic %}
+                <em>[symbolic]</em>
+                {% else %}
+                <em>[concrete]</em>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ol>
+        {% endfor %}
+    </div>
 </div>
 
-<h1>Binrec Project: {{project}}</h1>
-
-<table>
-    <tbody>
-        <tr>
-            <th>State:</th>
-            <td>{{state}}</td>
-        </tr>
-        <tr>
-            <th>Collected Traces:</th>
-            <td>
-                {{collected_trace_count}}
-                {% if collected_trace_count and not is_running %}
-                <form action="{{url_for('clear_trace_data', project=project)}}" method="POST">
-                    <input type="submit" value="Clear Collected Trace Data" class="btn">
-                </form>
-                {% endif %}
-            </td>
-        </tr>
-
-        <tr>
-            <th>Previous Lift Result:</th>
-            <td>
-                {% if is_running %}
-                Active
-                {% elif previous_lift_result is none %}
-                Unknown
-                {% elif previous_lift_result == 0 %}
-                Success
-                {% else %}
-                Error (code: {{previous_lift_result}})
-                {% endif %}
-
-                {% if has_worker_log and not is_running %}
-                <a class='btn' href="{{url_for('download_worker_log', project=project)}}">Download Previous Lift Log</a>
-                {% endif %}
-            </td>
-        </tr>
-
-        <tr>
-            <th>&nbsp;</th>
-            <td>
-                {% if can_recover %}
-                <form action="{{url_for('start_recover_project', project=project)}}" method="POST">
-                    <input type="submit" value="Recover Project" class="btn">
-                </form>
-                {% elif trace_count %}
-                <em>The project can be recovered after the worker finishes the current job</em>
-                {% else %}
-                <em>Add at least one trace to recover project.</em>
-                {% endif %}
-            </td>
-        </tr>
-    </tbody>
-</table>
 
 
-
-
-<h2>Traces</h2>
-
-<a class='btn' href="{{url_for('add_trace', project=project)}}">Add Trace</a>
-
-{% for trace in campaign.traces %}
-<h3>{{trace.name or "[anonymous trace]"}} (id: {{loop.index0}})</h3>
-
-<form action="{{url_for('remove_trace', project=project, trace_id=loop.index0)}}" method="POST">
-    <input type="submit" value="Delete Trace" class="btn">
-</form>
-
-<strong>Arguments:</strong> <code>{{trace.command_line_args | join(' ')}}</code>
-<ol>
-    {% for arg in trace.args %}
-    <li>
-        <code>{{arg.concrete_value}}</code>
-        {% if arg.is_symbolic %}
-        <em>[symbolic]</em>
-        {% else %}
-        <em>[concrete]</em>
-        {% endif %}
-    </li>
-    {% endfor %}
-</ol>
-{% endfor %}
 
 {% endblock %}
