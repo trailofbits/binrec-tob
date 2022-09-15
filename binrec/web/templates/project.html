@@ -35,7 +35,7 @@
                 </tr>
 
                 <tr>
-                    <th>Previous Lift Result:</th>
+                    <th>Previous Recovery Result:</th>
                     <td>
                         {% if is_running %}
                         Active
@@ -49,7 +49,7 @@
 
                         {% if has_worker_log and not is_running %}
                         <a class='btn btn-info' href="{{url_for('download_worker_log', project=project)}}">
-                            Download Previous Lift Log
+                            Download Previous Recovery Log
                         </a>
                         {% endif %}
                     </td>
