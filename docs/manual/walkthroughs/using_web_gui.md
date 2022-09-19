@@ -24,7 +24,7 @@ The just receipe will start the web server and then attempt to launch a web brow
 
 Once open, the dashboard will look similar to this:
 
-**INSERT SCREENSHOT OF DASHBOARD PAGE**
+![](web_gui_demo/BinRec-Dashboard_NoProjects.png)
 
 The dashboard lists all projects currently registered within BinRec.
 
@@ -32,7 +32,7 @@ The dashboard lists all projects currently registered within BinRec.
 
 From the dashboard page, click the **New Project** button to begin creating a new project.
 
-**INSERT SCREENSHOT OF NEW PROJECT PAGE**
+![](web_gui_demo/BinRec-NewProject.png)
 
 The new project form accepts several inputs:
 
@@ -50,11 +50,11 @@ Save the project by clicking the **Save** button. If successful, the project is 
 
 The project details page shows information about the project including registered traces. Traces specify the command line arguments that will be used when recording the binary's behavior and also used after recovery to validate the results.
 
-**INSERT SCREENSHOT OF PROJECT DETAILS PAGE**
+![](web_gui_demo/BinRec-EmptyProject.png)
 
 There are initially no registered traces so the project cannot be recovered yet. To add a new trace, click the **Add Trace** button which loads the new trace form.
 
-**INSERT SCREENSHOT OF NEW TRACE PAGE**
+![](web_gui_demo/BinRec-NewTrace.png)
 
 The new trace form accepts several inputs:
 
@@ -86,7 +86,7 @@ Click the **Save** button to save the new trace.
 
 After saving the new trace, the browser will navigate back to the project details page which will show that there is a single registered trace and the project can be recovered now.
 
-**INSERT SCREENSHOT OF PROJECT DETAILS PAGE**
+![](web_gui_demo/BinRec-Project_SingleTrace.png)
 
 To recover a project, click the **Recover Project** button. A single project can be recovered at once. After a minute or two continue to reload the page until the recovery process finishes.
 
@@ -112,9 +112,13 @@ At this point, the project should be successfully recovered. However, for the `e
 4. Save the new trace.
 5. Verify that two traces are registered that exercise the equal and not equal cases. Then recover the project.
 
-**INSERT SCREENSHOT OF PROJECT DETAILS PAGE WITH 2 TRACES**
+![](web_gui_demo/BinRec-Project_TwoTraces.png)
 
-After the recovery completes and is successful, you can verify the results manually by running the recovered binary from the command line. This is the same whether the project was created and recovered from the command line and web interfaces.
+After the recovery completes and is successful, you can verify the results in the web interface by clicking on the recovered directory link:
+
+![](web_gui_demo/BinRec-Project_Recovered.png)
+
+The results can also be verified manually by running the recovered binary from the command line. This is the same whether the project was created and recovered from the command line and web interfaces.
 
 ```bash
 $ cd path/to/binrec-prerelease
