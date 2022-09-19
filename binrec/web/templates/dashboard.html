@@ -20,6 +20,10 @@
             </li>
             {% endfor %}
         </ul>
+
+        {% if not projects %}
+        <em>No projects have been created yet. Add one!</em>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
