@@ -1,0 +1,7 @@
+BinRec-Project_TwoTraces.png filter=lfs diff=lfs merge=lfs -text
+BinRec-Dashboard_NoProjects.png filter=lfs diff=lfs merge=lfs -text
+BinRec-EmptyProject.png filter=lfs diff=lfs merge=lfs -text
+BinRec-NewProject.png filter=lfs diff=lfs merge=lfs -text
+BinRec-NewTrace.png filter=lfs diff=lfs merge=lfs -text
+BinRec-Project_Recovered.png filter=lfs diff=lfs merge=lfs -text
+BinRec-Project_SingleTrace.png filter=lfs diff=lfs merge=lfs -text

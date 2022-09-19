@@ -1,44 +1,39 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
-    {% block head %}
-    {% endblock %}
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="{{url_for('static', filename='bootstrap.min.css')}}" rel="stylesheet">
 
     <style>
-      .btn {
-        appearance: button;
-        text-decoration: none;
-        color: initial;
-        border: 1px solid #000;
-        background-color: #eee;
-        padding: 3px 6px;
-        cursor: pointer;
-        margin: 2px;
-        display: inline-block;
-        font-size: 1em;
-        font-family: serif;
-      }
-
-      .btn:hover {
-        background-color: #aaa;
-      }
-
-      .error-block {
-        border: #a00000;
-        background-color: #ff0000;
-        color: #fff;
-        padding: 10px;
-        margin: 10px;
-      }
-
-      label {
-        display: block;
-      }
+        td.shrink, th.shrink {
+            white-space: nowrap;
+            width: 1%;
+        }
     </style>
+
+    {% block head %}
+    {% endblock %}
   </head>
 
   <body>
-    {% block body %}
-    {% endblock %}
+
+    <div class="container">
+        {% block body %}
+        {% endblock %}
+
+        <div class="row">
+            <div class="col">
+                <div class="card bg-light border-info mt-3 mb-3">
+                    <div class="card-body" style="padding: 5px 10px">
+                        <div class="float-end">
+                            <small><a href="/docs/manual.md" target="_blank">Read the Docs</a></small>
+                        </div>
+                        <small>BinRec <code>v{{g.binrec_version}}</code></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
   </body>
 </html>

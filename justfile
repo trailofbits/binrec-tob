@@ -240,8 +240,12 @@ clear-trace-data project-name:
 list-projects:
   pipenv run python -m binrec.project list-projects
 
-# Starts BinRec's GUI, accessible via browser at http://localhost:8080
+_launch-web-browser-with-delay delay:
+    @/bin/sh -c "sleep {{delay}} && xdg-open http://localhost:8080" > /dev/null 2> /dev/null &
+
+# Starts BinRec's web server and GUI, accessible via browser at http://localhost:8080
 run-web-server:
+  @just _launch-web-browser-with-delay 3
   pipenv run python -m binrec.web
 
 ########## End: End-User API Recipes ##########

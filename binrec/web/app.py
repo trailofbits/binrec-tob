@@ -1,8 +1,10 @@
+import os
 import shlex
 import subprocess
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+from tempfile import mkstemp
 from typing import Dict, Optional, Tuple
 
 from flask import (
@@ -15,18 +17,26 @@ from flask import (
     send_file,
     url_for,
 )
+from werkzeug.utils import secure_filename
 
+from binrec import __version__ as BINREC_VERSION
 from binrec.campaign import Campaign, TraceParams
 from binrec.env import (
     BINREC_PROJECTS,
+    BINREC_ROOT,
     campaign_filename,
     get_trace_dirs,
+    merged_trace_dir,
     project_dir,
     recovered_binary_filename,
 )
 from binrec.project import clear_project_trace_data, new_project
 
+UPLOAD_DIRECTORY = Path(__file__).parent / "uploads"
+
 app = Flask(__name__)
+app.config["UPLOAD_FOLDER"] = str(UPLOAD_DIRECTORY.absolute())
+app.jinja_env.add_extension("jinja_markdown.MarkdownExtension")
 
 
 @dataclass
@@ -56,10 +66,16 @@ class AppState:
 STATE = AppState()
 
 
+def setup_web_app():
+    if not UPLOAD_DIRECTORY.is_dir():
+        UPLOAD_DIRECTORY.mkdir()
+
+
 @app.before_request
 def before_request():
     g.state = STATE
     g.state.poll()
+    g.binrec_version = BINREC_VERSION
 
 
 def worker_log_filename(project: str) -> Path:
@@ -82,12 +98,16 @@ def load_campaign(project: str):
 
 @app.get("/")
 def dashboard():
-    projects = sorted(
-        [
-            dirname.name
-            for dirname in BINREC_PROJECTS.iterdir()
-            if dirname.is_dir() and (dirname / "campaign.json").is_file()
-        ]
+    projects = (
+        sorted(
+            [
+                dirname.name
+                for dirname in BINREC_PROJECTS.iterdir()
+                if dirname.is_dir() and (dirname / "campaign.json").is_file()
+            ]
+        )
+        if BINREC_PROJECTS.is_dir()
+        else []
     )
     return render_template("dashboard.html", projects=projects)
 
@@ -99,11 +119,13 @@ def project_details(project: str):
     trace_count = len(campaign.traces)
     lift_result: int = g.state.lift_results.get(project)
     is_running: bool = g.state.is_project_running(project)
+    recovered_directory: Optional[str] = None
 
     if recovered_binary_filename(project).is_file():
         state = "Recovered"
         if lift_result is None:
             lift_result = 0
+        recovered_directory = str(merged_trace_dir(project))
     elif is_running:
         state = "Recovering"
     elif lift_result:
@@ -124,7 +146,29 @@ def project_details(project: str):
         has_worker_log=worker_log_filename(project).is_file(),
         is_running=is_running,
         can_recover=not g.state.is_worker_running() and trace_count > 0,
+        recovered_directory=recovered_directory,
     )
+
+
+def _validate_trace_params(
+    name: str, command_line: str, symbolic_arg_indicies: str
+) -> TraceParams:
+    try:
+        args = shlex.split(command_line)
+    except ValueError as error:
+        raise ValueError(f"Invalid command line arguments: {error}")
+
+    try:
+        symbolic_args = [int(i) for i in symbolic_arg_indicies.split()]
+    except ValueError as error:
+        raise ValueError(f"Invalid symbolic argument indices: {error}")
+
+    try:
+        trace_args = TraceParams.create_trace_args(args, symbolic_args)
+    except IndexError as error:
+        raise ValueError(f"Invalid symbolic argument indices: {error}")
+
+    return TraceParams(name=name, args=trace_args)
 
 
 @app.route("/projects/<project>/add-trace", methods=["GET", "POST"])
@@ -132,7 +176,11 @@ def add_trace(project: str):
     campaign = load_campaign(project)
     if request.method == "POST":
         try:
-            args = shlex.split(request.form["trace_args"])
+            trace_params = _validate_trace_params(
+                request.form["trace_name"],
+                request.form["trace_args"],
+                request.form["trace_symbolic_args"],
+            )
         except ValueError as err:
             return render_template(
                 "add-trace.html",
@@ -140,12 +188,11 @@ def add_trace(project: str):
                 campaign=campaign,
                 trace_name=request.form["trace_name"],
                 trace_args=request.form["trace_args"],
+                trace_symbolic_args=request.form["trace_symbolic_args"],
                 error=str(err),
             )
 
-        trace_args = TraceParams.create_trace_args(args, [])
-        trace_name = request.form["trace_name"]
-        campaign.traces.append(TraceParams(name=trace_name, args=trace_args))
+        campaign.traces.append(trace_params)
         campaign.save()
 
         return redirect(url_for("project_details", project=project))
@@ -176,28 +223,48 @@ def clear_trace_data(project: str):
     return redirect(url_for("project_details", project=project))
 
 
+def _save_uploaded_file() -> Tuple[str, Path]:
+    if "binary_filename" not in request.files:
+        raise ValueError("You must provide a binary filename1")
+
+    file = request.files["binary_filename"]
+    if not file.filename:
+        raise ValueError("You must provide a binary filename2")
+
+    fd, filename = mkstemp(
+        dir=UPLOAD_DIRECTORY, prefix=f"{secure_filename(file.filename)}."
+    )
+    os.close(fd)
+
+    app.logger.info("saving uploaded file %s -> %s", file.filename, filename)
+    file.save(filename)
+
+    return file.filename, Path(filename)
+
+
 @app.route("/add-project", methods=["GET", "POST"])
 def add_project():
     if request.method == "POST":
         project = request.form["project"]
-        binary_filename = request.form["binary_filename"]
-        binary = Path(binary_filename).absolute()
-        if not binary.is_file():
+
+        try:
+            original_filename, binary = _save_uploaded_file()
+        except Exception as error:
             return render_template(
                 "add-project.html",
                 project=project,
-                binary_filename=binary_filename,
-                error="binary does not exist",
+                binary_filename="",
+                error=str(error),
             )
 
         if not project:
-            project = binary.name
+            project = original_filename
 
         if (BINREC_PROJECTS / project).is_dir():
             return render_template(
                 "add-project.html",
                 project=project,
-                binary_filename=binary_filename,
+                binary_filename="",
                 error=f"project already exists: {project}",
             )
 
@@ -231,3 +298,34 @@ def download_worker_log(project: str):
         abort(404)
 
     return send_file(log)
+
+
+@app.get("/projects/<project>/open_recovered_directory")
+def open_recovered_directory(project: str):
+    path = merged_trace_dir(project)
+    try:
+        subprocess.check_call(["xdg-open", str(path)])
+    except subprocess.CalledProcessError:
+        app.logger.exception("failed to open recovered directory %s", path)
+        abort(404)
+
+    return redirect(url_for("project_details", project=project))
+
+
+@app.get("/docs")
+@app.get("/docs/<path:filename>")
+def render_docs(filename: str = None):
+    if not filename:
+        return redirect(url_for("render_docs", filename="manual.md"))
+
+    source = BINREC_ROOT / "docs" / "manual" / filename
+    if not source.is_file():
+        abort(404)
+
+    if source.suffix.lower() != ".md":
+        return send_file(source)
+
+    title = source.with_suffix("").name
+    return render_template(
+        "docs.html", content=source.read_text(), title=title, docs_filename=filename
+    )

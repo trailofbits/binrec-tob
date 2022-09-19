@@ -5,25 +5,40 @@
 {% endblock %}
 
 {% block body %}
-<div class="breadcrumbs">
-    <a href="{{url_for('dashboard')}}">Projects</a> /
+<nav>
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{url_for('dashboard')}}">Projects</a></li>
+        <li class="breadcrumb-item active">New Project</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <div class="col">
+        <h1>New Project</h1>
+
+        {% if error %}
+        <div class="alert alert-danger">
+            {{error}}
+        </div>
+        {% endif %}
+
+        <form method="POST" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="project" class="form-label">Project Name (optional)</label>
+                <input type="text" name="project" value="{{project}}" class="form-control">
+            </div>
+
+            <div class="mb-3">
+                <label for="binary_filename" class="form-label">Binary Filename</label>
+                <input type="file" name="binary_filename" value="{{binary_filename}}" class="form-control">
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save</button>
+        </form>
+    </div>
 </div>
 
-<h1>New Project</h1>
 
-{% if error %}
-    <div class="error-block">
-        {{error}}
-    </div>
-{% endif %}
 
-<form method="POST">
-    <label for="project">Project Name (optional)</label>
-    <input type="text" name="project" value="{{project}}">
 
-    <label for="binary_filename">Binary Filename</label>
-    <input type="text" name="binary_filename" value="{{binary_filename}}">
-
-    <input type="submit" value="Save">
-</form>
 {% endblock %}
