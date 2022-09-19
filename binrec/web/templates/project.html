@@ -55,6 +55,13 @@
                     </td>
                 </tr>
 
+                {% if previous_lift_result == 0 %}
+                <tr>
+                    <th>Recovered Directory:</th>
+                    <td><a href="{{url_for('open_recovered_directory', project=project)}}">{{recovered_directory}}</a></td>
+                </tr>
+                {% endif %}
+
                 <tr>
                     <th>Available Actions:</th>
                     <td>

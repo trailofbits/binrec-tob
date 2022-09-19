@@ -24,6 +24,7 @@ from binrec.env import (
     BINREC_PROJECTS,
     campaign_filename,
     get_trace_dirs,
+    merged_trace_dir,
     project_dir,
     recovered_binary_filename,
 )
@@ -110,11 +111,13 @@ def project_details(project: str):
     trace_count = len(campaign.traces)
     lift_result: int = g.state.lift_results.get(project)
     is_running: bool = g.state.is_project_running(project)
+    recovered_directory: Optional[str] = None
 
     if recovered_binary_filename(project).is_file():
         state = "Recovered"
         if lift_result is None:
             lift_result = 0
+        recovered_directory = str(merged_trace_dir(project))
     elif is_running:
         state = "Recovering"
     elif lift_result:
@@ -135,6 +138,7 @@ def project_details(project: str):
         has_worker_log=worker_log_filename(project).is_file(),
         is_running=is_running,
         can_recover=not g.state.is_worker_running() and trace_count > 0,
+        recovered_directory=recovered_directory,
     )
 
 
@@ -286,3 +290,15 @@ def download_worker_log(project: str):
         abort(404)
 
     return send_file(log)
+
+
+@app.get("/projects/<project>/open_recovered_directory")
+def open_recovered_directory(project: str):
+    path = merged_trace_dir(project)
+    try:
+        subprocess.check_call(["xdg-open", str(path)])
+    except subprocess.CalledProcessError:
+        app.logger.exception("failed to open recovered directory %s", path)
+        abort(404)
+
+    return redirect(url_for("project_details", project=project))
