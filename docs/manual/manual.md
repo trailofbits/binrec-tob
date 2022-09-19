@@ -73,7 +73,7 @@ Walkthroughs of Common Workflows
  3. [Advanced Tracing](walkthroughs/advanced_tracing.md)
  4. [General Guide to Binary Recovery](walkthroughs/generalguide.md)
  5. [Transforming Recovered Programs During Recompilation](walkthroughs/transformations.md)
- 6. Using BinRec's Graphical Interface |TODO|
+ 6. [Using BinRec's Graphical Interface](walkthroughs/using_web_gui.md)
 
 Known Limitations
 -----------------
