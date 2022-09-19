@@ -94,12 +94,16 @@ def load_campaign(project: str):
 
 @app.get("/")
 def dashboard():
-    projects = sorted(
-        [
-            dirname.name
-            for dirname in BINREC_PROJECTS.iterdir()
-            if dirname.is_dir() and (dirname / "campaign.json").is_file()
-        ]
+    projects = (
+        sorted(
+            [
+                dirname.name
+                for dirname in BINREC_PROJECTS.iterdir()
+                if dirname.is_dir() and (dirname / "campaign.json").is_file()
+            ]
+        )
+        if BINREC_PROJECTS.is_dir()
+        else []
     )
     return render_template("dashboard.html", projects=projects)
 
