@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block head %}
+<title>Binrec Docs: {{title}}</title>
+
+<style>
+    .markdown img {
+        max-width: 100%;
+    }
+
+    .markdown pre {
+        background-color: #333333;
+        color: #F6F6F5;
+        padding: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<nav>
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{url_for('render_docs')}}">Docs</a></li>
+        <li class="breadcrumb-item active">{{docs_filename}}</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <div class="col">
+        <div class="markdown">
+{% markdown %}
+{{content | safe}}
+{% endmarkdown %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

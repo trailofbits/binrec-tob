@@ -19,9 +19,11 @@ from flask import (
 )
 from werkzeug.utils import secure_filename
 
+from binrec import __version__ as BINREC_VERSION
 from binrec.campaign import Campaign, TraceParams
 from binrec.env import (
     BINREC_PROJECTS,
+    BINREC_ROOT,
     campaign_filename,
     get_trace_dirs,
     merged_trace_dir,
@@ -34,6 +36,7 @@ UPLOAD_DIRECTORY = Path(__file__).parent / "uploads"
 
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = str(UPLOAD_DIRECTORY.absolute())
+app.jinja_env.add_extension("jinja_markdown.MarkdownExtension")
 
 
 @dataclass
@@ -72,6 +75,7 @@ def setup_web_app():
 def before_request():
     g.state = STATE
     g.state.poll()
+    g.binrec_version = BINREC_VERSION
 
 
 def worker_log_filename(project: str) -> Path:
@@ -306,3 +310,22 @@ def open_recovered_directory(project: str):
         abort(404)
 
     return redirect(url_for("project_details", project=project))
+
+
+@app.get("/docs")
+@app.get("/docs/<path:filename>")
+def render_docs(filename: str = None):
+    if not filename:
+        return redirect(url_for("render_docs", filename="manual.md"))
+
+    source = BINREC_ROOT / "docs" / "manual" / filename
+    if not source.is_file():
+        abort(404)
+
+    if source.suffix.lower() != ".md":
+        return send_file(source)
+
+    title = source.with_suffix("").name
+    return render_template(
+        "docs.html", content=source.read_text(), title=title, docs_filename=filename
+    )

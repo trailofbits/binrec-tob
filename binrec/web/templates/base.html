@@ -17,9 +17,23 @@
   </head>
 
   <body>
+
     <div class="container">
         {% block body %}
         {% endblock %}
+
+        <div class="row">
+            <div class="col">
+                <div class="card bg-light border-info mt-3 mb-3">
+                    <div class="card-body" style="padding: 5px 10px">
+                        <div class="float-end">
+                            <small><a href="/docs/manual.md" target="_blank">Read the Docs</a></small>
+                        </div>
+                        <small>BinRec <code>v{{g.binrec_version}}</code></small>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
   </body>
 </html>
