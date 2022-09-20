@@ -32,6 +32,9 @@ TRACE_CONCRETE_ARGS_VAR = "TRACE_ARGS"
 #: The bash variable name for the trace symbolic arguments
 TRACE_SYMBOLIC_ARGS_VAR = "S2E_SYM_ARGS"
 
+#: The bash variable name for the trace stdin content
+TRACE_STDIN_VAR = "TRACE_STDIN"
+
 #: The prefix in ``bootstrap.sh`` for executing the sample
 BOOTSTRAP_EXECUTE_SAMPLE_PREFIX = (
     f'{TRACE_SYMBOLIC_ARGS_VAR}="" LD_PRELOAD="${{S2E_SO}}" "${{TARGET}}"'
@@ -58,7 +61,7 @@ source ./{TRACE_CONFIG_FILENAME}
 BOOTSTRAP_PATCH_CALL_EXECUTE = f"""
 # binrec patch #
 {SETUP_FUNCTION}
-execute "${{TARGET_PATH}}"
+echo -en "${{{TRACE_STDIN_VAR}}}" | execute "${{TARGET_PATH}}"
 {TEARDOWN_FUNCTION}
 ################
 """
@@ -267,7 +270,7 @@ class TraceParams:
     """
 
     args: List[TraceArg] = field(default_factory=list)
-    stdin: Union[bool, str] = False
+    stdin: Optional[str] = None
     match_stdout: Union[bool, str] = True
     match_stderr: Union[bool, str] = True
     input_files: List[TraceInputFile] = field(default_factory=list)
@@ -314,8 +317,11 @@ class TraceParams:
             " ".join([str(i) for i in self.symbolic_indexes])
         )
         args = " ".join(shlex.quote(arg) for arg in self.command_line_args)
+        stdin = shlex.quote(self.stdin or "")
+
         print(f"export {TRACE_SYMBOLIC_ARGS_VAR}={symbolic_indexes}", file=file)
         print(f"export {TRACE_CONCRETE_ARGS_VAR}=({args})", file=file)
+        print(f"export {TRACE_STDIN_VAR}={stdin}", file=file)
         print(file=file)
 
     def _write_get_input_files_function(self, file: TextIO) -> None:
@@ -375,7 +381,7 @@ class TraceParams:
             parsed
         """
         args = item.get("args") or []
-        stdin = item.get("stdin") or False
+        stdin = item.get("stdin") or None
         match_stdout = item.get("match_stdout", True)
         match_stderr = item.get("match_stderr", True)
         files = item.get("input_files") or []
