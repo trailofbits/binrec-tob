@@ -254,7 +254,11 @@ def _validate_campaign_trace(campaign: Campaign, trace: TraceParams) -> None:
     merged_dir = merged_trace_dir(project)
     lifted = str(merged_dir / "recovered")
     original = str(merged_dir / "binary")
-    target = str(merged_dir / "test-target")
+    target_path = merged_dir / "test-target"
+    target = str(target_path)
+
+    if target_path.is_symlink():
+        target_path.unlink()
 
     # We link to the binary we are running to make sure argv[0] is the same
     # for the original and the lifted program.
@@ -263,14 +267,7 @@ def _validate_campaign_trace(campaign: Campaign, trace: TraceParams) -> None:
     trace.setup_input_file_directory(project)
     _link_lifted_input_files(project)
 
-    if trace.stdin is False or trace.stdin is None:
-        # /dev/null
-        stdin_file: Optional[int] = subprocess.DEVNULL
-    elif trace.stdin is True:
-        # pass through stdin
-        stdin_file = None
-    else:
-        raise NotImplementedError("stdin content is not currently supported")
+    stdin_file = subprocess.PIPE if trace.stdin else subprocess.DEVNULL
 
     _run_trace_setup(campaign, trace, merged_dir)
     logger.debug(">> running original sample with args: %s", trace.command_line_args)
@@ -281,9 +278,10 @@ def _validate_campaign_trace(campaign: Campaign, trace: TraceParams) -> None:
         stdin=stdin_file,
         cwd=str(merged_dir),
     )
-    # stdin is not supported yet in the updated s2e integration
-    # if trace.stdin:
-    #     original_proc.stdin.write(trace.stdin.encode())
+
+    if trace.stdin:
+        original_proc.stdin.write(trace.stdin.encode())
+        original_proc.stdin.close()
 
     # Only close if stdin is a file / pipe (unsupported at this time)
     # original_proc.stdin.close()  # type: ignore
@@ -307,9 +305,10 @@ def _validate_campaign_trace(campaign: Campaign, trace: TraceParams) -> None:
         stdin=stdin_file,
         cwd=str(merged_dir),
     )
-    # stdin is not supported yet in the updated s2e integration
-    # if trace.stdin:
-    #    lifted_proc.stdin.write(trace.stdin.encode())
+
+    if trace.stdin:
+        lifted_proc.stdin.write(trace.stdin.encode())
+        lifted_proc.stdin.close()
 
     # Only close if stdin is a file / pipe (unsupported at this time)
     # lifted_proc.stdin.close()  # type: ignore
