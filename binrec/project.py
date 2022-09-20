@@ -283,8 +283,6 @@ def _validate_campaign_trace(campaign: Campaign, trace: TraceParams) -> None:
         original_proc.stdin.write(trace.stdin.encode())
         original_proc.stdin.close()
 
-    # Only close if stdin is a file / pipe (unsupported at this time)
-    # original_proc.stdin.close()  # type: ignore
     original_proc.wait()
     os.remove(target)
 
@@ -311,7 +309,6 @@ def _validate_campaign_trace(campaign: Campaign, trace: TraceParams) -> None:
         lifted_proc.stdin.close()
 
     # Only close if stdin is a file / pipe (unsupported at this time)
-    # lifted_proc.stdin.close()  # type: ignore
     lifted_proc.wait()
     os.remove(target)
 
