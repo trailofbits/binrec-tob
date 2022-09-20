@@ -1,11 +1,16 @@
 import json
+import logging
 import shlex
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Any, List, Optional, TextIO, Union
 
+import jsonschema
+import jsonschema.exceptions
+
 from .env import (
+    BINREC_ROOT,
     INPUT_FILES_DIRNAME,
     TRACE_CONFIG_FILENAME,
     campaign_filename,
@@ -14,6 +19,8 @@ from .env import (
     project_dir,
     trace_config_filename,
 )
+
+logger = logging.getLogger("binrec.campaign")
 
 GET_TRACE_INPUT_FILES_FUNCTION = "get_trace_input_files"
 SETUP_FUNCTION = "setup_trace"
@@ -66,6 +73,8 @@ BOOTSTRAP_PATCH_EXECUTE_SAMPLE = f"""
 #: The default value for symbolic arguments
 DEFAULT_SYMBOLIC_ARG_VALUE = "0"
 
+CAMPAIGN_SCHEMA_FILENAME = BINREC_ROOT / "docs" / "manual" / "campaign_schema.json"
+
 
 def _validate_file_permission(permissions: str) -> None:
     """
@@ -81,6 +90,11 @@ def _validate_file_permission(permissions: str) -> None:
 
     if len(permissions) != 3:
         raise ValueError("invalid permissions: must be valid 3 digit octal number")
+
+
+def _validate_campaign_file(campaign_body: dict) -> None:
+    schema = json.loads(CAMPAIGN_SCHEMA_FILENAME.read_text())
+    jsonschema.validate(campaign_body, schema)
 
 
 class CampaignJsonEncoder(json.JSONEncoder):
@@ -588,6 +602,8 @@ class Campaign:
         with open(filename, "r") as file:
             body = json.loads(file.read().strip())
 
+        _validate_campaign_file(body)
+
         campaign = Campaign(
             binary,
             [TraceParams.load_dict(item) for item in body["traces"]],
@@ -673,3 +689,55 @@ def patch_s2e_project(project: str, existing_patch_ok: bool = False) -> bool:
         file.write(f"\n{BOOTSTRAP_PATCH_MARKER}\n")
 
     return True
+
+
+def lint_campaign_file(filename: Path) -> None:
+    """
+    Lint a single campaign JSON file.
+    """
+    logger.info("linting campaign file: %s", filename)
+    try:
+        Campaign.load_json(Path(__file__), filename, project="lint")
+    except jsonschema.exceptions.ValidationError as err:
+        logger.error("campaign file is invalid: %s: %s", filename, err)
+
+
+def lint_campaign_directory(dirname: Path) -> None:
+    """
+    Lint all campaign files within a directory.
+    """
+    for child in dirname.iterdir():
+        if child.suffix.lower() == ".json":
+            lint_campaign_file(child)
+
+
+if __name__ == "__main__":
+    import argparse
+
+    from binrec.core import init_binrec
+
+    init_binrec()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-v", "--verbose", action="count", help="enable verbose logging"
+    )
+
+    subparsers = parser.add_subparsers(dest="current_parser")
+
+    lint = subparsers.add_parser("lint")
+    lint.add_argument(
+        "filename", help="campaign filename or directory to lint", type=Path
+    )
+
+    args = parser.parse_args()
+    if args.verbose:
+        logging.getLogger("binrec").setLevel(logging.DEBUG)
+
+    if args.current_parser == "lint":
+        if args.filename.is_dir():
+            lint_campaign_directory(args.filename)
+        else:
+            lint_campaign_file(args.filename)
+    else:
+        parser.error(f"unrecognized command: {args.current_parser}")
