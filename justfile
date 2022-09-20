@@ -248,6 +248,10 @@ run-web-server:
   @just _launch-web-browser-with-delay 3
   pipenv run python -m binrec.web
 
+# Lint a campaign file or directory and display validation errors
+lint-campaign filename:
+    pipenv run python -m binrec.campaign lint "{{filename}}"
+
 ########## End: End-User API Recipes ##########
 
 
