@@ -5,13 +5,15 @@ import os
 import re
 import shutil
 import subprocess
+import textwrap
 from pathlib import Path
-from typing import List, Union
+from typing import List, Tuple, Union
 
 from binrec.campaign import (
     Campaign,
     TraceArg,
     TraceArgType,
+    TraceInputFile,
     TraceParams,
     patch_s2e_project,
 )
@@ -73,6 +75,33 @@ def add_campaign_trace(
     return params
 
 
+def _resolve_trace_name_or_id(
+    campaign: Campaign, name_or_id: Union[str, int]
+) -> Tuple[int, TraceParams]:
+    """
+    Resolve a trace name or id to a trace. If ``name_or_id`` is a string
+    representing a number then it is treated as the trace id.
+
+    :returns: a tuple of ``(trace_id, trace)``
+    :raises KeyError: the trace does not exist within the campaign
+    """
+    try:
+        trace_id = int(name_or_id)
+        if trace_id < 0:
+            trace_id = len(campaign.traces) + trace_id
+
+        if trace_id >= 0 and trace_id < len(campaign.traces):
+            return trace_id, campaign.traces[trace_id]
+    except ValueError:
+        pass
+
+    for trace_id, trace in enumerate(campaign.traces):
+        if trace.name and trace.name == name_or_id:
+            return trace_id, trace
+
+    raise KeyError(f"trace does not exist: {name_or_id}")
+
+
 def remove_campaign_trace(project: str, name_or_id: Union[str, int]) -> None:
     """
     Remove a trace from an existing campaign.
@@ -82,8 +111,9 @@ def remove_campaign_trace(project: str, name_or_id: Union[str, int]) -> None:
     """
     campaign = Campaign.load_project(project, resolve_input_files=False)
 
-    logger.info("removing campaign trace: %s, %s", project, name_or_id)
-    campaign.remove_trace(name_or_id)
+    trace_id, _ = _resolve_trace_name_or_id(campaign, name_or_id)
+
+    campaign.remove_trace(trace_id)
     campaign.save()
 
 
@@ -95,6 +125,43 @@ def remove_campaign_all_traces(project: str) -> None:
 
     logger.info("removing all traces from campaign: %s", project)
     campaign.traces = []
+    campaign.save()
+
+
+def set_trace_stdin(
+    project: str, trace_name_or_id: Union[str, int], stdin: str
+) -> None:
+    """
+    Set the stdin content for a single trace.
+
+    :param project: project name
+    :param trace_name_or_id: the existing trace name or id
+    :param stdin: stdin content
+    """
+    campaign = Campaign.load_project(project, resolve_input_files=False)
+    _, trace = _resolve_trace_name_or_id(campaign, trace_name_or_id)
+    trace.stdin = stdin
+    campaign.save()
+
+
+def add_trace_input_file(
+    project: str, trace_name_or_id: Union[str, int], source: Path
+) -> None:
+    """
+    Add a new trace input file to an existing trace.
+
+    :param project: project name
+    :param trace_name_or_id: the existing trace name or id
+    :param source: source input file on the host filesystem
+    """
+    campaign = Campaign.load_project(project, resolve_input_files=False)
+    _, trace = _resolve_trace_name_or_id(campaign, trace_name_or_id)
+
+    with open(source, "r") as _:
+        # Verify that the file exists and we can read it
+        pass
+
+    trace.input_files.append(TraceInputFile(source.absolute()))
     campaign.save()
 
 
@@ -174,7 +241,7 @@ def run_campaign_trace(project: str, trace_name_or_id: Union[int, str]) -> None:
         :meth:`Campaign.get_trace`)
     """
     campaign = Campaign.load_project(project)
-    trace = campaign.get_trace(trace_name_or_id)
+    _, trace = _resolve_trace_name_or_id(campaign, trace_name_or_id)
     _run_campaign_trace(campaign, trace)
 
 
@@ -220,7 +287,7 @@ def validate_campaign_trace(project: str, trace_name_or_id: Union[int, str]) -> 
         :meth:`Campaign.get_trace`)
     """
     campaign = Campaign.load_project(project)
-    trace = campaign.get_trace(trace_name_or_id)
+    _, trace = _resolve_trace_name_or_id(campaign, trace_name_or_id)
     _validate_campaign_trace(campaign, trace)
 
 
@@ -450,7 +517,7 @@ def describe_campaign(project_name: str) -> None:
         print("  Symbolic Indexes:", ", ".join(str(i) for i in trace.symbolic_indexes))
 
         if trace.input_files:
-            print(f"  Input Files ({len(trace.input_files)}:")
+            print(f"  Input Files ({len(trace.input_files)}):")
             for input_file in trace.input_files:
                 print("   ", input_file.source)
                 if input_file.destination:
@@ -478,6 +545,10 @@ def describe_campaign(project_name: str) -> None:
             print()
         elif campaign.teardown:
             print("  [Inherit global teardown]")
+
+        if trace.stdin:
+            print("  stdin:")
+            print(textwrap.indent(trace.stdin, "    "))
 
         print()
 
@@ -532,7 +603,7 @@ def main() -> None:
     remove_trace = subparsers.add_parser("remove-trace")
     remove_trace.add_argument("project", help="Project name")
     remove_trace.add_argument(
-        "-i", "--id", action="store_true", help="treat 'name' as the trace id"
+        "-i", "--id", action="store_true", help="force treating 'name' as the trace id"
     )
     remove_trace.add_argument("--all", action="store_true", help="remove all traces")
     remove_trace.add_argument(
@@ -544,7 +615,7 @@ def main() -> None:
 
     run_trace = subparsers.add_parser("run-trace")
     run_trace.add_argument(
-        "-i", "--id", action="store_true", help="treat 'name' as the trace id"
+        "-i", "--id", action="store_true", help="force treating 'name' as the trace id"
     )
     run_trace.add_argument(
         "--last", action="store_true", help="run the last registered trace"
@@ -565,7 +636,7 @@ def main() -> None:
 
     validate_trace = subparsers.add_parser("validate-trace")
     validate_trace.add_argument(
-        "-i", "--id", action="store_true", help="treat 'name' as the trace id"
+        "-i", "--id", action="store_true", help="force treating 'name' as the trace id"
     )
     validate_trace.add_argument("project", help="Project name")
     validate_trace.add_argument(
@@ -577,6 +648,24 @@ def main() -> None:
 
     clear_trace_data = subparsers.add_parser("clear-trace-data")
     clear_trace_data.add_argument("project", help="Project name")
+
+    set_stdin = subparsers.add_parser("set-trace-stdin")
+    set_stdin.add_argument("project", help="Project name")
+    set_stdin.add_argument(
+        "-i", "--id", action="store_true", help="force treating 'name' as the trace id"
+    )
+    set_stdin.add_argument("name", help="trace name (or trace id if --id is provided)")
+    set_stdin.add_argument("stdin", help="stdin content")
+
+    add_input_file = subparsers.add_parser("add-trace-input-file")
+    add_input_file.add_argument("project", help="Project name")
+    add_input_file.add_argument(
+        "-i", "--id", action="store_true", help="force treating 'name' as the trace id"
+    )
+    add_input_file.add_argument(
+        "name", help="trace name (or trace id if --id is provided)"
+    )
+    add_input_file.add_argument("source", help="source filename", type=Path)
 
     args = parser.parse_args()
 
@@ -624,6 +713,12 @@ def main() -> None:
         validate_campaign_with_args(args.project, args.args)
     elif args.current_parser == "clear-trace-data":
         clear_project_trace_data(args.project)
+    elif args.current_parser == "set-trace-stdin":
+        name = int(args.name) if args.id else args.name
+        set_trace_stdin(args.project, name, args.stdin)
+    elif args.current_parser == "add-trace-input-file":
+        name = int(args.name) if args.id else args.name
+        add_trace_input_file(args.project, name, args.source)
     else:
         parser.print_help()
 

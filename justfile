@@ -112,7 +112,7 @@ rebuild-s2e-plugins:
 
 # Inserts a binrec plugin into the correct location within the S2E repository
 _s2e-insert-binrec-plugin name:
-  # If we don't drop existing links it will overwrite with default plugin content
+  # If we do not drop existing links it will overwrite with default plugin content
   rm -f "{{plugins_dir}}/{{name}}.cpp"
   rm -f "{{plugins_dir}}/{{name}}.h"
   just _s2e-command new_plugin --author-name \"{{binrec_authors}}\" --force \"{{name}}\"
@@ -178,14 +178,19 @@ new-project name binary template="":
 add-trace project-name trace-name symbolic-indexes args:
   pipenv run python -m binrec.project add-trace --name "{{trace-name}}" --symbolic-indexes "{{symbolic-indexes}}" "{{project-name}}" {{args}}
 
-# Remove a trace by name from an existing project
+# Set the stdin content for a single trace
+set-trace-stdin project-name trace-name stdin:
+    pipenv run python -m binrec.project set-trace-stdin "{{project-name}}" "{{trace-name}}" "{{stdin}}"
+
+# Set the stdin content for a single trace
+add-trace-input-file project-name trace-name source:
+    pipenv run python -m binrec.project add-trace-input-file "{{project-name}}" "{{trace-name}}" "{{source}}"
+
+# Remove a trace by name or id from an existing project
 remove-trace project-name trace-name:
   pipenv run python -m binrec.project remove-trace "{{project-name}}" "{{trace-name}}"
 
-# Remove a trace by ID from an existing project
-remove-trace-id project-name trace-id:
-  pipenv run python -m binrec.project remove-trace --id "{{project-name}}" "{{trace-id}}"
-
+# Remove all traces from an existing project
 remove-all-traces project-name:
   pipenv run python -m binrec.project remove-trace "{{project-name}}" --all
 
@@ -193,25 +198,17 @@ remove-all-traces project-name:
 run project-name:
   pipenv run python -m binrec.project run "{{project-name}}"
 
-# Run a single project trace by name
+# Run a single project trace by name or id
 run-trace project-name trace-name:
   pipenv run python -m binrec.project run-trace "{{project-name}}" "{{trace-name}}"
-
-# Run a single project trace by id
-run-trace-id project-name trace-id:
-  pipenv run python -m binrec.project run-trace --id "{{project-name}}" "{{trace-id}}"
 
 # Validate the recovered binary against an entire project
 validate project-name:
   pipenv run python -m binrec.project validate "{{project-name}}"
 
-# Validate the recovered binary against a single trace by name
+# Validate the recovered binary against a single trace by name or id
 validate-trace project-name trace-name:
   pipenv run python -m binrec.project validate-trace "{{project-name}}" "{{trace-name}}"
-
-# Validate the recovered binary against a single trace by id
-validate-trace-id project-name trace-name:
-  pipenv run python -m binrec.project validate-trace --id "{{project-name}}" "{{trace-name}}"
 
 validate-args project-name *args:
   pipenv run python -m binrec.project validate-args "$@"
