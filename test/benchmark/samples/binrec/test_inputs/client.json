@@ -2,17 +2,17 @@
   "traces": [
     {
       "args": [],
-      "stdin": false,
+      "stdin": null,
       "match_stdout": true,
       "match_stderr": true,
       "input_files": [
         {
-          "source": "../../bin/x86/binrec/server",
+          "source": "/home/meilya/Projects/binrec-prerelease/test/benchmark/samples/binrec/test_inputs/../../bin/x86/binrec/server",
           "destination": null,
           "permissions": true
         },
         {
-          "source": "input_files/server.sh",
+          "source": "/home/meilya/Projects/binrec-prerelease/test/benchmark/samples/binrec/test_inputs/input_files/server.sh",
           "destination": null,
           "permissions": true
         }

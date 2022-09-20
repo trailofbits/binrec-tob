@@ -2,17 +2,17 @@
   "traces": [
     {
       "args": [],
-      "stdin": false,
+      "stdin": null,
       "match_stdout": "^Connection from IP (\\d+\\.){3}\\d+, port \\d+\nReceived 20 bytes:\nThanks! Bye-bye...\r\n$",
       "match_stderr": true,
       "input_files": [
         {
-          "source": "../../bin/x86/binrec/client",
+          "source": "/home/meilya/Projects/binrec-prerelease/test/benchmark/samples/binrec/test_inputs/../../bin/x86/binrec/client",
           "destination": null,
           "permissions": true
         },
         {
-          "source": "input_files/client.sh",
+          "source": "/home/meilya/Projects/binrec-prerelease/test/benchmark/samples/binrec/test_inputs/input_files/client.sh",
           "destination": null,
           "permissions": true
         }

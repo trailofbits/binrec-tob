@@ -31,7 +31,7 @@
           "value": "4"
         }
       ],
-      "stdin": false,
+      "stdin": null,
       "match_stdout": true,
       "match_stderr": true,
       "input_files": [],

@@ -1,29 +1,24 @@
 {
   "traces": [
     {
-      "args": [
-        {
-          "arg_type": "symbolic",
-          "value": "ab"
-        }
-      ],
-      "stdin": null,
+      "args": [],
+      "stdin": "hello world!\nnext line\nanother really long line\nexit\nfinal line",
       "match_stdout": true,
       "match_stderr": true,
       "input_files": [],
       "setup": [],
       "teardown": [],
-      "name": null
+      "name": "explicit_exit"
     },
     {
       "args": [],
-      "stdin": null,
+      "stdin": "hello\nworld",
       "match_stdout": true,
       "match_stderr": true,
       "input_files": [],
       "setup": [],
       "teardown": [],
-      "name": null
+      "name": "stdin_eof"
     }
   ],
   "setup": [],

@@ -7,7 +7,7 @@
           "value": "ab"
         }
       ],
-      "stdin": false,
+      "stdin": null,
       "match_stdout": true,
       "match_stderr": true,
       "input_files": [],
@@ -22,7 +22,7 @@
           "value": "az"
         }
       ],
-      "stdin": false,
+      "stdin": null,
       "match_stdout": true,
       "match_stderr": true,
       "input_files": [],
@@ -37,7 +37,7 @@
           "value": "zb"
         }
       ],
-      "stdin": false,
+      "stdin": null,
       "match_stdout": true,
       "match_stderr": true,
       "input_files": [],
