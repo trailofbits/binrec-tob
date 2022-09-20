@@ -87,7 +87,7 @@
                       "description": "Location on host system where the input file can be found."
                     },
                     "destination": {
-                      "type": "string",
+                      "type": ["string", "null"],
                       "description": "Location on the guest system where the input file should be mapped to for tracing."
                     },
                     "permissions": {
