@@ -1,8 +1,9 @@
 import json
+import logging
 from pathlib import Path
-import shlex
 from unittest.mock import patch, mock_open, call, MagicMock
 
+import jsonschema.exceptions
 import pytest
 
 from binrec import campaign
@@ -266,7 +267,8 @@ class TestCampaign:
         assert campaign.Campaign(binary=Path("/eq"), traces=[]).project == "eq"
 
     @patch.object(campaign, "open", new_callable=mock_open, read_data=json.dumps(JSON_BATCH))
-    def test_load_json(self, mock_file):
+    @patch.object(campaign, "_validate_campaign_file")
+    def test_load_json(self, mock_validate, mock_file):
         binary = Path("/eq")
         filename = Path("thing.json")
         project_name = "asdf"
@@ -284,6 +286,7 @@ class TestCampaign:
         )
         mock_file.assert_called_once_with(filename, "r")
         mock_file().read.assert_called_once_with()
+        mock_validate.assert_called_once_with(JSON_BATCH)
 
     @patch.object(campaign, "open", new_callable=mock_open, read_data=json.dumps(JSON_INPUT_FILES))
     @patch.object(campaign, "TraceInputFile")
@@ -595,3 +598,48 @@ class TestCampaignJsonEncoder:
     def test_super(self):
         with pytest.raises(TypeError):
             campaign.CampaignJsonEncoder().default(100) == "100"
+
+
+class TestLintCampaign:
+
+    @patch.object(campaign.Campaign, "load_json")
+    def test_lint_campaign_file(self, mock_load):
+        filename = MockPath("campaign.json")
+        campaign.lint_campaign_file(filename)
+        mock_load.assert_called_once_with(Path(campaign.__file__), filename, project="lint")
+
+    @patch.object(campaign.Campaign, "load_json")
+    @patch.object(campaign, "logger")
+    def test_lint_campaign_file_error(self, mock_logger, mock_load):
+        filename = MockPath("campaign.json")
+        mock_load.side_effect = jsonschema.exceptions.ValidationError("sadf")
+        campaign.lint_campaign_file(filename)
+        mock_load.assert_called_once_with(Path(campaign.__file__), filename, project="lint")
+        mock_logger.error.assert_called_once()
+
+    @patch.object(campaign, "lint_campaign_file")
+    def test_lint_campaign_directory(self, mock_lint_file):
+        json1 = MagicMock(suffix=".json")
+        json2 = MagicMock(suffix=".json")
+        not_json = MagicMock(suffix=".md")
+        dirname = MagicMock()
+        dirname.iterdir.return_value = [json1, not_json, json2]
+        campaign.lint_campaign_directory(dirname)
+        assert mock_lint_file.call_args_list == [call(json1), call(json2)]
+
+    @patch("sys.argv", ["campaign", "-v", "lint", __file__])
+    @patch.object(campaign, "lint_campaign_file")
+    @patch.object(campaign, "logging")
+    def test_main_file(self, mock_logging, mock_lint):
+        mock_logging.DEBUG = logging.DEBUG
+        campaign.main()
+        mock_logging.getLogger.return_value.setLevel.assert_called_once_with(
+            logging.DEBUG
+        )
+        mock_lint.assert_called_once_with(Path(__file__))
+
+    @patch("sys.argv", ["campaign", "lint", "./"])
+    @patch.object(campaign, "lint_campaign_directory")
+    def test_main_directory(self, mock_lint):
+        campaign.main()
+        mock_lint.assert_called_once_with(Path("./"))

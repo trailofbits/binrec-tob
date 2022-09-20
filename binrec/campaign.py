@@ -93,6 +93,9 @@ def _validate_file_permission(permissions: str) -> None:
 
 
 def _validate_campaign_file(campaign_body: dict) -> None:
+    """
+    Validate a loaded JSON campaign file against the campaign schema.
+    """
     schema = json.loads(CAMPAIGN_SCHEMA_FILENAME.read_text())
     jsonschema.validate(campaign_body, schema)
 
@@ -698,7 +701,7 @@ def lint_campaign_file(filename: Path) -> None:
     logger.info("linting campaign file: %s", filename)
     try:
         Campaign.load_json(Path(__file__), filename, project="lint")
-    except jsonschema.exceptions.ValidationError as err:
+    except (jsonschema.exceptions.ValidationError, ValueError) as err:
         logger.error("campaign file is invalid: %s: %s", filename, err)
 
 
@@ -711,7 +714,7 @@ def lint_campaign_directory(dirname: Path) -> None:
             lint_campaign_file(child)
 
 
-if __name__ == "__main__":
+def main():
     import argparse
 
     from binrec.core import init_binrec
@@ -739,5 +742,9 @@ if __name__ == "__main__":
             lint_campaign_directory(args.filename)
         else:
             lint_campaign_file(args.filename)
-    else:
+    else:  # pragma: no cover
         parser.error(f"unrecognized command: {args.current_parser}")
+
+
+if __name__ == "__main__":  # pragma: no cover
+    main()
