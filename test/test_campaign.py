@@ -104,17 +104,18 @@ class TestTraceParams:
     @patch.object(campaign, "print")
     def test_write_variables(self, mock_print, mock_shlex):
         handle = MagicMock()
-        mock_shlex.quote.side_effect = ["sym", "con_1", "con_2"]
+        mock_shlex.quote.side_effect = ["sym", "con_1", "con_2", "stdin_hello_world"]
         params = campaign.TraceParams(args=[
             campaign.TraceArg(campaign.TraceArgType.symbolic, "one"),
             campaign.TraceArg(campaign.TraceArgType.symbolic, "two"),
-        ])
+        ], stdin="hello\nworld")
         params._write_variables(handle)
 
-        assert mock_shlex.quote.call_args_list == [call("1 2"), call("one"), call("two")]
+        assert mock_shlex.quote.call_args_list == [call("1 2"), call("one"), call("two"), call("hello\nworld")]
         assert mock_print.call_args_list == [
             call("export S2E_SYM_ARGS=sym", file=handle),
             call("export TRACE_ARGS=(con_1 con_2)", file=handle),
+            call("export TRACE_STDIN=stdin_hello_world", file=handle),
             call(file=handle),
         ]
 
@@ -181,7 +182,7 @@ class TestTraceParams:
     def test_load_dict_default(self):
         assert campaign.TraceParams.load_dict({}) == campaign.TraceParams(
             args=[],
-            stdin=False,
+            stdin=None,
             match_stdout=True,
             match_stderr=True
         )
