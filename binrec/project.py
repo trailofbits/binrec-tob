@@ -145,7 +145,11 @@ def set_trace_stdin(
 
 
 def add_trace_input_file(
-    project: str, trace_name_or_id: Union[str, int], source: Path
+    project: str,
+    trace_name_or_id: Union[str, int],
+    source: Path,
+    destination: Path = None,
+    permissions: Union[str, bool] = None,
 ) -> None:
     """
     Add a new trace input file to an existing trace.
@@ -161,7 +165,41 @@ def add_trace_input_file(
         # Verify that the file exists and we can read it
         pass
 
-    trace.input_files.append(TraceInputFile(source.absolute()))
+    if permissions in (None, ""):
+        chmod = True  # default behavior: copy source file permissions
+    else:
+        chmod = permissions  # type: ignore
+
+    trace.input_files.append(TraceInputFile(source.absolute(), destination, chmod))
+    campaign.save()
+
+
+def remove_trace_input_file(
+    project: str, trace_name_or_id: Union[int, str], filename: Path
+) -> None:
+    """
+    Remove an input file from a trace. The ``filename`` parameter can either be the
+    full path to remove or just the file basename.
+
+    :param project: project name
+    :param trace_name_or_id: trace name or id
+    :param filename: filename or path to remove
+    :raises KeyError: the input file does not exist
+    """
+    basename = filename.name if "/" not in str(filename) else None
+    campaign = Campaign.load_project(project, resolve_input_files=False)
+    _, trace = _resolve_trace_name_or_id(campaign, trace_name_or_id)
+
+    for input_file in trace.input_files:
+        if filename == input_file.source or (
+            basename and basename == input_file.source.name
+        ):
+            found = input_file
+            break
+    else:
+        raise KeyError(f"input files does not eixst: {filename}")
+
+    trace.input_files.remove(found)
     campaign.save()
 
 
@@ -666,6 +704,22 @@ def main() -> None:
         "name", help="trace name (or trace id if --id is provided)"
     )
     add_input_file.add_argument("source", help="source filename", type=Path)
+    add_input_file.add_argument("destination", help="destination file path", nargs="?")
+    add_input_file.add_argument(
+        "permissions",
+        help="destination file permissions, in cmod octal syntax",
+        nargs="?",
+    )
+
+    remove_input_file = subparsers.add_parser("remove-trace-input-file")
+    remove_input_file.add_argument("project", help="Project name")
+    remove_input_file.add_argument(
+        "-i", "--id", action="store_true", help="force treating 'name' as the trace id"
+    )
+    remove_input_file.add_argument(
+        "name", help="trace name (or trace id if --id is provided)"
+    )
+    remove_input_file.add_argument("source", help="source filename or path", type=Path)
 
     args = parser.parse_args()
 
@@ -718,7 +772,12 @@ def main() -> None:
         set_trace_stdin(args.project, name, args.stdin)
     elif args.current_parser == "add-trace-input-file":
         name = int(args.name) if args.id else args.name
-        add_trace_input_file(args.project, name, args.source)
+        dest = Path(args.destination) if args.destination else None
+        permissions = args.permissions or True
+        add_trace_input_file(args.project, name, args.source, dest, permissions)
+    elif args.current_parser == "remove-trace-input-file":
+        name = int(args.name) if args.id else args.name
+        remove_trace_input_file(args.project, name, args.source)
     else:
         parser.print_help()
 

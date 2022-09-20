@@ -182,9 +182,14 @@ add-trace project-name trace-name symbolic-indexes args:
 set-trace-stdin project-name trace-name stdin:
     pipenv run python -m binrec.project set-trace-stdin "{{project-name}}" "{{trace-name}}" "{{stdin}}"
 
-# Set the stdin content for a single trace
-add-trace-input-file project-name trace-name source:
+# Add a new input file to an existing trace
+add-trace-input-file project-name trace-name source destination="" permissions="":
     pipenv run python -m binrec.project add-trace-input-file "{{project-name}}" "{{trace-name}}" "{{source}}"
+
+# Remove an input file by absolute path or filename from an existing trace
+remove-trace-input-file project-name trace-name source:
+    pipenv run python -m binrec.project remove-trace-input-file "{{project-name}}" "{{trace-name}}" "{{source}}"
+
 
 # Remove a trace by name or id from an existing project
 remove-trace project-name trace-name:
