@@ -6,7 +6,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Union
 
 from binrec.campaign import (
     Campaign,
@@ -279,7 +279,7 @@ def _validate_campaign_trace(campaign: Campaign, trace: TraceParams) -> None:
         cwd=str(merged_dir),
     )
 
-    if trace.stdin:
+    if trace.stdin and original_proc.stdin:
         original_proc.stdin.write(trace.stdin.encode())
         original_proc.stdin.close()
 
@@ -304,7 +304,7 @@ def _validate_campaign_trace(campaign: Campaign, trace: TraceParams) -> None:
         cwd=str(merged_dir),
     )
 
-    if trace.stdin:
+    if trace.stdin and lifted_proc.stdin:
         lifted_proc.stdin.write(trace.stdin.encode())
         lifted_proc.stdin.close()
 
