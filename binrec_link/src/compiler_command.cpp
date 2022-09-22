@@ -12,7 +12,7 @@ using namespace std;
 static const char *ENV_GCC_LIB = getenv("GCC_LIB");
 static const string GCC_LIB = ENV_GCC_LIB ? ENV_GCC_LIB : "";
 
-CompilerCommand::CompilerCommand(CompilerCommandMode mode) : mode{mode} {}
+CompilerCommand::CompilerCommand(CompilerCommandMode mode) : harden{0}, mode{mode} {}
 
 auto CompilerCommand::run() -> error_code
 {
