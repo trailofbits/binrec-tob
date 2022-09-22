@@ -723,7 +723,7 @@ def lint_campaign_directory(dirname: Path) -> None:
 def main():
     import argparse
 
-    from binrec.core import init_binrec
+    from binrec.core import enable_binrec_debug_mode, init_binrec
 
     init_binrec()
 
@@ -741,7 +741,7 @@ def main():
 
     args = parser.parse_args()
     if args.verbose:
-        logging.getLogger("binrec").setLevel(logging.DEBUG)
+        enable_binrec_debug_mode()
 
     if args.current_parser == "lint":
         if args.filename.is_dir():

@@ -22,6 +22,7 @@ def _link_bitcode(base: Path, source: Path, destination: Path):
     :param source: input bitcode file to link
     :param destination: output bitcode file
     """
+    logfile = destination.parent / "merge_link.log"
     logger.info("linking prepared bitcode: %s", source)
     try:
         subprocess.check_call(
@@ -33,7 +34,9 @@ def _link_bitcode(base: Path, source: Path, destination: Path):
                 str(destination),
                 f"-override={base}",
                 str(source),
-            ]
+            ],
+            stdout=logfile.open("a"),
+            stderr=subprocess.STDOUT,
         )
     except subprocess.CalledProcessError:
         raise BinRecError(f"llvm-link failed on captured bitcode: {source}")
@@ -160,7 +163,7 @@ def main() -> None:
     import argparse
     import sys
 
-    from .core import init_binrec
+    from .core import enable_binrec_debug_mode, init_binrec
 
     init_binrec()
 
@@ -173,7 +176,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.verbose:
-        logging.getLogger("binrec").setLevel(logging.DEBUG)
+        enable_binrec_debug_mode()
         if args.verbose > 1:
             from .audit import enable_python_audit_log
 

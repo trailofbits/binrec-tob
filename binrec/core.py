@@ -22,3 +22,14 @@ def init_binrec() -> None:
         datefmt="%H:%M:%S",
         level=logging.INFO,
     )
+
+    if os.environ.get("BINREC_DEBUG") == "1":
+        enable_binrec_debug_mode()
+
+
+def enable_binrec_debug_mode() -> None:
+    """
+    Run binrec with debug logging enabled.
+    """
+    logging.getLogger("binrec").setLevel(logging.DEBUG)
+    os.environ["BINREC_DEBUG"] = "1"

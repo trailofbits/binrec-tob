@@ -1,13 +1,12 @@
-#include <llvm/ADT/Triple.h>
-#include <llvm/IRReader/IRReader.h>
-#include <llvm/Passes/PassBuilder.h>
-#include <llvm/Support/CommandLine.h>
-//#include <llvm/ADT/StringMap.h>
 #include "binrec_lift.hpp"
 #include "error.hpp"
 #include "lift_context.hpp"
 #include "pass_utils.hpp"
+#include <llvm/ADT/Triple.h>
 #include <llvm/Analysis/AliasAnalysis.h>
+#include <llvm/IRReader/IRReader.h>
+#include <llvm/Passes/PassBuilder.h>
+#include <llvm/Support/CommandLine.h>
 
 
 extern "C" {
@@ -45,9 +44,12 @@ static void set_memssa_check_limit(int limit)
     llvm::StringMap<llvm::cl::Option *> &opts = llvm::cl::getRegisteredOptions();
     auto option = (llvm::cl::opt<unsigned> *)opts["memssa-check-limit"];
     option->setValue(limit);
+}
 
-    auto log_opt = (llvm::cl::opt<logging::Level> *)opts["loglevel"];
-    log_opt->setValue(logging::DEBUG);
+static int is_binrec_debug_mode()
+{
+    char *debug = getenv("BINREC_DEBUG");
+    return debug && !strcmp(debug, "1");
 }
 
 /**
@@ -60,7 +62,7 @@ static void reset_llvm_options()
     option->setValue(option->getDefault().getValue());
 
     auto log_opt = (llvm::cl::opt<logging::Level> *)opts["loglevel"];
-    log_opt->setValue(logging::INFO);
+    log_opt->setValue(is_binrec_debug_mode() ? logging::DEBUG : logging::ERROR);
 }
 
 /**

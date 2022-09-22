@@ -111,8 +111,9 @@ def remove_campaign_trace(project: str, name_or_id: Union[str, int]) -> None:
     """
     campaign = Campaign.load_project(project, resolve_input_files=False)
 
-    trace_id, _ = _resolve_trace_name_or_id(campaign, name_or_id)
+    trace_id, trace = _resolve_trace_name_or_id(campaign, name_or_id)
 
+    logger.info("removing trace %s/%s", project, trace.name or trace_id)
     campaign.remove_trace(trace_id)
     campaign.save()
 
@@ -139,8 +140,9 @@ def set_trace_stdin(
     :param stdin: stdin content
     """
     campaign = Campaign.load_project(project, resolve_input_files=False)
-    _, trace = _resolve_trace_name_or_id(campaign, trace_name_or_id)
+    trace_id, trace = _resolve_trace_name_or_id(campaign, trace_name_or_id)
     trace.stdin = stdin
+    logger.info("setting stdin content for %s/%s", project, trace.name or trace_id)
     campaign.save()
 
 
@@ -159,7 +161,7 @@ def add_trace_input_file(
     :param source: source input file on the host filesystem
     """
     campaign = Campaign.load_project(project, resolve_input_files=False)
-    _, trace = _resolve_trace_name_or_id(campaign, trace_name_or_id)
+    trace_id, trace = _resolve_trace_name_or_id(campaign, trace_name_or_id)
 
     with open(source, "r") as _:
         # Verify that the file exists and we can read it
@@ -170,7 +172,15 @@ def add_trace_input_file(
     else:
         chmod = permissions  # type: ignore
 
-    trace.input_files.append(TraceInputFile(source.absolute(), destination, chmod))
+    input_file = TraceInputFile(source.absolute(), destination, chmod)
+    trace.input_files.append(input_file)
+    logger.info(
+        "adding input file to %s/%s: %s -> %s",
+        project,
+        trace.name or trace_id,
+        input_file.source,
+        destination or f"./{input_file.source.name}",
+    )
     campaign.save()
 
 
@@ -188,7 +198,7 @@ def remove_trace_input_file(
     """
     basename = filename.name if "/" not in str(filename) else None
     campaign = Campaign.load_project(project, resolve_input_files=False)
-    _, trace = _resolve_trace_name_or_id(campaign, trace_name_or_id)
+    trace_id, trace = _resolve_trace_name_or_id(campaign, trace_name_or_id)
 
     for input_file in trace.input_files:
         if filename == input_file.source or (
@@ -199,6 +209,12 @@ def remove_trace_input_file(
     else:
         raise KeyError(f"input files does not eixst: {filename}")
 
+    logger.info(
+        "removing input file from %s/%s: %s",
+        project,
+        trace.name or trace_id,
+        found.source,
+    )
     trace.input_files.remove(found)
     campaign.save()
 
@@ -293,10 +309,40 @@ def _run_campaign_trace(campaign: Campaign, trace: TraceParams) -> None:
     trace.setup_input_file_directory(campaign.project)
     trace.write_config_script(campaign.project)
 
+    logfile = _get_next_trace_log_filename(campaign.project)
+    logger.info(
+        "running campaign trace: %s/%s (saving S2E log to: %s)",
+        campaign.project,
+        trace.name or "<anonymous trace>",
+        logfile,
+    )
     try:
-        subprocess.check_call(["s2e", "run", "--no-tui", campaign.project])
+        subprocess.check_call(
+            ["s2e", "run", "--no-tui", campaign.project],
+            stdout=logfile.open("w"),
+            stderr=subprocess.STDOUT,
+        )
     except subprocess.CalledProcessError:
-        raise BinRecError(f"s2e run failed for project: {campaign.project}")
+        raise BinRecError(
+            f"s2e run failed for project: {campaign.project}, for more information "
+            f"view the log file at {logfile}"
+        )
+
+
+def _get_next_trace_log_filename(project: str) -> Path:
+    trace_nums = []
+    for entry in get_trace_dirs(project):
+        try:
+            number = int(entry.name.split("-")[-1])
+            trace_nums.append(number)
+        except ValueError:
+            pass
+
+    i = 0
+    while i in trace_nums:
+        i += 1
+
+    return project_dir(project) / f"s2e-out-{i}.log"
 
 
 def validate_campaign(project_or_campaign: Union[str, Campaign]) -> None:
@@ -609,7 +655,7 @@ def clear_project_trace_data(project: str) -> None:
 def main() -> None:
     import argparse
 
-    from .core import init_binrec
+    from .core import enable_binrec_debug_mode, init_binrec
 
     init_binrec()
 
@@ -724,7 +770,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.verbose:
-        logging.getLogger("binrec").setLevel(logging.DEBUG)
+        enable_binrec_debug_mode()
 
     if args.current_parser == "new":
         template = Path(args.template) if args.template else None

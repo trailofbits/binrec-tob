@@ -324,6 +324,7 @@ def _apply_fixups(trace_dir: Path) -> None:
     :param trace_dir: binrec binary trace directory
     :raises BinRecError: operation failed
     """
+    logfile = trace_dir / "fixups.log"
     logger.debug("applying fixups to captured bitcode: %s", trace_dir.parent.name)
     try:
         subprocess.check_call(
@@ -335,15 +336,21 @@ def _apply_fixups(trace_dir: Path) -> None:
                 str(BINREC_RUNLIB / "custom-helpers.bc"),
             ],
             cwd=str(trace_dir),
+            stdout=logfile.open("w"),
+            stderr=subprocess.STDOUT,
         )
     except subprocess.CalledProcessError:
         raise BinRecError(
-            f"failed to apply fixups to captured LLVM bitcode: {trace_dir.parent.name}"
+            f"failed to apply fixups to captured LLVM bitcode: {trace_dir.parent.name}, "
+            f"see the log for more information: {logfile}"
         )
 
     try:
         subprocess.check_call(
-            [llvm_command("llvm-dis"), "linked.bc"], cwd=str(trace_dir)
+            [llvm_command("llvm-dis"), "linked.bc"],
+            cwd=str(trace_dir),
+            stdout=logfile.open("a"),
+            stderr=subprocess.STDOUT,
         )
     except subprocess.CalledProcessError:  # pragma: no cover
         # we don't really care if this fail since we really only want the
@@ -443,13 +450,18 @@ def _disassemble_bitcode(trace_dir: Path) -> None:
     :raises BinRecError: operation failed
     """
     logger.debug("disassembling optimized bitcode: %s", trace_dir.parent.name)
+    logfile = trace_dir / "disassembly.log"
     try:
         subprocess.check_call(
-            [llvm_command("llvm-dis"), "optimized.bc"], cwd=str(trace_dir)
+            [llvm_command("llvm-dis"), "optimized.bc"],
+            cwd=str(trace_dir),
+            stdout=logfile.open("w"),
+            stderr=subprocess.STDOUT,
         )
     except subprocess.CalledProcessError:
         raise BinRecError(
-            f"failed to disassemble captured LLVM bitcode: {trace_dir.parent.name}"
+            f"failed to disassemble captured LLVM bitcode: {trace_dir.parent.name}, "
+            f"see log for more information: {logfile}"
         )
 
 
@@ -494,6 +506,7 @@ def _compile_bitcode(trace_dir: Path) -> None:
     :raises BinRecError: operation failed
     """
     logger.debug("compiling recovered LLVM bitcode: %s", trace_dir.parent.name)
+    logfile = trace_dir / "compile.log"
     try:
         subprocess.check_call(
             [
@@ -505,10 +518,13 @@ def _compile_bitcode(trace_dir: Path) -> None:
                 "recovered.bc",
             ],
             cwd=str(trace_dir),
+            stdout=logfile.open("a"),
+            stderr=subprocess.STDOUT,
         )
     except subprocess.CalledProcessError:
         raise BinRecError(
-            f"failed to compile recovered LLVM bitcode: {trace_dir.parent.name}"
+            f"failed to compile recovered LLVM bitcode: {trace_dir.parent.name}, "
+            f"see log for more information: {logfile}"
         )
 
 
@@ -562,6 +578,8 @@ def lift_trace(
             f"nothing to lift: directory does not exist: {merged_trace_dir}"
         )
 
+    logger.info("lifting project %s", project_name)
+
     # Step 1: extract symbols, data imports, sections, and dependencies
     _extract_binary_symbols(merged_trace_dir)
     _extract_data_imports(merged_trace_dir)
@@ -603,7 +621,7 @@ def main() -> None:
     import argparse
     import sys
 
-    from .core import init_binrec
+    from .core import enable_binrec_debug_mode, init_binrec
 
     init_binrec()
 
@@ -626,7 +644,7 @@ def main() -> None:
 
     args = parser.parse_args()
     if args.verbose:
-        logging.getLogger("binrec").setLevel(logging.DEBUG)
+        enable_binrec_debug_mode()
         if args.verbose > 1:
             from .audit import enable_python_audit_log
 
