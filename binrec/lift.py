@@ -341,8 +341,8 @@ def _apply_fixups(trace_dir: Path) -> None:
         )
     except subprocess.CalledProcessError:
         raise BinRecError(
-            f"failed to apply fixups to captured LLVM bitcode: {trace_dir.parent.name}, "
-            f"see the log for more information: {logfile}"
+            f"failed to apply fixups to captured LLVM bitcode: {trace_dir.parent.name},"
+            f" see the log for more information: {logfile}"
         )
 
     try:
