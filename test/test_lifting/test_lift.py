@@ -2,12 +2,11 @@ from unittest import mock
 from unittest.mock import patch, MagicMock, mock_open, call
 from subprocess import CalledProcessError
 import subprocess
-import logging
 import sys
 
 import pytest
 
-from binrec import lift
+from binrec import lift, core
 from binrec.lift import OptimizationLevel
 from binrec.env import BINREC_ROOT, llvm_command
 from binrec.errors import BinRecError
@@ -169,7 +168,7 @@ class TestLifting:
 
     @patch.object(lift.subprocess, "check_call")
     def test_apply_fixups(self, mock_check_call):
-        trace_dir = MagicMock(name="asdf")
+        trace_dir = MockPath("asdf")
 
         lift._apply_fixups(trace_dir)
 
@@ -183,15 +182,22 @@ class TestLifting:
                     str(BINREC_ROOT / "runlib" / "custom-helpers.bc"),
                 ],
                 cwd=str(trace_dir),
+                stdout=(trace_dir / "fixups.log").open.return_value,
+                stderr=subprocess.STDOUT
             ),
-            call([llvm_command("llvm-dis"), "linked.bc"], cwd=str(trace_dir)),
+            call(
+                [llvm_command("llvm-dis"), "linked.bc"],
+                cwd=str(trace_dir),
+                stdout=(trace_dir / "fixups.log").open.return_value,
+                stderr=subprocess.STDOUT
+            ),
         ]
 
     @patch.object(lift.subprocess, "check_call")
     def test_apply_fixups_error(self, mock_check_call):
         mock_check_call.side_effect = CalledProcessError(0, "asdf")
         with pytest.raises(BinRecError):
-            lift._apply_fixups(MagicMock(name="asdf"))
+            lift._apply_fixups(MockPath("asdf"))
 
     def test_lift_bitcode(self, mock_lib_module):
         trace_dir = MockPath("asdf")
@@ -235,19 +241,22 @@ class TestLifting:
 
     @patch.object(lift.subprocess, "check_call")
     def test_disassemble_bitcode(self, mock_check_call):
-        trace_dir = MagicMock(name="asdf")
+        trace_dir = MockPath("asdf")
 
         lift._disassemble_bitcode(trace_dir)
 
         mock_check_call.assert_called_once_with(
-            [llvm_command("llvm-dis"), "optimized.bc"], cwd=str(trace_dir)
+            [llvm_command("llvm-dis"), "optimized.bc"],
+            cwd=str(trace_dir),
+            stdout=(trace_dir / "disassembly.log").open.return_value,
+            stderr=subprocess.STDOUT
         )
 
     @patch.object(lift.subprocess, "check_call")
     def test_disassemble_bitcode_error(self, mock_check_call):
         mock_check_call.side_effect = CalledProcessError(0, "asdf")
         with pytest.raises(BinRecError):
-            lift._disassemble_bitcode(MagicMock(name="asdf"))
+            lift._disassemble_bitcode(MockPath("asdf"))
 
     def test_recover_bitcode(self, mock_lib_module):
         trace_dir = MockPath("asdf")
@@ -270,20 +279,24 @@ class TestLifting:
 
     @patch.object(lift.subprocess, "check_call")
     def test_compile_bitcode(self, mock_check_call):
-        trace_dir = MagicMock(name="asdf")
+        trace_dir = MockPath("asdf")
         lift._compile_bitcode(trace_dir)
 
         mock_check_call.assert_called_once_with(
             [
                 llvm_command("llc"), "-filetype", "obj", "-o", "recovered.o",
                 "recovered.bc"
-            ], cwd=str(trace_dir))
+            ],
+            cwd=str(trace_dir),
+            stdout=(trace_dir / "compile.log").open.return_value,
+            stderr=subprocess.STDOUT
+        )
 
     @patch.object(lift.subprocess, "check_call")
     def test_compile_bitcode_error(self, mock_check_call):
         mock_check_call.side_effect = CalledProcessError(0, "asdf")
         with pytest.raises(BinRecError):
-            lift._compile_bitcode(MagicMock(name="asdf"))
+            lift._compile_bitcode(MockPath("asdf"))
 
     def test_link_recovered_binary(self, mock_lib_module):
         trace_dir = MockPath("asdf")
@@ -417,28 +430,22 @@ class TestLifting:
     @patch("sys.argv", ["lift", "-v", "hello"])
     @patch.object(sys, "exit")
     @patch.object(lift, "lift_trace")
-    @patch.object(lift, "logging")
     @patch.object(audit, "enable_python_audit_log")
-    def test_main_verbose(self, mock_audit, mock_logging, mock_lift, mock_exit):
-        mock_logging.DEBUG = logging.DEBUG
+    @patch.object(core, "enable_binrec_debug_mode")
+    def test_main_verbose(self, mock_debug, mock_audit, mock_lift, mock_exit):
         lift.main()
-        mock_logging.getLogger.return_value.setLevel.assert_called_once_with(
-            logging.DEBUG
-        )
         mock_audit.assert_not_called()
+        mock_debug.assert_called_once()
 
     @patch("sys.argv", ["lift", "-vv", "hello"])
     @patch.object(sys, "exit")
     @patch.object(lift, "lift_trace")
-    @patch.object(lift, "logging")
     @patch.object(audit, "enable_python_audit_log")
-    def test_main_audit(self, mock_audit, mock_logging, mock_lift, mock_exit):
-        mock_logging.DEBUG = logging.DEBUG
+    @patch.object(core, "enable_binrec_debug_mode")
+    def test_main_audit(self, mock_debug, mock_audit, mock_lift, mock_exit):
         lift.main()
-        mock_logging.getLogger.return_value.setLevel.assert_called_once_with(
-            logging.DEBUG
-        )
         mock_audit.assert_called_once()
+        mock_debug.assert_called_once()
 
     @patch("builtins.open", new_callable=mock.mock_open)
     @patch.object(lift, "print")
@@ -461,7 +468,7 @@ class TestLifting:
             call(["objdump", "--private-headers", str(binary)]),
             call(["ldd", str(binary)])
         ]
-    
+
     @patch.object(lift.subprocess, "check_output")
     def test_extract_dependencies_objdump_err(self, mock_check):
         trace_dir = MockPath(name="asdf")

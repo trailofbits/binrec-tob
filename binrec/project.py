@@ -330,6 +330,9 @@ def _run_campaign_trace(campaign: Campaign, trace: TraceParams) -> None:
 
 
 def _get_next_trace_log_filename(project: str) -> Path:
+    """
+    Get the next log file name prior to running a trace.
+    """
     trace_nums = []
     for entry in get_trace_dirs(project):
         try:

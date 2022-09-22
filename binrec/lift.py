@@ -420,7 +420,7 @@ def _optimize_bitcode(trace_dir: Path, opt_level: OptimizationLevel) -> None:
         "optimizing lifted bitcode: %s at level %s", trace_dir.parent.name, opt_level
     )
 
-    if opt_level not in optimizers:
+    if opt_level not in optimizers:  # pragma: no cover
         raise BinRecError(f"Unknown optimization level: {opt_level}")
 
     optimizer = optimizers[opt_level]
@@ -651,7 +651,7 @@ def main() -> None:
             enable_python_audit_log()
 
     opt_level = OptimizationLevel.NORMAL
-    if args.extra_opts:
+    if args.extra_opts:  # pragma: no cover
         logger.debug("Enabling extra performance optimizations during lifting")
         opt_level = OptimizationLevel.HIGH
 

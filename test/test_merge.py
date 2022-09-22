@@ -6,7 +6,7 @@ import logging
 
 import pytest
 
-from binrec import merge
+from binrec import merge, core
 from binrec.env import BINREC_ROOT, llvm_command
 from binrec.errors import BinRecError
 from binrec import audit
@@ -17,7 +17,8 @@ from helpers.mock_path import MockPath
 class TestMerge:
     @patch.object(merge.subprocess, "check_call")
     def test_link_bitcode(self, mock_check_call):
-        merge._link_bitcode("base", "source", "dest")
+        dest = MockPath("dest")
+        merge._link_bitcode(Path("base"), Path("source"), dest)
         mock_check_call.assert_called_once_with(
             [
                 llvm_command("llvm-link"),
@@ -28,13 +29,16 @@ class TestMerge:
                 "-override=base",
                 "source",
             ],
+            stdout=(dest.parent / "merge_link.log").open.return_value,
+            stderr=subprocess.STDOUT
         )
 
     @patch.object(merge.subprocess, "check_call")
     def test_link_bitcode_exc(self, mock_check_call):
+        dest = MockPath("dest")
         mock_check_call.side_effect = subprocess.CalledProcessError(0, "asdf")
         with pytest.raises(BinRecError):
-            merge._link_bitcode("base", "source", "dest")
+            merge._link_bitcode(Path("base"), Path("source"), dest)
 
     @patch.object(merge.subprocess, "check_call")
     def test_merge_trace_info(self, mock_check_call):
@@ -219,25 +223,17 @@ class TestMerge:
     @patch("sys.argv", ["merge", "-v", "hello"])
     @patch.object(sys, "exit")
     @patch.object(merge, "merge_traces")
-    @patch.object(merge, "logging")
-    def test_main_verbose(self, mock_logging, mock_merge, mock_exit):
-        merge.logging.DEBUG = logging.DEBUG
+    @patch.object(core, "enable_binrec_debug_mode")
+    def test_main_verbose(self, mock_debug, mock_merge, mock_exit):
         merge.main()
-        mock_logging.getLogger.assert_called_once_with("binrec")
-        print(mock_logging.getLogger.return_value.setLevel.call_args_list)
-        mock_logging.getLogger.return_value.setLevel.assert_called_once_with(
-            logging.DEBUG
-        )
+        mock_debug.assert_called_once()
 
     @patch("sys.argv", ["merge", "-vv", "hello"])
     @patch.object(sys, "exit")
     @patch.object(merge, "merge_traces")
-    @patch.object(merge, "logging")
     @patch.object(audit, "enable_python_audit_log")
-    def test_main_audit(self, mock_audit, mock_logging, mock_merge, mock_exit):
-        mock_logging.DEBUG = logging.DEBUG
+    @patch.object(core, "enable_binrec_debug_mode")
+    def test_main_audit(self, mock_debug, mock_audit, mock_merge, mock_exit):
         merge.main()
-        mock_logging.getLogger.return_value.setLevel.assert_called_once_with(
-            logging.DEBUG
-        )
         mock_audit.assert_called_once()
+        mock_debug.assert_called_once()

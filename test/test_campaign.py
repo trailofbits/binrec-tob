@@ -6,7 +6,7 @@ from unittest.mock import patch, mock_open, call, MagicMock
 import jsonschema.exceptions
 import pytest
 
-from binrec import campaign
+from binrec import campaign, core
 from binrec.env import BINREC_PROJECTS
 
 from helpers.mock_path import MockPath
@@ -630,14 +630,11 @@ class TestLintCampaign:
 
     @patch("sys.argv", ["campaign", "-v", "lint", __file__])
     @patch.object(campaign, "lint_campaign_file")
-    @patch.object(campaign, "logging")
-    def test_main_file(self, mock_logging, mock_lint):
-        mock_logging.DEBUG = logging.DEBUG
+    @patch.object(core, "enable_binrec_debug_mode")
+    def test_main_file(self, mock_enable_debug, mock_lint):
         campaign.main()
-        mock_logging.getLogger.return_value.setLevel.assert_called_once_with(
-            logging.DEBUG
-        )
         mock_lint.assert_called_once_with(Path(__file__))
+        mock_enable_debug.assert_called_once()
 
     @patch("sys.argv", ["campaign", "lint", "./"])
     @patch.object(campaign, "lint_campaign_directory")
