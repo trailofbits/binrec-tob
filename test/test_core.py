@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from binrec import core
+from binrec import core, env
 
 
 class TestCore:
@@ -13,8 +13,8 @@ class TestCore:
     @patch.object(core, "logging")
     @patch.object(core, "os")
     @patch.object(core, "enable_binrec_debug_mode")
+    @patch.object(env, "BINREC_DEBUG", new=True)
     def test_init_binrec_debug(self, mock_debug, mock_os, mock_logging):
-        mock_os.environ = {"BINREC_DEBUG": "1"}
         core.init_binrec()
         mock_logging.basicConfig.assert_called_once()
         mock_debug.assert_called_once()

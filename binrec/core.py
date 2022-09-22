@@ -15,7 +15,7 @@ def init_binrec() -> None:
     variables.
     """
     # make sure environment variables are setup
-    from . import env  # noqa: F401
+    from . import env
 
     logging.basicConfig(
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
@@ -23,7 +23,7 @@ def init_binrec() -> None:
         level=logging.INFO,
     )
 
-    if os.environ.get("BINREC_DEBUG") == "1":
+    if env.BINREC_DEBUG:
         enable_binrec_debug_mode()
 
 
@@ -31,5 +31,7 @@ def enable_binrec_debug_mode() -> None:
     """
     Run binrec with debug logging enabled.
     """
+    from . import env
+
     logging.getLogger("binrec").setLevel(logging.DEBUG)
-    os.environ["BINREC_DEBUG"] = "1"
+    os.environ[env.BINREC_DEBUG_ENV] = "1"
