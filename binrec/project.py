@@ -179,7 +179,7 @@ def add_trace_input_file(
         project,
         trace.name or trace_id,
         input_file.source,
-        destination or f"./{input_file.source.name}",
+        destination or f"./input_files/{input_file.source.name}",
     )
     campaign.save()
 
@@ -655,6 +655,38 @@ def clear_project_trace_data(project: str) -> None:
         shutil.rmtree(merged)
 
 
+def add_trace_setup(
+    project: str, trace_name_or_id: Union[str, int], command: str
+) -> None:
+    """
+    Add a new setup command to an existing trace.
+
+    :param project: project name
+    :param trace_name_or_id: trace name or id
+    :param command: bash command to execute during trace setup
+    """
+    campaign = Campaign.load_project(project)
+    _, trace = _resolve_trace_name_or_id(campaign, trace_name_or_id)
+    trace.setup.append(command)
+    campaign.save()
+
+
+def add_trace_teardown(
+    project: str, trace_name_or_id: Union[str, int], command: str
+) -> None:
+    """
+    Add a new teardown command to an existing trace.
+
+    :param project: project name
+    :param trace_name_or_id: trace name or id
+    :param command: bash command to execute during trace teardown
+    """
+    campaign = Campaign.load_project(project)
+    _, trace = _resolve_trace_name_or_id(campaign, trace_name_or_id)
+    trace.teardown.append(command)
+    campaign.save()
+
+
 def main() -> None:
     import argparse
 
@@ -770,6 +802,24 @@ def main() -> None:
     )
     remove_input_file.add_argument("source", help="source filename or path", type=Path)
 
+    add_setup = subparsers.add_parser("add-trace-setup")
+    add_setup.add_argument("project", help="Project name")
+    add_setup.add_argument(
+        "-i", "--id", action="store_true", help="force treating 'name' as the trace id"
+    )
+    add_setup.add_argument("name", help="trace name (or trace id if --id is provided)")
+    add_setup.add_argument("command", help="bash command to execute")
+
+    add_teardown = subparsers.add_parser("add-trace-teardown")
+    add_teardown.add_argument("project", help="Project name")
+    add_teardown.add_argument(
+        "-i", "--id", action="store_true", help="force treating 'name' as the trace id"
+    )
+    add_teardown.add_argument(
+        "name", help="trace name (or trace id if --id is provided)"
+    )
+    add_teardown.add_argument("command", help="bash command to execute")
+
     args = parser.parse_args()
 
     if args.verbose:
@@ -827,6 +877,12 @@ def main() -> None:
     elif args.current_parser == "remove-trace-input-file":
         name = int(args.name) if args.id else args.name
         remove_trace_input_file(args.project, name, args.source)
+    elif args.current_parser == "add-trace-setup":
+        name = int(args.name) if args.id else args.name
+        add_trace_setup(args.project, name, args.command)
+    elif args.current_parser == "add-trace-teardown":
+        name = int(args.name) if args.id else args.name
+        add_trace_teardown(args.project, name, args.command)
     else:
         parser.print_help()
 
