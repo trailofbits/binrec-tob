@@ -186,6 +186,14 @@ set-trace-stdin project-name trace-name stdin:
 add-trace-input-file project-name trace-name source destination="" permissions="":
     pipenv run python -m binrec.project add-trace-input-file "{{project-name}}" "{{trace-name}}" "{{source}}"
 
+# Add a new setup command to an existing trace
+add-trace-setup project-name trace-name script:
+    pipenv run python -m binrec.project add-trace-setup "{{project-name}}" "{{trace-name}}" "{{script}}"
+
+# Add a new teardown command to an existing trace
+add-trace-teardown project-name trace-name script:
+    pipenv run python -m binrec.project add-trace-teardown "{{project-name}}" "{{trace-name}}" "{{script}}"
+
 # Remove an input file by absolute path or filename from an existing trace
 remove-trace-input-file project-name trace-name source:
     pipenv run python -m binrec.project remove-trace-input-file "{{project-name}}" "{{trace-name}}" "{{source}}"
