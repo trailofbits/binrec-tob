@@ -10,7 +10,7 @@ Please note that support for applying LLVM's passes to LLVM IR recovered by BinR
    ```bash
    # just new-project <project_name> <path_to_target_binary>
    $ just new-project eqproj test/benchmark/samples/bin/x86/binrec/eq
-   
+
    # just add-trace <project_name> <trace_name> <symbolic-indexes> <args>
    $ just add-trace eqproj tr1 "" "1 2"
    $ just add-trace eqproj tr2 "" "2 2"
@@ -29,11 +29,11 @@ Please note that support for applying LLVM's passes to LLVM IR recovered by BinR
    $ just lift-trace eqproj --extra-opts --hardening
    ```
 
-   This will lift the merged trace completely to LLVM IR, and then prior to recompilation run LLVM's passes on the refined IR. 
+   This will lift the merged trace completely to LLVM IR, and then prior to recompilation run LLVM's passes on the refined IR.
 
 3. Finally, let's validate the debloated program outputs match the original:
 
    ```bash
    # just validate <project_name>
-   $ just validate-eqproj
+   $ just validate eqproj
    ```

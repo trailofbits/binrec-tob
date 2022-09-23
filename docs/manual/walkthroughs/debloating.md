@@ -33,7 +33,7 @@ merge the traces, lift the merged trace to LLVM IR, and then recompile the IR to
    $ just add-trace eqproj tr1 "1" "3 2"
    ```
 
-   Note in this case to mark the first argument (i.e., the value `3`) as a symbolic argument, we provide the list `"1"` for our `symbolic-indexes`. During tracing, BinRec will ignore the actual value `3` and treat this argument as a wildcard. However, the valuer `3` will be used during validation (covered in Step 4). 
+   Note in this case to mark the first argument (i.e., the value `3`) as a symbolic argument, we provide the list `"1"` for our `symbolic-indexes`. During tracing, BinRec will ignore the actual value `3` and treat this argument as a wildcard. However, the valuer `3` will be used during validation (covered in Step 4).
 
 
 3. Run the recovery process on the project:
@@ -48,6 +48,12 @@ merge the traces, lift the merged trace to LLVM IR, and then recompile the IR to
    The recovered binary is located in the `s2e-out` subdirectory in the project folder. In addition to the debloated program binary (`recovered`), the folder also contains the binary's associated LLVM IR (`recovered.bc` and `recovered.ll`).
 
    The recovery process also validates that the recovered binary's output matches the original binary's with respect to the provided concrete arguments.
+
+   The `BINREC_DEBUG` environment variable can be used to increase the verbosity of log messages. For example, to recove the project with more logging enabled:
+
+   ```bash
+   $ BINREC_DEBUG=1 just recover eqproj
+   ```
 
 4. To validate the debloated program outputs match the original for aditional inputs:
 
@@ -65,11 +71,11 @@ merge the traces, lift the merged trace to LLVM IR, and then recompile the IR to
 7. To validate program behaviors other than outputs to `stdout`, `stderr`, and the return code (e.g., performance, file outputs), manually compare the behaviors of programs in the `s2e-out` project folder:
 
    ```bash
-      $ cd s2e/projects/eqproj/s2e-out
+   $ cd s2e/projects/eqproj/s2e-out
 
-      # Observe original behavior
-      $ ./binary 1 2
+   # Observe original behavior
+   $ ./binary 1 2
 
-      # Manually ensure recovered binary behavior matches
-      $ ./recovered 1 2
+   # Manually ensure recovered binary behavior matches
+   $ ./recovered 1 2
    ```

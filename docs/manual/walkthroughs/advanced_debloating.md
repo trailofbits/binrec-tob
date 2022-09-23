@@ -77,7 +77,7 @@ In this walkthrough, we will explore some of BinRec's other useful interface fea
    $ just clear-trace-data eq2proj
    ```
 
-2. Next, remove the desired traces using the `just delete-trace` command (or the `just delete-all-traces` command if you want to start over from scratch):
+2. Next, remove the desired traces using the `just remove-trace` command (or the `just remove-all-traces` command if you want to start over from scratch):
 
    ```bash
    # just delete-trace <project_name> <trace_name>
