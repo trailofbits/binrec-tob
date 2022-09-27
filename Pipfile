@@ -11,7 +11,7 @@ jinja-markdown = "*"
 [dev-packages]
 black = "==22.8.0"
 flake8 = "*"
-mypy = "==0.971"
+mypy = "==0.981"
 pytest = "*"
 isort = "*"
 coverage = "*"
