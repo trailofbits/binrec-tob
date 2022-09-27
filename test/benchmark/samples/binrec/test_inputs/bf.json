@@ -7,7 +7,7 @@
           "value": "./input_files/bf_hello_world.bf"
         }
       ],
-      "stdin": false,
+      "stdin": null,
       "match_stdout": true,
       "match_stderr": true,
       "input_files": [
@@ -23,7 +23,7 @@
     },
     {
       "args": [],
-      "stdin": false,
+      "stdin": null,
       "match_stdout": true,
       "match_stderr": true,
       "input_files": [],

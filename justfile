@@ -58,8 +58,8 @@ _binrec-init:
     git lfs pull
     cd ./s2e-env && pipenv run pip install .
     pipenv run s2e init {{justdir}}/s2e
-    just _freeze-s2e
-    just s2e-insert-binrec-plugins
+    @just _freeze-s2e
+    @just s2e-insert-binrec-plugins
 
 # Freeze all S2E repositories to commits that have been tested against
 _freeze-s2e:
@@ -84,7 +84,7 @@ rebuild-all: clean-all build-all
 
 # Build all of s2e. Takes a long time (~1 hour). Should only be needed if S2E is updated
 _s2e-build:
-  just _s2e-command build
+  @just _s2e-command build
 
 # Builds/Re-builds BinRec. Use for rebuilding after modifying merge or lift components
 build-binrec:
@@ -104,34 +104,34 @@ _clean-s2e:
 
 # Build an s2e image. Default is x86 Debian-9.2.1.
 build-s2e-image image="debian-9.2.1-i386":
-  just _s2e-command image_build -d \"{{image}}\"
+  @just _s2e-command image_build -d \"{{image}}\"
 
 # This will trigger a rebuild of libs2e, which contains the plugins
 rebuild-s2e-plugins:
-  just _s2e-command build -r libs2e-release
+  @just _s2e-command build -r libs2e-release
 
 # Inserts a binrec plugin into the correct location within the S2E repository
 _s2e-insert-binrec-plugin name:
-  # If we don't drop existing links it will overwrite with default plugin content
+  # If we do not drop existing links it will overwrite with default plugin content
   rm -f "{{plugins_dir}}/{{name}}.cpp"
   rm -f "{{plugins_dir}}/{{name}}.h"
-  just _s2e-command new_plugin --author-name \"{{binrec_authors}}\" --force \"{{name}}\"
+  @just _s2e-command new_plugin --author-name \"{{binrec_authors}}\" --force \"{{name}}\"
   ln -f -s "{{justdir}}/{{name}}.cpp" "{{plugins_dir}}/{{name}}.cpp"
   ln -f -s "{{justdir}}/{{name}}.h" "{{plugins_dir}}/{{name}}.h"
 
 #  Adds the binrec-plugins to the s2e-plugins structure
 s2e-insert-binrec-plugins:
   # Regular plugins
-  just _s2e-insert-binrec-plugin "binrec_plugins/ELFSelector"
-  just _s2e-insert-binrec-plugin "binrec_plugins/Export"
-  just _s2e-insert-binrec-plugin "binrec_plugins/ExportELF"
-  just _s2e-insert-binrec-plugin "binrec_plugins/FunctionLog"
+  @just _s2e-insert-binrec-plugin "binrec_plugins/ELFSelector"
+  @just _s2e-insert-binrec-plugin "binrec_plugins/Export"
+  @just _s2e-insert-binrec-plugin "binrec_plugins/ExportELF"
+  @just _s2e-insert-binrec-plugin "binrec_plugins/FunctionLog"
 
   # Special handling (e.g. only header, or other directory layout)
 
   # TODO (hbrodin): Not very proud of this structure. Any way of cleaning it?
   rm -f {{plugins_dir}}/binrec_traceinfo/src/trace_info.cpp
-  just _s2e-command new_plugin --author-name \"{{binrec_authors}}\" --force \"binrec_traceinfo/src/trace_info\"
+  @just _s2e-command new_plugin --author-name \"{{binrec_authors}}\" --force \"binrec_traceinfo/src/trace_info\"
   ln -s -f "{{justdir}}/binrec_traceinfo/src/trace_info.cpp" "{{plugins_dir}}/binrec_traceinfo/src/"
   rm -f "{{plugins_dir}}/binrec_traceinfo/src/trace_info.h"
   ln -s -f "{{justdir}}/binrec_traceinfo/include" "{{plugins_dir}}/binrec_traceinfo/"
@@ -178,14 +178,32 @@ new-project name binary template="":
 add-trace project-name trace-name symbolic-indexes args:
   pipenv run python -m binrec.project add-trace --name "{{trace-name}}" --symbolic-indexes "{{symbolic-indexes}}" "{{project-name}}" {{args}}
 
-# Remove a trace by name from an existing project
+# Set the stdin content for a single trace
+set-trace-stdin project-name trace-name stdin:
+    pipenv run python -m binrec.project set-trace-stdin "{{project-name}}" "{{trace-name}}" "{{stdin}}"
+
+# Add a new input file to an existing trace
+add-trace-input-file project-name trace-name source destination="" permissions="":
+    pipenv run python -m binrec.project add-trace-input-file "{{project-name}}" "{{trace-name}}" "{{source}}"
+
+# Add a new setup command to an existing trace
+add-trace-setup project-name trace-name script:
+    pipenv run python -m binrec.project add-trace-setup "{{project-name}}" "{{trace-name}}" "{{script}}"
+
+# Add a new teardown command to an existing trace
+add-trace-teardown project-name trace-name script:
+    pipenv run python -m binrec.project add-trace-teardown "{{project-name}}" "{{trace-name}}" "{{script}}"
+
+# Remove an input file by absolute path or filename from an existing trace
+remove-trace-input-file project-name trace-name source:
+    pipenv run python -m binrec.project remove-trace-input-file "{{project-name}}" "{{trace-name}}" "{{source}}"
+
+
+# Remove a trace by name or id from an existing project
 remove-trace project-name trace-name:
   pipenv run python -m binrec.project remove-trace "{{project-name}}" "{{trace-name}}"
 
-# Remove a trace by ID from an existing project
-remove-trace-id project-name trace-id:
-  pipenv run python -m binrec.project remove-trace --id "{{project-name}}" "{{trace-id}}"
-
+# Remove all traces from an existing project
 remove-all-traces project-name:
   pipenv run python -m binrec.project remove-trace "{{project-name}}" --all
 
@@ -193,25 +211,17 @@ remove-all-traces project-name:
 run project-name:
   pipenv run python -m binrec.project run "{{project-name}}"
 
-# Run a single project trace by name
+# Run a single project trace by name or id
 run-trace project-name trace-name:
   pipenv run python -m binrec.project run-trace "{{project-name}}" "{{trace-name}}"
-
-# Run a single project trace by id
-run-trace-id project-name trace-id:
-  pipenv run python -m binrec.project run-trace --id "{{project-name}}" "{{trace-id}}"
 
 # Validate the recovered binary against an entire project
 validate project-name:
   pipenv run python -m binrec.project validate "{{project-name}}"
 
-# Validate the recovered binary against a single trace by name
+# Validate the recovered binary against a single trace by name or id
 validate-trace project-name trace-name:
   pipenv run python -m binrec.project validate-trace "{{project-name}}" "{{trace-name}}"
-
-# Validate the recovered binary against a single trace by id
-validate-trace-id project-name trace-name:
-  pipenv run python -m binrec.project validate-trace --id "{{project-name}}" "{{trace-name}}"
 
 validate-args project-name *args:
   pipenv run python -m binrec.project validate-args "$@"
@@ -222,17 +232,17 @@ describe project-name:
 
 # Recursively merge all captures and traces for a project
 merge-traces project:
-  pipenv run python -m binrec.merge -vv "{{project}}"
+  pipenv run python -m binrec.merge "{{project}}"
 
 # Lift a recovered binary from a project's merged traces. Add -o to perform extra optimizations.
 lift-trace project *flags:
-  pipenv run python -m binrec.lift -vv  "{{project}}" {{flags}}
+  pipenv run python -m binrec.lift  "{{project}}" {{flags}}
 
 recover project-name:
-  just run "{{project-name}}"
-  just merge-traces "{{project-name}}"
-  just lift-trace "{{project-name}}"
-  just validate "{{project-name}}"
+  @just run "{{project-name}}"
+  @just merge-traces "{{project-name}}"
+  @just lift-trace "{{project-name}}"
+  @just validate "{{project-name}}"
 
 clear-trace-data project-name:
   pipenv run python -m binrec.project clear-trace-data "{{project-name}}"
@@ -247,6 +257,10 @@ _launch-web-browser-with-delay delay:
 run-web-server:
   @just _launch-web-browser-with-delay 3
   pipenv run python -m binrec.web
+
+# Lint a campaign file or directory and display validation errors
+lint-campaign filename:
+    pipenv run python -m binrec.campaign lint "{{filename}}"
 
 ########## End: End-User API Recipes ##########
 
@@ -269,12 +283,12 @@ _format-isort:
 
 # Runs clang-format linting on C++ code
 _format-clang:
-  just _format-clang-dir binrec_lift
-  just _format-clang-dir binrec_link
-  just _format-clang-dir binrec_plugins
-  just _format-clang-dir binrec_rt
-  just _format-clang-dir binrec_traceinfo
-  just _format-clang-dir binrec_tracemerge
+  @just _format-clang-dir binrec_lift
+  @just _format-clang-dir binrec_link
+  @just _format-clang-dir binrec_plugins
+  @just _format-clang-dir binrec_rt
+  @just _format-clang-dir binrec_traceinfo
+  @just _format-clang-dir binrec_tracemerge
 
 # Run clang-format linting recursively on a directory
 _format-clang-dir dirname:
@@ -309,12 +323,12 @@ _lint-isort:
 
 # Runs linting checks for C++ code
 _lint-clang:
-  just _lint-clang-dir binrec_lift
-  just _lint-clang-dir binrec_link
-  just _lint-clang-dir binrec_plugins
-  just _lint-clang-dir binrec_rt
-  just _lint-clang-dir binrec_traceinfo
-  just _lint-clang-dir binrec_tracemerge
+  @just _lint-clang-dir binrec_lift
+  @just _lint-clang-dir binrec_link
+  @just _lint-clang-dir binrec_plugins
+  @just _lint-clang-dir binrec_rt
+  @just _lint-clang-dir binrec_traceinfo
+  @just _lint-clang-dir binrec_tracemerge
 
 # Run clang-format linting recursively on a directory
 _lint-clang-dir dirname:
@@ -355,7 +369,7 @@ _build-python-docs target="html":
 
 # Clean built Sphinx documentation
 _clean-python-docs:
-  just _build-python-docs clean
+  @just _build-python-docs clean
 
 ########## End: Documentation Recipes ##########
 

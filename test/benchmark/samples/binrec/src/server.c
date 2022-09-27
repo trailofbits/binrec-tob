@@ -73,12 +73,11 @@ int main(int argc, char *argv[]) {
     // A connection is accepted. The new socket "s1" is created
     // for data input/output. The peeraddr structure is filled in with
     // the address of connected entity, print it.
-    printf("Connection from IP %d.%d.%d.%d, port %d\n",
+    printf("Connection from IP %d.%d.%d.%d\n",
            (ntohl(peeraddr.sin_addr.s_addr) >> 24) & 0xff, // High byte of address
            (ntohl(peeraddr.sin_addr.s_addr) >> 16) & 0xff, // . . .
            (ntohl(peeraddr.sin_addr.s_addr) >> 8) & 0xff,  // . . .
-           ntohl(peeraddr.sin_addr.s_addr) & 0xff,         // Low byte of addr
-           ntohs(peeraddr.sin_port));
+           ntohl(peeraddr.sin_addr.s_addr) & 0xff);        // Low byte of addr
 
     res = close(s0); // Close the listen socket
 

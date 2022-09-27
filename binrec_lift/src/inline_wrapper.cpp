@@ -16,7 +16,7 @@ static void run_impl(Module &m)
         {
             continue;
         }
-        errs() << "inline: " << f.getName() << "\n";
+        // errs() << "inline: " << f.getName() << "\n";
         f.addFnAttr(Attribute::AlwaysInline);
     }
 }

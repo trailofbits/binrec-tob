@@ -87,6 +87,7 @@
         <a class='btn btn-primary' href="{{url_for('add_trace', project=project)}}">Add Trace</a>
 
         {% for trace in campaign.traces %}
+        {% set trace_id = loop.index0 %}
         <div class="card mt-3">
             <div class="card-header">
                 <h4>
@@ -95,7 +96,7 @@
                     {% else %}
                     <em>anonymous trace</em>
                     {% endif %}
-                    (id: {{loop.index0}})
+                    (id: trace_id)
                 </h4>
             </div>
 
@@ -106,7 +107,7 @@
                         <td class="table-light"><code>{{trace.command_line_args | join(' ')}}</code></td>
                     </tr>
                 </thead>
-                <tbody class="table-group-dividerss">
+                <tbody class="table-group-divider">
                     {% for arg in trace.args %}
                     <tr>
                         <td class="shrink">
@@ -119,11 +120,59 @@
                         <td class="table-light"><code>{{arg.concrete_value}}</code></td>
                     </tr>
                     {% endfor %}
+                    {% if trace.stdin %}
+                    <tbody class="table-group-divider">
+                        <tr>
+                            <th class="shrink">Stdin</th>
+                            <td>
+                                <pre class="code-block">{{trace.stdin}}</pre>
+                            </td>
+                        </tr>
+                    </tbody>
+                    {% endif %}
+                    <tbody class="table-group-divider">
+                        <tr>
+                            <th class="shrink">Input Files</th>
+                            <td>
+                                <a href="{{url_for('add_input_file', project=project, trace_id=trace_id)}}" class="btn btn-primary btn-sm">
+                                    Add Input File
+                                </a>
+                            </td>
+                        </tr>
+
+                        {% for input_file in trace.input_files %}
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td>
+                                <div class="card">
+                                    <div class="card-body">
+                                        <dl>
+                                            <dt>Source</dt>
+                                            <dd><code>{{input_file.source}}</code></dd>
+
+                                            <dt>Destination</dt>
+                                            <dd><code>{{input_file.resolve_destination()}}</code></dd>
+
+                                            <dt>Permissions</dt>
+                                            <dd><code>{{input_file.resolve_permissions()}}</code></dd>
+                                        </dl>
+                                    </div>
+                                    <div class="card-footer text-end">
+                                        <form action="{{url_for('remove_input_file', project=project, trace_id=trace_id, input_file_id=loop.index0)}}" method="POST">
+                                            <button type="submit" class="btn btn-warning btn-sm">Remove Input File</button>
+                                        </form>
+                                    </div>
+                                </div>
+
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
                 </tbody>
             </table>
 
             <div class="card-footer text-end">
-                <form action="{{url_for('remove_trace', project=project, trace_id=loop.index0)}}" method="POST">
+                <form action="{{url_for('remove_trace', project=project, trace_id=trace_id)}}" method="POST">
                     <button type="submit" class="btn btn-warning btn-sm">Remove Trace</button>
                 </form>
             </div>

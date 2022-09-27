@@ -263,7 +263,7 @@ def _diff_trace_info_files(
 
 
 def main() -> int:
-    from .core import init_binrec
+    from .core import enable_binrec_debug_mode, init_binrec
 
     init_binrec()
 
@@ -294,6 +294,9 @@ def main() -> int:
     )
 
     args = parser.parse_args()
+    if args.verbose:
+        enable_binrec_debug_mode()
+
     if args.subcmd == "pretty":
         pretty_print_trace_info(args.trace_info_filename, hexify=args.hex)
         rc = 0

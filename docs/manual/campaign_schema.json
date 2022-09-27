@@ -1,103 +1,146 @@
 {
-    "$id": "https://github.com/trailofbits/binrec-prerelease/tree/main/docs/manual/campaign_schema.json",
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "description": "BinRec Campaign File Schema",
-    "type": "object",
-    "properties": {
-      "setup": {
-        "type": "array",
-        "description": "optional list of setup commands to execute before tracing",
-        "items": {
-          "type": "string"
-        },
-        "minItems": 0
+  "$id": "https://github.com/trailofbits/binrec-prerelease/tree/main/docs/manual/campaign_schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "BinRec Campaign File Schema",
+  "type": "object",
+  "properties": {
+    "setup": {
+      "type": "array",
+      "description": "optional list of setup commands to execute before tracing",
+      "items": {
+        "type": "string"
       },
-      "teardown": {
-        "type": "array",
-        "description": "optional list of teardown commands to execute after tracing",
-        "items": {
-          "type": "string"
-        },
-        "minItems": 0
+      "minItems": 0
+    },
+    "teardown": {
+      "type": "array",
+      "description": "optional list of teardown commands to execute after tracing",
+      "items": {
+        "type": "string"
       },
-      "traces": {
-        "type": "array",
-        "description": "List of parameters for the desired traces to be collected",
-        "items": {
-          "type": "object",
-          "properties": {
-            "name": {
-              "type": "string",
-              "description": "name to uniquely identify this trace"
-            },
-            "args": {
-              "type": "array",
-              "description": "list of arguments for this trace",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "type": {
-                    "type": "string",
-                    "description": "type of argument: concrete or symbolic"
-                  },
-                  "value": {
-                    "type": "string",
-                    "description": "value of the concrete argument"
+      "minItems": 0
+    },
+    "traces": {
+      "type": "array",
+      "description": "List of parameters for the desired traces to be collected",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "name to uniquely identify this trace"
+          },
+          "args": {
+            "type": "array",
+            "description": "list of arguments for this trace",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "description": "type of argument: concrete or symbolic"
+                    },
+                    "value": {
+                      "type": "string",
+                      "description": "value of the concrete argument"
+                    }
                   }
+                },
+                {
+                  "type": "string",
+                  "description": "concrete argument value"
                 }
-              }
-            },
-            "setup": {
-              "type": "array",
-              "description": "optional list of setup commands to execute before this trace",
-              "items": {
-                "type": "string"
-              },
-              "minItems": 0
-            },
-            "teardown": {
-              "type": "array",
-              "description": "optional list of teardown commands to execute after this trace",
-              "items": {
-                "type": "string"
-              },
-              "minItems": 0
-            },
-            "input_files": {
-              "type": "array",
-              "description": "List of files to inject into the execution environment other than the target binary",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "source": {
-                    "type": "string",
-                    "description": "Location on host system where the input file can be found."                    
-                  },
-                  "destination": {
-                    "type": "string",
-                    "description": "Location on the guest system where the input file should be mapped to for tracing."
-                  },
-                  "permissions": {
-                    "type": "string",
-                    "description": "Boolean value true to copy the permissions from the source file. Can also provide permissions as octal number."
-                  }              
-                }
-              }
-            },
-            "stdin": {
-              "type": "string",
-              "description": "Not yet implemented. Specify input to provide to the target binary via stdin."
-            },
-            "match_stdout": {
-              "type": "string",
-              "description": "Boolean to match stdout during validation. May also be regex to match against."
-            },
-            "match_stderr": {
-              "type": "string",
-              "description": "Boolean to match stderr during validation. May also be regex to match against."
+              ]
             }
+          },
+          "setup": {
+            "type": "array",
+            "description": "optional list of setup commands to execute before this trace",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 0
+          },
+          "teardown": {
+            "type": "array",
+            "description": "optional list of teardown commands to execute after this trace",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 0
+          },
+          "input_files": {
+            "type": "array",
+            "description": "List of files to inject into the execution environment other than the target binary",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "source": {
+                      "type": "string",
+                      "description": "Location on host system where the input file can be found."
+                    },
+                    "destination": {
+                      "type": ["string", "null"],
+                      "description": "Location on the guest system where the input file should be mapped to for tracing."
+                    },
+                    "permissions": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "description": "Octal number representing the final file permissions in the format accepted by chmod."
+                        },
+                        {
+                          "type": "boolean",
+                          "description": "Copy the source file permissions."
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "type": "string",
+                  "description": "Location on host system where the input file can be found."
+                }
+              ]
+            }
+          },
+          "stdin": {
+            "type": ["string", "null"],
+            "description": "Specify input to provide to the target binary via stdin."
+          },
+          "match_stdout": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Match stdout content exactly."
+              },
+              {
+                "type": "string",
+                "description": "Regex pattern to match stdout content against."
+              }
+            ]
+          },
+          "match_stderr": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Match stderr content exactly."
+              },
+              {
+                "type": "string",
+                "description": "Regex pattern to match stderr content against."
+              }
+            ]
           }
         }
       }
     }
   }
+}

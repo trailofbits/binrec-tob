@@ -97,13 +97,20 @@ class TestProject:
         mock_subproc.run.assert_not_called()
 
     @patch.object(project.subprocess, "check_call")
-    def test_run_campaign_trace(self, mock_check_call):
+    @patch.object(project, "_get_next_trace_log_filename")
+    def test_run_campaign_trace(self, mock_log_filename, mock_check_call):
         c = MagicMock()
         trace = MagicMock()
+        logfile = mock_log_filename.return_value = MockPath("s2e-out-0.log")
         project._run_campaign_trace(c, trace)
         trace.setup_input_file_directory.assert_called_once_with(c.project)
         trace.write_config_script.assert_called_once_with(c.project)
-        mock_check_call.assert_called_once_with(["s2e", "run", "--no-tui", c.project])
+        mock_check_call.assert_called_once_with(
+            ["s2e", "run", "--no-tui", c.project],
+            stdout=logfile.open.return_value,
+            stderr=subprocess.STDOUT
+        )
+        mock_log_filename.assert_called_once_with(c.project)
 
     @patch.object(project, "project_dir")
     @patch.object(project.subprocess, "check_call")

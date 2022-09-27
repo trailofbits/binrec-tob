@@ -5,7 +5,7 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from tempfile import mkstemp
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, Union
 
 from flask import (
     Flask,
@@ -20,7 +20,12 @@ from flask import (
 from werkzeug.utils import secure_filename
 
 from binrec import __version__ as BINREC_VERSION
-from binrec.campaign import Campaign, TraceParams
+from binrec.campaign import (
+    Campaign,
+    TraceInputFile,
+    TraceParams,
+    _validate_file_permission,
+)
 from binrec.env import (
     BINREC_PROJECTS,
     BINREC_ROOT,
@@ -151,7 +156,7 @@ def project_details(project: str):
 
 
 def _validate_trace_params(
-    name: str, command_line: str, symbolic_arg_indicies: str
+    name: str, command_line: str, symbolic_arg_indicies: str, stdin: str
 ) -> TraceParams:
     try:
         args = shlex.split(command_line)
@@ -168,7 +173,7 @@ def _validate_trace_params(
     except IndexError as error:
         raise ValueError(f"Invalid symbolic argument indices: {error}")
 
-    return TraceParams(name=name, args=trace_args)
+    return TraceParams(name=name, args=trace_args, stdin=stdin)
 
 
 @app.route("/projects/<project>/add-trace", methods=["GET", "POST"])
@@ -180,6 +185,7 @@ def add_trace(project: str):
                 request.form["trace_name"],
                 request.form["trace_args"],
                 request.form["trace_symbolic_args"],
+                request.form["trace_stdin"],
             )
         except ValueError as err:
             return render_template(
@@ -189,6 +195,7 @@ def add_trace(project: str):
                 trace_name=request.form["trace_name"],
                 trace_args=request.form["trace_args"],
                 trace_symbolic_args=request.form["trace_symbolic_args"],
+                trace_stdin=request.form["trace_stdin"],
                 error=str(err),
             )
 
@@ -198,7 +205,7 @@ def add_trace(project: str):
         return redirect(url_for("project_details", project=project))
 
     return render_template(
-        "add-trace.html", project=project, trace_name="", trace_args=""
+        "add-trace.html", project=project, trace_name="", trace_args="", trace_stdin=""
     )
 
 
@@ -329,3 +336,83 @@ def render_docs(filename: str = None):
     return render_template(
         "docs.html", content=source.read_text(), title=title, docs_filename=filename
     )
+
+
+def _validate_input_file(
+    source: str, destination: str, permissions: str
+) -> TraceInputFile:
+    src = Path(source).absolute()
+    if not src.is_file():
+        raise ValueError(f"source file does not exist: {src}")
+
+    perms: Union[str, bool] = permissions
+    dest = Path(destination) if destination else None
+    if permissions:
+        perms = permissions
+        try:
+            _validate_file_permission(permissions)
+        except ValueError as err:
+            raise ValueError(f"invalid file permissions: {err}")
+    else:
+        perms = True
+
+    return TraceInputFile(src, dest, perms)
+
+
+@app.route(
+    "/project/<project>/traces/<int:trace_id>/add-input-file", methods=["GET", "POST"]
+)
+def add_input_file(project: str, trace_id: int):
+    campaign = load_campaign(project)
+    try:
+        trace = campaign.get_trace(trace_id)
+    except IndexError:
+        abort(404)
+
+    trace_name = trace.name or str(trace_id)
+
+    if request.method == "POST":
+        try:
+            input_file = _validate_input_file(
+                request.form["source"],
+                request.form["destination"],
+                request.form["permissions"],
+            )
+        except ValueError as err:
+            return render_template(
+                "add-trace-input-file.html",
+                project=project,
+                trace=trace,
+                trace_name=trace_name,
+                source=request.form["source"],
+                destination=request.form["destination"],
+                permissions=request.form["permissions"],
+                error=err,
+            )
+
+        trace.input_files.append(input_file)
+        campaign.save()
+        return redirect(url_for("project_details", project=project))
+
+    return render_template(
+        "add-trace-input-file.html", project=project, trace=trace, trace_name=trace_name
+    )
+
+
+@app.post(
+    "/project/<project>/traces/<int:trace_id>/remove-input-file/<int:input_file_id>"
+)
+def remove_input_file(project: str, trace_id: int, input_file_id: int):
+    campaign = load_campaign(project)
+    try:
+        trace = campaign.get_trace(trace_id)
+    except IndexError:
+        abort(404)
+
+    try:
+        trace.input_files.pop(input_file_id)
+    except IndexError:
+        abort(404)
+
+    campaign.save()
+    return redirect(url_for("project_details", project=project))

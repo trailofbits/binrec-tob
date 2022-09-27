@@ -5,6 +5,7 @@ chmod
 config
 dir
 eget
+filesystem
 ifunc
 libc
 manpage
@@ -17,6 +18,8 @@ params
 qemu
 runtime
 serializable
+stderr
+stdin
 stdout
 subprocesses
 symlinks

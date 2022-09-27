@@ -74,6 +74,7 @@ Walkthroughs of Common Workflows
  4. [General Guide to Binary Recovery](walkthroughs/generalguide.md)
  5. [Transforming Recovered Programs During Recompilation](walkthroughs/transformations.md)
  6. [Using BinRec's Graphical Interface](walkthroughs/using_web_gui.md)
+ 7. [Debloating the id Program](walkthroughs/debloating_coreutils.md)
 
 Known Limitations
 -----------------

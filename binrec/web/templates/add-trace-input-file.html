@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block head %}
+<title>Add Trace: {{project}}</title>
+{% endblock %}
+
+{% block body %}
+<nav>
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{url_for('dashboard')}}">Projects</a></li>
+        <li class="breadcrumb-item"><a href="{{url_for('project_details', project=project)}}">{{project}}</a></li>
+        <li class="breadcrumb-item active">{{trace_name}}</li>
+        <li class="breadcrumb-item active">Add Input File</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <div class="col">
+        <h1>Add Trace Input File: {{project}} / {{trace_name}}</h1>
+        {% if error %}
+        <div class="alert alert-danger">
+            {{error}}
+        </div>
+        {% endif %}
+
+        <form method="POST">
+            <div class="mb-3">
+                <label for="source" class="form-label">Source</label>
+                <input type='text' name="source" value="{{source}}" class="form-control">
+                <div class="form-text">
+                    The absolute file path to the trace input file on the host. This file must
+                    exist.
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="destination" class="form-label">Destination</label>
+                <input type='text' name="destination" value="{{destination}}" class="form-control">
+                <div class="form-text">
+                    The destination where the file will be placed within the analysis VM during
+                    tracing. If a destination is not provided, the file will be stored in
+                    <code>./input_files</code>.
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="permissions" class="form-label">Permissions</label>
+                <input type='text' name="permissions" value="{{permissions}}" class="form-control">
+                <div class="form-text">
+                    The octal permissions of the file when copied into the analysis VM. The permissions
+                    must be in a format supported by <code>chmod</code>. If permissions are not provided,
+                    the original source permissions are used.
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save</button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

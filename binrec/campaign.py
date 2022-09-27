@@ -1,11 +1,16 @@
 import json
+import logging
 import shlex
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Any, List, Optional, TextIO, Union
 
+import jsonschema
+import jsonschema.exceptions
+
 from .env import (
+    BINREC_ROOT,
     INPUT_FILES_DIRNAME,
     TRACE_CONFIG_FILENAME,
     campaign_filename,
@@ -14,6 +19,8 @@ from .env import (
     project_dir,
     trace_config_filename,
 )
+
+logger = logging.getLogger("binrec.campaign")
 
 GET_TRACE_INPUT_FILES_FUNCTION = "get_trace_input_files"
 SETUP_FUNCTION = "setup_trace"
@@ -24,6 +31,9 @@ TRACE_CONCRETE_ARGS_VAR = "TRACE_ARGS"
 
 #: The bash variable name for the trace symbolic arguments
 TRACE_SYMBOLIC_ARGS_VAR = "S2E_SYM_ARGS"
+
+#: The bash variable name for the trace stdin content
+TRACE_STDIN_VAR = "TRACE_STDIN"
 
 #: The prefix in ``bootstrap.sh`` for executing the sample
 BOOTSTRAP_EXECUTE_SAMPLE_PREFIX = (
@@ -51,7 +61,7 @@ source ./{TRACE_CONFIG_FILENAME}
 BOOTSTRAP_PATCH_CALL_EXECUTE = f"""
 # binrec patch #
 {SETUP_FUNCTION}
-execute "${{TARGET_PATH}}"
+echo -en "${{{TRACE_STDIN_VAR}}}" | execute "${{TARGET_PATH}}"
 {TEARDOWN_FUNCTION}
 ################
 """
@@ -65,6 +75,8 @@ BOOTSTRAP_PATCH_EXECUTE_SAMPLE = f"""
 
 #: The default value for symbolic arguments
 DEFAULT_SYMBOLIC_ARG_VALUE = "0"
+
+CAMPAIGN_SCHEMA_FILENAME = BINREC_ROOT / "docs" / "manual" / "campaign_schema.json"
 
 
 def _validate_file_permission(permissions: str) -> None:
@@ -81,6 +93,14 @@ def _validate_file_permission(permissions: str) -> None:
 
     if len(permissions) != 3:
         raise ValueError("invalid permissions: must be valid 3 digit octal number")
+
+
+def _validate_campaign_file(campaign_body: dict) -> None:
+    """
+    Validate a loaded JSON campaign file against the campaign schema.
+    """
+    schema = json.loads(CAMPAIGN_SCHEMA_FILENAME.read_text())
+    jsonschema.validate(campaign_body, schema)
 
 
 class CampaignJsonEncoder(json.JSONEncoder):
@@ -171,6 +191,33 @@ class TraceInputFile:
     #: 3 digit octal permissions to set.
     permissions: Union[bool, str] = True
 
+    def resolve_permissions(self) -> str:
+        """
+        Attempt to resolve the destination file permissions to a chmod string. If the
+        source file does not exist an error message is returned.
+        """
+        if self.permissions is True:
+            if self.source.exists():
+                perms = self.source.stat().st_mode & 0o777
+                return f"{perms:o}"
+            else:
+                return "<unknown: file does not exist>"
+        elif self.permissions is False:
+            return "664"  # guessing a sane default of s2eget
+        else:
+            return self.permissions
+
+    def resolve_destination(self, absolute: bool = False) -> str:
+        """
+        Resolve the destination path. If ``absolute=True``, the absolute destination
+        path is returned.
+        """
+        if self.destination and self.destination.is_absolute():
+            return str(self.destination)
+
+        base = Path("/home/s2e/input_files") if absolute else Path("./input_files")
+        return str(base / (self.destination if self.destination else self.source.name))
+
     def check_source(self, resolve_root: Path = None) -> None:
         """
         Verify that the source file can be opened for reading. Optionally, if
@@ -250,7 +297,7 @@ class TraceParams:
     """
 
     args: List[TraceArg] = field(default_factory=list)
-    stdin: Union[bool, str] = False
+    stdin: Optional[str] = None
     match_stdout: Union[bool, str] = True
     match_stderr: Union[bool, str] = True
     input_files: List[TraceInputFile] = field(default_factory=list)
@@ -297,8 +344,11 @@ class TraceParams:
             " ".join([str(i) for i in self.symbolic_indexes])
         )
         args = " ".join(shlex.quote(arg) for arg in self.command_line_args)
+        stdin = shlex.quote(self.stdin or "")
+
         print(f"export {TRACE_SYMBOLIC_ARGS_VAR}={symbolic_indexes}", file=file)
         print(f"export {TRACE_CONCRETE_ARGS_VAR}=({args})", file=file)
+        print(f"export {TRACE_STDIN_VAR}={stdin}", file=file)
         print(file=file)
 
     def _write_get_input_files_function(self, file: TextIO) -> None:
@@ -358,7 +408,7 @@ class TraceParams:
             parsed
         """
         args = item.get("args") or []
-        stdin = item.get("stdin") or False
+        stdin = item.get("stdin") or None
         match_stdout = item.get("match_stdout", True)
         match_stderr = item.get("match_stderr", True)
         files = item.get("input_files") or []
@@ -588,6 +638,8 @@ class Campaign:
         with open(filename, "r") as file:
             body = json.loads(file.read().strip())
 
+        _validate_campaign_file(body)
+
         campaign = Campaign(
             binary,
             [TraceParams.load_dict(item) for item in body["traces"]],
@@ -673,3 +725,59 @@ def patch_s2e_project(project: str, existing_patch_ok: bool = False) -> bool:
         file.write(f"\n{BOOTSTRAP_PATCH_MARKER}\n")
 
     return True
+
+
+def lint_campaign_file(filename: Path) -> None:
+    """
+    Lint a single campaign JSON file.
+    """
+    logger.info("linting campaign file: %s", filename)
+    try:
+        Campaign.load_json(Path(__file__), filename, project="lint")
+    except (jsonschema.exceptions.ValidationError, ValueError) as err:
+        logger.error("campaign file is invalid: %s: %s", filename, err)
+
+
+def lint_campaign_directory(dirname: Path) -> None:
+    """
+    Lint all campaign files within a directory.
+    """
+    for child in dirname.iterdir():
+        if child.suffix.lower() == ".json":
+            lint_campaign_file(child)
+
+
+def main():
+    import argparse
+
+    from binrec.core import enable_binrec_debug_mode, init_binrec
+
+    init_binrec()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-v", "--verbose", action="count", help="enable verbose logging"
+    )
+
+    subparsers = parser.add_subparsers(dest="current_parser")
+
+    lint = subparsers.add_parser("lint")
+    lint.add_argument(
+        "filename", help="campaign filename or directory to lint", type=Path
+    )
+
+    args = parser.parse_args()
+    if args.verbose:
+        enable_binrec_debug_mode()
+
+    if args.current_parser == "lint":
+        if args.filename.is_dir():
+            lint_campaign_directory(args.filename)
+        else:
+            lint_campaign_file(args.filename)
+    else:  # pragma: no cover
+        parser.error(f"unrecognized command: {args.current_parser}")
+
+
+if __name__ == "__main__":  # pragma: no cover
+    main()

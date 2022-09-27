@@ -1,11 +1,12 @@
 import json
+import logging
 from pathlib import Path
-import shlex
 from unittest.mock import patch, mock_open, call, MagicMock
 
+import jsonschema.exceptions
 import pytest
 
-from binrec import campaign
+from binrec import campaign, core
 from binrec.env import BINREC_PROJECTS
 
 from helpers.mock_path import MockPath
@@ -103,17 +104,18 @@ class TestTraceParams:
     @patch.object(campaign, "print")
     def test_write_variables(self, mock_print, mock_shlex):
         handle = MagicMock()
-        mock_shlex.quote.side_effect = ["sym", "con_1", "con_2"]
+        mock_shlex.quote.side_effect = ["sym", "con_1", "con_2", "stdin_hello_world"]
         params = campaign.TraceParams(args=[
             campaign.TraceArg(campaign.TraceArgType.symbolic, "one"),
             campaign.TraceArg(campaign.TraceArgType.symbolic, "two"),
-        ])
+        ], stdin="hello\nworld")
         params._write_variables(handle)
 
-        assert mock_shlex.quote.call_args_list == [call("1 2"), call("one"), call("two")]
+        assert mock_shlex.quote.call_args_list == [call("1 2"), call("one"), call("two"), call("hello\nworld")]
         assert mock_print.call_args_list == [
             call("export S2E_SYM_ARGS=sym", file=handle),
             call("export TRACE_ARGS=(con_1 con_2)", file=handle),
+            call("export TRACE_STDIN=stdin_hello_world", file=handle),
             call(file=handle),
         ]
 
@@ -180,7 +182,7 @@ class TestTraceParams:
     def test_load_dict_default(self):
         assert campaign.TraceParams.load_dict({}) == campaign.TraceParams(
             args=[],
-            stdin=False,
+            stdin=None,
             match_stdout=True,
             match_stderr=True
         )
@@ -266,7 +268,8 @@ class TestCampaign:
         assert campaign.Campaign(binary=Path("/eq"), traces=[]).project == "eq"
 
     @patch.object(campaign, "open", new_callable=mock_open, read_data=json.dumps(JSON_BATCH))
-    def test_load_json(self, mock_file):
+    @patch.object(campaign, "_validate_campaign_file")
+    def test_load_json(self, mock_validate, mock_file):
         binary = Path("/eq")
         filename = Path("thing.json")
         project_name = "asdf"
@@ -284,6 +287,7 @@ class TestCampaign:
         )
         mock_file.assert_called_once_with(filename, "r")
         mock_file().read.assert_called_once_with()
+        mock_validate.assert_called_once_with(JSON_BATCH)
 
     @patch.object(campaign, "open", new_callable=mock_open, read_data=json.dumps(JSON_INPUT_FILES))
     @patch.object(campaign, "TraceInputFile")
@@ -571,6 +575,42 @@ class TestTraceInputFile:
             permissions=False
         ).get_file_script(s2e_get_var="/bin/s2eget", indent="  ") == "  /bin/s2eget 'app setup.sh'"
 
+    def test_resolve_destination_none(self):
+        input_file = campaign.TraceInputFile(source=Path("/bin/bash"))
+        assert input_file.resolve_destination() == "input_files/bash"
+        assert input_file.resolve_destination(absolute=True) == "/home/s2e/input_files/bash"
+
+    def test_resolve_destination_rel_destination(self):
+        input_file = campaign.TraceInputFile(source=Path("/bin/bash"), destination=Path("./thing/binary"))
+        assert input_file.resolve_destination() == "input_files/thing/binary"
+        assert input_file.resolve_destination(absolute=True) == "/home/s2e/input_files/thing/binary"
+
+    def test_resolve_destination_abs_destination(self):
+        input_file = campaign.TraceInputFile(source=Path("/bin/bash"), destination=Path("/thing/binary"))
+        assert input_file.resolve_destination() == "/thing/binary"
+        assert input_file.resolve_destination(absolute=True) == "/thing/binary"
+
+    def test_resolve_permissions_copy(self):
+        src = Path(__file__)
+        perms = src.stat().st_mode & 0o777
+        input_file = campaign.TraceInputFile(source=src, permissions=True)
+        assert input_file.resolve_permissions() == f"{perms:o}"
+
+    def test_resolve_permissions_default(self):
+        src = Path(__file__)
+        input_file = campaign.TraceInputFile(source=src, permissions=False)
+        assert input_file.resolve_permissions() == "664"
+
+    def test_resolve_permissions_explicit(self):
+        src = Path(__file__)
+        input_file = campaign.TraceInputFile(source=src, permissions="700")
+        assert input_file.resolve_permissions() == "700"
+
+    def test_resolve_permissions_does_not_exist(self):
+        src = Path("/does/not/exist")
+        input_file = campaign.TraceInputFile(source=src, permissions=True)
+        assert input_file.resolve_permissions() == "<unknown: file does not exist>"
+
 
 class TestTraceArg:
 
@@ -595,3 +635,45 @@ class TestCampaignJsonEncoder:
     def test_super(self):
         with pytest.raises(TypeError):
             campaign.CampaignJsonEncoder().default(100) == "100"
+
+
+class TestLintCampaign:
+
+    @patch.object(campaign.Campaign, "load_json")
+    def test_lint_campaign_file(self, mock_load):
+        filename = MockPath("campaign.json")
+        campaign.lint_campaign_file(filename)
+        mock_load.assert_called_once_with(Path(campaign.__file__), filename, project="lint")
+
+    @patch.object(campaign.Campaign, "load_json")
+    @patch.object(campaign, "logger")
+    def test_lint_campaign_file_error(self, mock_logger, mock_load):
+        filename = MockPath("campaign.json")
+        mock_load.side_effect = jsonschema.exceptions.ValidationError("sadf")
+        campaign.lint_campaign_file(filename)
+        mock_load.assert_called_once_with(Path(campaign.__file__), filename, project="lint")
+        mock_logger.error.assert_called_once()
+
+    @patch.object(campaign, "lint_campaign_file")
+    def test_lint_campaign_directory(self, mock_lint_file):
+        json1 = MagicMock(suffix=".json")
+        json2 = MagicMock(suffix=".json")
+        not_json = MagicMock(suffix=".md")
+        dirname = MagicMock()
+        dirname.iterdir.return_value = [json1, not_json, json2]
+        campaign.lint_campaign_directory(dirname)
+        assert mock_lint_file.call_args_list == [call(json1), call(json2)]
+
+    @patch("sys.argv", ["campaign", "-v", "lint", __file__])
+    @patch.object(campaign, "lint_campaign_file")
+    @patch.object(core, "enable_binrec_debug_mode")
+    def test_main_file(self, mock_enable_debug, mock_lint):
+        campaign.main()
+        mock_lint.assert_called_once_with(Path(__file__))
+        mock_enable_debug.assert_called_once()
+
+    @patch("sys.argv", ["campaign", "lint", "./"])
+    @patch.object(campaign, "lint_campaign_directory")
+    def test_main_directory(self, mock_lint):
+        campaign.main()
+        mock_lint.assert_called_once_with(Path("./"))

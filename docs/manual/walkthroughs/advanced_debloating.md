@@ -8,7 +8,7 @@ In this walkthrough, we will explore some of BinRec's other useful interface fea
 
    ```bash
    # just new-project <project_name> <path_to_target_binary> <path_to_campaign_file>
-   $ just new-project eq2proj ./test/benchmark/samples/bin/x86/binrec/eq2 ./s2e/projects/eq/campaign.json
+   $ just new-project eq2proj ./test/benchmark/samples/bin/x86/binrec/eq2 ./s2e/projects/eqproj/campaign.json
 
    # Recover the eq2 binary with the same settings and trace arguments as used in the `eqproj` project
    $ just recover eq2proj
@@ -77,7 +77,7 @@ In this walkthrough, we will explore some of BinRec's other useful interface fea
    $ just clear-trace-data eq2proj
    ```
 
-2. Next, remove the desired traces using the `just delete-trace` command (or the `just delete-all-traces` command if you want to start over from scratch):
+2. Next, remove the desired traces using the `just remove-trace` command (or the `just remove-all-traces` command if you want to start over from scratch):
 
    ```bash
    # just delete-trace <project_name> <trace_name>
@@ -93,5 +93,5 @@ In this walkthrough, we will explore some of BinRec's other useful interface fea
 
    ```bash
    # just recover <project_name>
-   $ just recover eqproj
+   $ just recover eq2proj
    ```

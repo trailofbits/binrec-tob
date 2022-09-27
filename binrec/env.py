@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from .errors import BinRecError
 
 __all__ = (
+    "BINREC_DEBUG",
     "BINREC_ROOT",
     "BINREC_BIN",
     "BINREC_RUNLIB",
@@ -91,6 +92,10 @@ BINREC_PROJECTS = Path(os.environ["BINREC_PROJECTS"]).absolute()
 BINREC_LIBC_MODULE = Path(os.environ["BINREC_LIBC_MODULE"]).absolute()
 #: The absolute path to the qemu guest filesystem root
 BINREC_GUESTFS_ROOT = Path(os.environ["BINREC_GUESTFS_ROOT"]).absolute()
+#: The environment variable name for the BINREC_DEBUG value
+BINREC_DEBUG_ENV = "BINREC_DEBUG"
+#: Binrec is running in debug mode
+BINREC_DEBUG = os.environ.get(BINREC_DEBUG_ENV) == "1"
 
 #: The default filename for the binrec trace config script
 TRACE_CONFIG_FILENAME = "binrec_trace_config.sh"
