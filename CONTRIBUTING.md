@@ -11,8 +11,8 @@ process. For information on installing and using BinRec, please refer to the
 Bugs, new features, enhancements, and general issues are all tracked in our
 [GitHub repository](https://github.com/trailofbits/binrec-prerelease).
 A GitHub issue should contain all relevant discussion about the topic.
-If discussions about a particular issue occur in our slack channel
-(#research-metis), please summarize the takeaways from the discussion
+If discussions about a particular issue occur in our slack instance
+(empire hacking), please summarize the takeaways from the discussion
 in a comment on the issue.
 
 ## Development Environment
@@ -126,16 +126,12 @@ just run-integration-tests  # run only integration tests (takes a few minutes)
 just print-coverage-report  # print the last pytest coverage report
 ```
 
-Integration tests use sample code and binaries provided by the
-[binrec-benchmark](https://github.com/trailofbits/binrec-benchmark) repository,
-which is a submodule of the BinRec repo.
+Integration tests use sample code and binaries provided in the `test` directory.
 Each integration test sample is run multiple times, depending on the test inputs,
 the runtime traces are merged, the merged trace is lifted, and then the
 recovered binary is compared against the original binary with the same test inputs
 used during the trace operations. The process exit code, stdout, and stderr are
 compared for each test input.
-
-For more information, refer to the binrec-benchmark `README`.
 
 ## Contributing Code
 
