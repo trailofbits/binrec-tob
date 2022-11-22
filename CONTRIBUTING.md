@@ -179,3 +179,20 @@ and the docs can be built using the `build-cpp-docs` just recipe.
    ```bash
    just build-cpp-docs
    ```
+
+## List of Historical Contributors
+
+Fabian Parzefall
+Chinmay Deshpande
+Anil Altinay
+Joseph Nash
+Taddeus Kroes
+Prabhu Rajasekaran
+Dixin Zhou
+Adrian Dabrowski
+David Gens
+Yeoul Na
+Stijn Volckaert
+Cristiano Giuffrida
+Herbert Bos
+Michael Franz
