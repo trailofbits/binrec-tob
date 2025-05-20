@@ -41,7 +41,9 @@ install-binrec: _install-dependencies _binrec-init build-all build-s2e-image bui
 # Install apt packages and git LFS. Required once before build. Requires super user privileges.
 _install-dependencies:
     sudo apt-get update
-    sudo apt-get install -y bison cmake flex g++ g++-multilib gcc gcc-multilib git libglib2.0-dev liblua5.1-dev \
+    sudo dpkg --add-architecture i386
+    sudo apt-get update
+    sudo apt-get install -y bison cmake flex g++ g++-multilib gcc gcc-multilib git libglib2.0-dev enchant-2 python3-enchant liblua5.1-dev \
         libsigc++-2.0-dev lua5.3 nasm nlohmann-json3-dev pkg-config subversion curl pipenv git-lfs doxygen graphviz \
         binutils libc6-dbg:i386 \
         python3.9-dev python3.9-venv # For s2e-env (and compatibility with Python 3.9 from Pipfile): http://s2e.systems/docs/s2e-env.html#id2
@@ -56,9 +58,12 @@ _binrec-init:
     pipenv sync --dev
     git submodule update --recursive --init
     git lfs pull
+    ln -sf "{{justdir}}/google.py" "{{justdir}}/s2e-env/s2e_env/utils/google.py"
     cd ./s2e-env && pipenv run pip install .
     pipenv run s2e init {{justdir}}/s2e
     @just _freeze-s2e
+    sed -i 's|git://git.qemu.org|https://gitlab.com/qemu-project|g' "{{justdir}}/s2e/source/qemu/.gitmodules"
+    sed -i 's|git://git.qemu-project.org|https://gitlab.com/qemu-project|g' "{{justdir}}/s2e/source/qemu/.gitmodules"
     @just s2e-insert-binrec-plugins
 
 # Freeze all S2E repositories to commits that have been tested against
@@ -70,6 +75,7 @@ _freeze-s2e:
     git -C "{{justdir}}/s2e/source/qemu" checkout {{repo_qemu_commit}}
     git -C "{{justdir}}/s2e/source/qemu" submodule update
     git -C "{{justdir}}/s2e/source/scripts" checkout {{repo_scripts_commit}}
+
 
 
 ########## End: Installation Recipes ##########
